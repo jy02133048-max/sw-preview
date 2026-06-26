@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SW Luopan</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Noto+Serif+SC:wght@400;600;700;900&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{background:transparent;overflow:hidden;height:100%}
+  body{display:flex;align-items:center;justify-content:center}
+  .scene{position:relative;aspect-ratio:1;height:100%;max-height:780px;width:auto;max-width:100%;margin:auto}
+  canvas{position:absolute;inset:0;width:100%!important;height:100%!important}
+  #fx{pointer-events:none}
+</style>
+</head>
+<body>
+<div class="scene">
+  <canvas id="main" width="800" height="800"></canvas>
+  <canvas id="fx" width="800" height="800"></canvas>
+</div>
+<script>
+const C = document.getElementById('main');
+const F = document.getElementById('fx');
+const c = C.getContext('2d');
+const f = F.getContext('2d');
+const W = 800, H = 800, cx = W/2, cy = H/2;
+
+// Data
+const d28 = '角亢氐房心尾箕斗牛女虚危室壁奎娄胃昴毕觜参井鬼柳星张翼轸'.split('');
+const d24 = '壬子癸丑艮寅甲卯乙辰巽巳丙午丁未坤申庚酉辛戌乾亥'.split('');
+const tg = '甲乙丙丁戊己庚辛壬癸'.split('');
+const dz = '子丑寅卯辰巳午未申酉戌亥'.split('');
+const bgChars = '乾兑离震巽坎艮坤'.split('');
+const bgSymbols = '☰☱☲☳☴☵☶☷';
+const wx = [{c:'金',cl:'#ddc88a'},{c:'木',cl:'#8ab872'},{c:'水',cl:'#72a0b8'},{c:'火',cl:'#d48a5a'},{c:'土',cl:'#b8a068'}];
+
+// Ring config
+const rings = [
+  { oR:375, iR:345, chars:null, speed:0.04, divs:360, label:'ticks' },
+  { oR:345, iR:300, chars:d28, cR:322, cS:13, cW:'600', speed:-0.06, divs:28 },
+  { oR:300, iR:260, chars:d24, cR:280, cS:13, cW:'600', speed:0.04, divs:24 },
+  { oR:260, iR:215, chars:tg, cR:237, cS:21, cW:'700', speed:-0.05, divs:10, glow:true },
+  { oR:215, iR:170, chars:dz, cR:192, cS:19, cW:'700', speed:0.035, divs:12, glow:true },
+  { oR:170, iR:130, chars:null, speed:-0.045, divs:8, label:'bagua' },
+  { oR:130, iR:68, chars:null, speed:0.03, divs:5, label:'wuxing' },
+];
+
+let rots = rings.map(() => 0);
+let t0 = null;
+let lightAngle = 0;
+
+// Easing
+function easeOutBack(t) { const s=1.8; return 1+((s+1)*Math.pow(t-1,3))+(s*Math.pow(t-1,2)); }
+function easeOutCubic(t) { return 1-Math.pow(1-t,3); }
+
+function entry(i, el) {
+  const delay = i * 400;
+  const t = Math.max(0, Math.min(1, (el - delay) / 800));
+  return { a: easeOutCubic(t), r: (1-easeOutBack(Math.min(1,t*1.3))) * (i%2===0?-50:50) };
+}
+
+// ========== DRAW RING BAND (metallic) ==========
+function drawBand(oR, iR, entryA) {
+  c.save();
+  c.globalAlpha = entryA;
+
+  // Base fill — warm, slightly brighter to eliminate dark seams
+  c.beginPath(); c.arc(cx,cy,oR+2,0,Math.PI*2); c.arc(cx,cy,iR-2,0,Math.PI*2,true);
+  c.fillStyle = '#1a1610';
+  c.fill();
+
+  // Depth gradient — lighter near outer edge, darker near inner
+  c.beginPath(); c.arc(cx,cy,oR+2,0,Math.PI*2); c.arc(cx,cy,iR-2,0,Math.PI*2,true);
+  const depthGrad = c.createRadialGradient(cx, cy, iR, cx, cy, oR);
+  depthGrad.addColorStop(0, 'rgba(10,8,4,0.4)');
+  depthGrad.addColorStop(1, 'rgba(40,34,20,0.3)');
+  c.fillStyle = depthGrad;
+  c.fill();
+
+  // Soft top-half lighting (gradient overlay, not a stroke)
+  c.save();
+  c.beginPath(); c.arc(cx,cy,oR,0,Math.PI*2); c.arc(cx,cy,iR,0,Math.PI*2,true); c.clip();
+  const lgY = cy - oR;
+  const lightGrad = c.createLinearGradient(cx, lgY, cx, cy);
+  lightGrad.addColorStop(0, 'rgba(220,200,140,0.1)');
+  lightGrad.addColorStop(0.6, 'rgba(220,200,140,0.03)');
+  lightGrad.addColorStop(1, 'rgba(0,0,0,0)');
+  c.fillStyle = lightGrad;
+  c.fillRect(cx-oR, lgY, oR*2, oR);
+  c.restore();
+
+  // Subtle metallic sheen (animated light sweep)
+  const sheenX = cx + Math.cos(lightAngle) * oR * 0.6;
+  const sheenY = cy + Math.sin(lightAngle) * oR * 0.6;
+  const sheen = c.createRadialGradient(sheenX, sheenY, 0, sheenX, sheenY, oR*0.8);
+  sheen.addColorStop(0, 'rgba(255,240,180,0.06)');
+  sheen.addColorStop(0.3, 'rgba(255,240,180,0.02)');
+  sheen.addColorStop(1, 'rgba(0,0,0,0)');
+  c.beginPath(); c.arc(cx,cy,oR,0,Math.PI*2); c.arc(cx,cy,iR,0,Math.PI*2,true);
+  c.fillStyle = sheen; c.fill();
+
+  c.restore();
+}
+
+// ========== TICKS ==========
+function drawTicks(oR, iR, count, rot, isMajorRing) {
+  c.save(); c.translate(cx,cy); c.rotate(rot*Math.PI/180);
+  for (let i=0; i<count; i++) {
+    const a = (i/count)*Math.PI*2;
+    const isMaj = isMajorRing && i % 10 === 0;
+    const len = isMaj ? (oR-iR)*0.85 : (oR-iR)*0.3;
+    c.save(); c.rotate(a);
+    c.beginPath(); c.moveTo(0,-oR+2); c.lineTo(0,-(oR-2-len));
+
+    if (isMaj) {
+      const g = c.createLinearGradient(0,-oR,0,-(oR-len));
+      g.addColorStop(0,'rgba(220,200,140,0.5)');
+      g.addColorStop(0.5,'rgba(255,240,180,0.7)');
+      g.addColorStop(1,'rgba(220,200,140,0.4)');
+      c.strokeStyle = g;
+      c.lineWidth = 1.2;
+    } else {
+      c.strokeStyle = 'rgba(200,180,120,0.15)';
+      c.lineWidth = 0.5;
+    }
+    c.stroke(); c.restore();
+  }
+  c.restore();
+}
+
+// ========== DIVIDERS ==========
+function drawDividers(oR, iR, count, rot, alpha) {
+  c.save(); c.translate(cx,cy); c.rotate(rot*Math.PI/180);
+  for (let i=0; i<count; i++) {
+    const a = (i/count)*Math.PI*2;
+    c.save(); c.rotate(a);
+    c.beginPath(); c.moveTo(0,-oR+4); c.lineTo(0,-(iR+4));
+    c.strokeStyle = `rgba(180,160,100,${alpha*0.4})`;
+    c.lineWidth = 0.5;
+    c.stroke(); c.restore();
+  }
+  c.restore();
+}
+
+// ========== CHARS ==========
+function drawChars(arr, radius, size, rot, color, weight, glow, elapsed) {
+  c.save(); c.translate(cx,cy); c.rotate(rot*Math.PI/180);
+  c.font = `${weight} ${size}px 'Noto Serif SC', serif`;
+  c.textAlign = 'center'; c.textBaseline = 'middle';
+  arr.forEach((ch, i) => {
+    const a = (i/arr.length)*Math.PI*2 - Math.PI/2;
+    const x = Math.cos(a)*radius, y = Math.sin(a)*radius;
+    // Breathing: each char has its own phase, wide range
+    const breathe = 0.5 + 0.5 * Math.sin((elapsed || 0) * 0.0006 + i * 2.3);
+    c.save(); c.translate(x,y); c.rotate(a+Math.PI/2);
+    if (glow) {
+      const glowColor = typeof ch==='object' ? ch.cl : 'rgba(240,210,120,0.5)';
+      c.shadowColor = glowColor;
+      c.shadowBlur = 8 + breathe * 12;
+    }
+    if (typeof ch === 'object') {
+      // Five elements — breathing affects glow intensity, not base color
+      c.fillStyle = ch.cl;
+    } else {
+      // Parse base alpha from color string, modulate with breathe
+      const baseAlpha = parseFloat(color.match(/[\d.]+\)$/)?.[0] || '0.8');
+      const modAlpha = baseAlpha * (0.2 + 0.8 * breathe);
+      c.fillStyle = color.replace(/[\d.]+\)$/, modAlpha.toFixed(2) + ')');
+    }
+    c.fillText(typeof ch==='object' ? ch.c : ch, 0, 0);
+    c.shadowBlur = 0; c.restore();
+  });
+  c.restore();
+}
+
+// ========== PARTICLES ==========
+const particles = [];
+for (let i=0; i<120; i++) {
+  const a = Math.random()*Math.PI*2;
+  const d = 80+Math.random()*320;
+  particles.push({a,d, s:0.3+Math.random()*1.8, spd:0.03+Math.random()*0.15, br:0.2+Math.random()*0.8, ph:Math.random()*Math.PI*2});
+}
+
+function drawParticles(el) {
+  const pA = Math.min(1, el/3000);
+  particles.forEach(p => {
+    p.a += p.spd*0.002;
+    const wobble = Math.sin(el*0.001+p.ph)*6;
+    const x = cx+Math.cos(p.a)*(p.d+wobble);
+    const y = cy+Math.sin(p.a)*(p.d+wobble);
+    const fl = 0.4+0.6*Math.sin(el*0.003+p.ph);
+    const al = p.br*fl*pA*0.45;
+    f.beginPath(); f.arc(x,y,p.s,0,Math.PI*2);
+    f.fillStyle = `rgba(240,210,120,${al})`; f.fill();
+    if (p.s > 1.2) {
+      const g = f.createRadialGradient(x,y,0,x,y,p.s*4);
+      g.addColorStop(0,`rgba(240,210,120,${al*0.4})`);
+      g.addColorStop(1,'rgba(240,210,120,0)');
+      f.beginPath(); f.arc(x,y,p.s*4,0,Math.PI*2);
+      f.fillStyle = g; f.fill();
+    }
+  });
+}
+
+// ========== CLOCK HANDS (short, elegant) ==========
+function drawClockHands(el) {
+  const entryT = Math.max(0, Math.min(1, (el - 3800) / 1000));
+  if (entryT <= 0) return;
+  const alpha = easeOutCubic(entryT);
+
+  const hand1Angle = el * 0.0003;  // slow
+  const hand2Angle = el * 0.0008;  // faster
+
+  f.save();
+  f.globalAlpha = alpha;
+  f.translate(cx, cy);
+
+  // --- Hand 1 (longer, thinner) ---
+  f.save();
+  f.rotate(hand1Angle);
+  f.shadowColor = 'rgba(0,0,0,0.25)'; f.shadowBlur = 3; f.shadowOffsetX = 1; f.shadowOffsetY = 1;
+  f.beginPath();
+  f.moveTo(-0.8, 12);
+  f.lineTo(-0.4, -52);
+  f.quadraticCurveTo(0, -58, 0.4, -52);
+  f.lineTo(0.8, 12);
+  f.closePath();
+  const g1 = f.createLinearGradient(0, 12, 0, -58);
+  g1.addColorStop(0, 'rgba(180,160,100,0.6)');
+  g1.addColorStop(0.5, 'rgba(230,210,150,0.85)');
+  g1.addColorStop(1, 'rgba(200,180,120,0.7)');
+  f.fillStyle = g1; f.fill();
+  f.restore();
+
+  // --- Hand 2 (shorter, slightly wider) ---
+  f.save();
+  f.rotate(hand2Angle);
+  f.shadowColor = 'rgba(0,0,0,0.25)'; f.shadowBlur = 3; f.shadowOffsetX = 1; f.shadowOffsetY = 1;
+  f.beginPath();
+  f.moveTo(-1.2, 10);
+  f.lineTo(-0.6, -38);
+  f.quadraticCurveTo(0, -44, 0.6, -38);
+  f.lineTo(1.2, 10);
+  f.closePath();
+  const g2 = f.createLinearGradient(0, 10, 0, -44);
+  g2.addColorStop(0, 'rgba(170,150,90,0.55)');
+  g2.addColorStop(0.5, 'rgba(220,200,140,0.8)');
+  g2.addColorStop(1, 'rgba(190,170,110,0.65)');
+  f.fillStyle = g2; f.fill();
+  f.restore();
+
+  // --- Center cap ---
+  f.shadowBlur = 0; f.shadowOffsetX = 0; f.shadowOffsetY = 0;
+  const cap = f.createRadialGradient(-1, -1, 0, 0, 0, 5);
+  cap.addColorStop(0, 'rgba(240,220,160,0.9)');
+  cap.addColorStop(1, 'rgba(160,140,80,0.7)');
+  f.beginPath(); f.arc(0, 0, 5, 0, Math.PI * 2);
+  f.fillStyle = cap; f.fill();
+  f.beginPath(); f.arc(0, 0, 5, 0, Math.PI * 2);
+  f.strokeStyle = 'rgba(220,200,140,0.35)'; f.lineWidth = 0.6; f.stroke();
+
+  f.restore();
+}
+
+// ========== TAIJI as full-disc background ==========
+function drawTaijiBg(el) {
+  const entryT = Math.max(0, Math.min(1, (el - 1000) / 2000));
+  if (entryT <= 0) return;
+  const alpha = easeOutCubic(entryT) * 0.18; // subtle but visible
+  const r = 350; // covers most of the luopan
+  const angle = el * 0.00008; // extremely slow rotation
+
+  c.save();
+  c.globalAlpha = alpha;
+  c.translate(cx, cy);
+  c.rotate(angle);
+
+  // White (yang) half
+  c.beginPath();
+  c.arc(0, 0, r, -Math.PI / 2, Math.PI / 2, false);
+  c.arc(0, r / 2, r / 2, Math.PI / 2, -Math.PI / 2, true);
+  c.arc(0, -r / 2, r / 2, Math.PI / 2, -Math.PI / 2, false);
+  c.closePath();
+  c.fillStyle = 'rgba(230,220,190,1)';
+  c.fill();
+
+  // Black (yin) half
+  c.beginPath();
+  c.arc(0, 0, r, Math.PI / 2, -Math.PI / 2, false);
+  c.arc(0, -r / 2, r / 2, -Math.PI / 2, Math.PI / 2, true);
+  c.arc(0, r / 2, r / 2, -Math.PI / 2, Math.PI / 2, false);
+  c.closePath();
+  c.fillStyle = 'rgba(20,18,12,1)';
+  c.fill();
+
+  // Yang dot
+  c.beginPath(); c.arc(0, -r / 2, r * 0.1, 0, Math.PI * 2);
+  c.fillStyle = 'rgba(20,18,12,1)';
+  c.fill();
+
+  // Yin dot
+  c.beginPath(); c.arc(0, r / 2, r * 0.1, 0, Math.PI * 2);
+  c.fillStyle = 'rgba(230,220,190,1)';
+  c.fill();
+
+  c.restore();
+}
+
+// ========== Center taiji with decorative outer ring ==========
+function drawTaiji(el) {
+  const entryT = Math.max(0, Math.min(1, (el - 4500) / 1200));
+  if (entryT <= 0) return;
+  const alpha = easeOutCubic(entryT);
+  const r = 26;  // taiji radius
+  const outerR = 55; // decorative outer ring
+  const angle = el * 0.0003;
+
+  f.save();
+  f.globalAlpha = alpha;
+  f.translate(cx, cy);
+
+  // === Outer decorative ring (rotating with taiji) ===
+  const outerAngle = el * 0.00025; // slow rotation, opposite to taiji
+  f.save();
+  f.rotate(-outerAngle);
+
+  // Gold ring band
+  f.beginPath(); f.arc(0, 0, outerR, 0, Math.PI * 2);
+  f.arc(0, 0, r + 6, 0, Math.PI * 2, true);
+  f.fillStyle = 'rgba(180,160,100,0.08)';
+  f.fill();
+
+  // Outer gold circle
+  f.beginPath(); f.arc(0, 0, outerR, 0, Math.PI * 2);
+  f.strokeStyle = 'rgba(200,180,120,0.25)'; f.lineWidth = 1; f.stroke();
+
+  // Inner gold circle (around taiji)
+  f.beginPath(); f.arc(0, 0, r + 6, 0, Math.PI * 2);
+  f.strokeStyle = 'rgba(200,180,120,0.2)'; f.lineWidth = 0.8; f.stroke();
+
+  // Mid decorative circle
+  f.beginPath(); f.arc(0, 0, (outerR + r + 6) / 2, 0, Math.PI * 2);
+  f.strokeStyle = 'rgba(200,180,120,0.1)'; f.lineWidth = 0.5; f.stroke();
+
+  // Tick marks + characters around the ring
+  const centerChars = '乾坎艮震巽离坤兑'.split('');
+  for (let i = 0; i < 24; i++) {
+    const a = (i / 24) * Math.PI * 2 - Math.PI / 2;
+    const isMaj = i % 3 === 0;
+    const from = outerR - 2;
+    const to = isMaj ? r + 8 : outerR - (outerR - r - 6) * 0.3;
+    f.beginPath();
+    f.moveTo(Math.cos(a) * from, Math.sin(a) * from);
+    f.lineTo(Math.cos(a) * to, Math.sin(a) * to);
+    f.strokeStyle = isMaj ? 'rgba(200,180,120,0.3)' : 'rgba(200,180,120,0.1)';
+    f.lineWidth = isMaj ? 0.8 : 0.5;
+    f.stroke();
+
+    // Characters on major ticks — breathing glow
+    if (isMaj) {
+      const charIdx = i / 3;
+      const charR = (outerR + r + 6) / 2;
+      const x = Math.cos(a) * charR;
+      const y = Math.sin(a) * charR;
+      const breathe = 0.15 + 0.75 * (0.5 + 0.5 * Math.sin(el * 0.0006 + charIdx * 1.7));
+      f.save();
+      f.translate(x, y);
+      f.rotate(a + Math.PI / 2);
+      f.font = "700 10px 'Noto Serif SC', serif";
+      f.textAlign = 'center'; f.textBaseline = 'middle';
+      f.fillStyle = `rgba(210,190,130,${breathe})`;
+      f.fillText(centerChars[charIdx], 0, 0);
+      f.restore();
+    }
+  }
+
+  f.restore(); // end outer ring rotation
+
+  // === Taiji (rotating) ===
+  f.save();
+  f.rotate(angle);
+
+  // White (yang) half
+  f.beginPath();
+  f.arc(0, 0, r, -Math.PI / 2, Math.PI / 2, false);
+  f.arc(0, r / 2, r / 2, Math.PI / 2, -Math.PI / 2, true);
+  f.arc(0, -r / 2, r / 2, Math.PI / 2, -Math.PI / 2, false);
+  f.closePath();
+  f.fillStyle = 'rgba(220,210,180,0.8)';
+  f.fill();
+
+  // Black (yin) half
+  f.beginPath();
+  f.arc(0, 0, r, Math.PI / 2, -Math.PI / 2, false);
+  f.arc(0, -r / 2, r / 2, -Math.PI / 2, Math.PI / 2, true);
+  f.arc(0, r / 2, r / 2, -Math.PI / 2, Math.PI / 2, false);
+  f.closePath();
+  f.fillStyle = 'rgba(20,18,12,0.85)';
+  f.fill();
+
+  // Dots
+  f.beginPath(); f.arc(0, -r / 2, r * 0.11, 0, Math.PI * 2);
+  f.fillStyle = 'rgba(20,18,12,0.8)'; f.fill();
+  f.beginPath(); f.arc(0, r / 2, r * 0.11, 0, Math.PI * 2);
+  f.fillStyle = 'rgba(220,210,180,0.75)'; f.fill();
+
+  // Taiji border
+  f.beginPath(); f.arc(0, 0, r, 0, Math.PI * 2);
+  f.strokeStyle = 'rgba(200,180,120,0.3)'; f.lineWidth = 0.8; f.stroke();
+
+  f.restore(); // end taiji rotation
+
+  f.restore(); // end translate
+}
+
+// ========== MAIN LOOP ==========
+let brandShown = false;
+
+function draw(ts) {
+  if (!t0) t0 = ts;
+  const el = ts - t0;
+  lightAngle += 0.003; // slow sweep
+
+  c.clearRect(0,0,W,H);
+  f.clearRect(0,0,W,H);
+
+  // Ambient glow
+  const ag = c.createRadialGradient(cx,cy,50,cx,cy,400);
+  ag.addColorStop(0,'rgba(200,170,100,0.06)');
+  ag.addColorStop(0.4,'rgba(200,170,100,0.03)');
+  ag.addColorStop(1,'rgba(0,0,0,0)');
+  c.fillStyle = ag; c.fillRect(0,0,W,H);
+
+  for (let i=0; i<rots.length; i++) rots[i] += rings[i].speed;
+
+  // Draw rings
+  rings.forEach((r, i) => {
+    const e = entry(i, el);
+    if (e.a <= 0) return;
+    c.save(); c.globalAlpha = e.a;
+    const rot = rots[i] + e.r;
+
+    drawBand(r.oR, r.iR, e.a);
+
+    if (r.label === 'ticks') {
+      drawTicks(r.oR, r.iR, 360, rot, true);
+      // Degree numbers
+      c.save(); c.translate(cx,cy); c.rotate(rot*Math.PI/180);
+      c.font = "400 7px 'Inter', sans-serif"; c.textAlign = 'center'; c.textBaseline = 'middle';
+      c.fillStyle = 'rgba(200,180,120,0.3)';
+      for (let d=0; d<360; d+=30) {
+        const a = (d/360)*Math.PI*2 - Math.PI/2;
+        const x = Math.cos(a)*(r.oR-8), y = Math.sin(a)*(r.oR-8);
+        c.save(); c.translate(x,y); c.rotate(a+Math.PI/2);
+        c.fillText(d+'°',0,0); c.restore();
+      }
+      c.restore();
+    }
+
+    if (r.chars) {
+      drawDividers(r.oR, r.iR, r.divs, rot, 0.35);
+      drawChars(r.chars, r.cR, r.cS, rot, 'rgba(230,210,140,0.8)', r.cW, r.glow, el);
+    }
+
+    if (r.label === 'bagua') {
+      drawDividers(r.oR, r.iR, 8, rot, 0.3);
+      c.save(); c.translate(cx,cy); c.rotate(rot*Math.PI/180);
+      bgChars.forEach((name, j) => {
+        const a = (j/8)*Math.PI*2 - Math.PI/2;
+        const breathe = 0.5 + 0.5 * Math.sin(el * 0.0006 + j * 2.1);
+        // Symbol only
+        c.save();
+        c.translate(Math.cos(a)*148, Math.sin(a)*148);
+        c.rotate(a+Math.PI/2);
+        c.font = "700 20px 'Noto Serif SC', serif";
+        c.textAlign = 'center'; c.textBaseline = 'middle';
+        c.shadowColor = `rgba(240,210,120,${(0.2 + 0.6 * breathe).toFixed(2)})`;
+        c.shadowBlur = 5 + breathe * 20;
+        c.fillStyle = `rgba(240,210,130,${(0.15 + 0.75 * breathe).toFixed(2)})`;
+        c.fillText(bgSymbols[j],0,0);
+        c.shadowBlur = 0; c.restore();
+      });
+      c.restore();
+    }
+
+    if (r.label === 'wuxing') {
+      drawDividers(r.oR, r.iR, 5, rot, 0.3);
+      // Decorative inner circles
+      for (let dr=10; dr<r.oR-r.iR-10; dr+=15) {
+        c.beginPath(); c.arc(cx,cy,r.iR+dr,0,Math.PI*2);
+        c.strokeStyle = 'rgba(200,170,100,0.05)'; c.lineWidth = 0.5; c.stroke();
+      }
+      c.save(); c.translate(cx,cy); c.rotate(rot*Math.PI/180);
+      c.textAlign = 'center'; c.textBaseline = 'middle';
+      wx.forEach((el2, j) => {
+        const a = (j/5)*Math.PI*2 - Math.PI/2;
+        const breathe = 0.5 + 0.5 * Math.sin(el * 0.001 + j * 1.9);
+        c.save();
+        c.translate(Math.cos(a)*98, Math.sin(a)*98);
+        c.rotate(a+Math.PI/2);
+        c.font = "900 28px 'Noto Serif SC', serif";
+        c.shadowColor = el2.cl; c.shadowBlur = 5 + breathe * 25;
+        c.globalAlpha *= (0.2 + 0.8 * breathe);
+        c.fillStyle = el2.cl;
+        c.fillText(el2.c, 0, 0);
+        c.shadowBlur = 0; c.restore();
+      });
+      c.restore();
+    }
+
+    c.restore();
+  });
+
+  // Center disc
+  const ce = entry(7, el);
+  if (ce.a > 0) {
+    c.save(); c.globalAlpha = ce.a;
+    // Base
+    const cGrad = c.createRadialGradient(cx-20,cy-20,0,cx,cy,68);
+    cGrad.addColorStop(0,'#2a2218');
+    cGrad.addColorStop(0.5,'#201a10');
+    cGrad.addColorStop(1,'#181208');
+    c.beginPath(); c.arc(cx,cy,68,0,Math.PI*2);
+    c.fillStyle = cGrad; c.fill();
+
+    // Chrome edge
+    c.beginPath(); c.arc(cx,cy,68, Math.PI*1.1, Math.PI*1.9);
+    const ceGrad = c.createLinearGradient(cx-68,cy,cx+68,cy);
+    ceGrad.addColorStop(0,'rgba(200,180,120,0.2)');
+    ceGrad.addColorStop(0.4,'rgba(255,240,180,0.7)');
+    ceGrad.addColorStop(0.6,'rgba(255,240,180,0.7)');
+    ceGrad.addColorStop(1,'rgba(200,180,120,0.2)');
+    c.strokeStyle = ceGrad; c.lineWidth = 2.5; c.stroke();
+
+    c.beginPath(); c.arc(cx,cy,68,0,Math.PI*2);
+    c.strokeStyle = 'rgba(200,170,100,0.3)'; c.lineWidth = 0.8; c.stroke();
+
+    // Decorative rings
+    [52,38].forEach(r => {
+      c.beginPath(); c.arc(cx,cy,r,0,Math.PI*2);
+      c.strokeStyle = 'rgba(200,170,100,0.15)'; c.lineWidth = 0.5; c.stroke();
+    });
+
+    // Inner glow
+    const iG = c.createRadialGradient(cx,cy,0,cx,cy,68);
+    iG.addColorStop(0,'rgba(240,210,120,0.15)');
+    iG.addColorStop(0.4,'rgba(240,210,120,0.05)');
+    iG.addColorStop(1,'rgba(0,0,0,0)');
+    c.beginPath(); c.arc(cx,cy,68,0,Math.PI*2);
+    c.fillStyle = iG; c.fill();
+
+    // Light sweep on center
+    const csX = cx + Math.cos(lightAngle*1.5)*30;
+    const csY = cy + Math.sin(lightAngle*1.5)*30;
+    const csG = c.createRadialGradient(csX,csY,0,csX,csY,50);
+    csG.addColorStop(0,'rgba(255,240,180,0.08)');
+    csG.addColorStop(1,'rgba(0,0,0,0)');
+    c.beginPath(); c.arc(cx,cy,68,0,Math.PI*2); c.clip();
+    c.fillStyle = csG; c.fillRect(cx-68,cy-68,136,136);
+
+    c.restore();
+  }
+
+  // Lock flash
+  if (el > 4800 && el < 6500) {
+    for (let w=0; w<3; w++) {
+      const wt = Math.max(0, Math.min(1, (el-4800-w*250)/1200));
+      if (wt>0) {
+        const wr = 60+wt*340;
+        c.beginPath(); c.arc(cx,cy,wr,0,Math.PI*2);
+        c.strokeStyle = `rgba(240,210,120,${Math.max(0,0.3*(1-wt*wt))})`;
+        c.lineWidth = 2.5*(1-wt);
+        c.stroke();
+      }
+    }
+    if (el<5200) {
+      c.fillStyle = `rgba(240,220,150,${0.12*(1-(el-4800)/400)})`;
+      c.fillRect(0,0,W,H);
+    }
+  }
+
+  // FX layer
+  drawParticles(el);
+  drawTaiji(el);
+
+
+  requestAnimationFrame(draw);
+}
+requestAnimationFrame(draw);
+</script>
+</body>
+</html>
