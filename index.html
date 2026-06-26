@@ -9,14 +9,14 @@
 <style>
   :root{--gold:#E3BC77;--ink:#F1E7D6;--body:#C8B79E;--muted:#8C7E6B;--serif:'Cormorant Garamond',serif;--ui:'DM Sans',sans-serif}
   *{box-sizing:border-box;margin:0;padding:0}
-  html,body{min-height:100%}
+  html,body{min-height:100%;overflow-x:hidden;max-width:100%}
   body{font-family:var(--ui);color:var(--body);
     background:radial-gradient(125% 85% at 50% -10%,#1c1636 0%,#0d0a16 52%,#08060e 100%);
     min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;
-    padding:32px 20px;text-align:center;gap:6px}
+    padding:32px 20px;text-align:center;gap:6px;width:100%}
   .eyebrow{font-size:12px;letter-spacing:.34em;text-transform:uppercase;color:var(--gold);opacity:.9}
-  h1{font-family:var(--serif);font-weight:500;font-size:clamp(2.6rem,11vw,4rem);color:var(--ink);line-height:1;margin:6px 0 2px}
-  .sub{font-size:15px;line-height:1.6;color:var(--body);max-width:30ch;margin:0 auto 30px}
+  h1{font-family:var(--serif);font-weight:500;font-size:clamp(2.2rem,10vw,4rem);color:var(--ink);line-height:1.02;margin:6px 0 2px;max-width:100%;overflow-wrap:break-word}
+  .sub{font-size:15px;line-height:1.6;color:var(--body);max-width:30ch;margin:0 auto 30px;padding:0 6px}
   .cards{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;width:100%;max-width:560px}
   a.card{flex:1 1 220px;text-decoration:none;color:var(--ink);border:1px solid rgba(241,231,214,.14);
     background:rgba(255,255,255,.04);border-radius:18px;padding:30px 22px;transition:.2s;display:block}
