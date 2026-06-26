@@ -391,7 +391,7 @@
       <div class="sweep"></div>
       <div class="empty-hint" id="emptyHint">Your bracelet<br>takes shape here</div>
     </div>
-    <div class="preview-meta"><span><b id="beadCount">—</b> beads</span><span id="sizeMeta">16cm · 8mm ✎</span><span class="meta-lucky" id="luckyBtn">🎲 Lucky</span><span class="meta-clear" id="clearAll" style="display:none">✕ Clear</span></div>
+    <div class="preview-meta"><span><b id="beadCount">—</b> beads</span><span id="sizeMeta">16cm · 8mm ✎</span><span class="meta-clear" id="undoBtn" style="display:none">↩ Undo</span><span class="meta-lucky" id="luckyBtn">🎲 Lucky</span><span class="meta-clear" id="clearAll" style="display:none">✕ Clear</span></div>
     <div class="preview-meta2" id="patternMeta" style="display:none"></div>
     <div class="preview-meta2" id="metaFit" style="display:none"></div>
     <div class="sizebar fitpop" id="fitPop">
@@ -1003,6 +1003,16 @@ function beadCount(){ return Math.max(4, Math.round(loopMm()/state.beadMm)); }  
 function fillToCount(recipe,n){ if(!recipe.length)return[]; const o=[]; let i=0; while(o.length<n){o.push(recipe[i%recipe.length]);i++} return o; }
 function recipeFromPicks(picks){ const r=[]; picks.forEach((p,i)=>{r.push(p.key); if(i<2)r.push(p.key);}); return r; }
 function rebuild(){ state.seq=state.recipe.slice(); renderAll(); }   // the ring IS the beads you placed — one bead per entry
+/* ---- undo history + non-destructive fit (User 2026-06-26) ---- */
+function snap(){ return JSON.stringify({recipe:state.recipe,mmList:state.mmList,autofilled:state.autofilled,basePattern:state.basePattern,picks:state.picks,beadMm:state.beadMm,wristCm:state.wristCm,pattern:state.pattern,palette:state.palette,displaced:state.displaced||[]}); }
+function pushHistory(){ (state.history=state.history||[]).push(snap()); if(state.history.length>60)state.history.shift(); updateUndoBtn(); }
+function undo(){ if(!state.history||!state.history.length)return; const s=JSON.parse(state.history.pop()); Object.assign(state,s); rebuild(); updateUndoBtn(); }
+function updateUndoBtn(){ const u=$('undoBtn'); if(u) u.style.display=(state.history&&state.history.length)?'inline':'none'; }
+/* fit strand to wrist WITHOUT losing beads: overflow → displaced buffer; room reappears → restore (so shrinking a bead brings the pushed-out one back) */
+function fitStrand(){ state.displaced=state.displaced||[];
+  while(state.recipe.length>4 && sumMm()>loopMm()+state.beadMm/2){ const k=state.recipe.pop(), m=state.mmList.pop(); state.displaced.push([k,m]); }
+  while(state.displaced.length){ const d=state.displaced[state.displaced.length-1], add=(d[1]||state.beadMm);
+    if(sumMm()+add<=loopMm()+state.beadMm/2){ state.displaced.pop(); state.recipe.push(d[0]); state.mmList.push(d[1]); } else break; } }
 function refit(){
   const target=beadCount();
   if(state.autofilled && state.picks && state.picks.length){ state.recipe=arrangeStrand(state.picks, target);   // re-run the 对味 arranger on resize so spacing/buffering stays correct at the new count
@@ -1194,7 +1204,7 @@ function bloomAt(g,x,y,bd,k){
 }
 
 /* ===== state ===== */
-const state={intents:[],picks:[],recipe:[],seq:[],basePattern:null,autofilled:false,tilt:false,mmList:[],prof:null,hasReading:false,cat:"all",wristCm:16,beadMm:8,name:"",request:"",customText:"",place:"",pattern:null,palette:null}; window.__state=state;
+const state={intents:[],picks:[],recipe:[],seq:[],basePattern:null,autofilled:false,tilt:false,mmList:[],prof:null,hasReading:false,cat:"all",wristCm:16,beadMm:8,name:"",request:"",customText:"",place:"",pattern:null,palette:null,displaced:[],history:[]}; window.__state=state;
 const esc=s=>(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
 // map a free-text "in my own words" description to stone wishes by keyword
 const CUSTOM_WISH=[[/sleep|insomnia|awake at|can't sleep|dream/i,"sleep_light"],[/anxi|nervous|stress|overwhelm|panic|tense|calm|relax|on edge/i,"calm"],[/focus|distract|concentrat|procrastinat|scattered/i,"focus"],[/confiden|shy|timid|afraid to|scared to|doubt myself|imposter/i,"confidence"],[/money|wealth|income|broke|debt|business|sell|hustle/i,"wealth"],[/career|job|promotion|work|interview|boss/i,"career"],[/love|crush|relationship|dating|romance|heart|single|soulmate/i,"love"],[/myself|self[- ]?worth|not enough|accept|deserve|self[- ]?love/i,"self_love"],[/protect|boundar|drain|toxic|negative|say no|people[- ]?pleas/i,"protection"],[/ground|stable|settle|root|steady|belong|home/i,"grounding"],[/speak|talk|communicat|express|present|voice|public/i,"communication"],[/energy|tired|exhaust|motivat|drive|burnout|no spark/i,"energy"],[/intuition|gut|guidance|sign|spiritual|clarity/i,"intuition"]];
@@ -1235,11 +1245,11 @@ const beadSrc=(k,i)=>{ const vi=VARN>1?((jit(k,i)>>>4)%VARN):0; return vi?`${ASS
 function addStone(k){   // capacity is now millimetre-true: sum of every bead's own size vs the wrist loop
   const cap=loopMm(), cur=sumMm(), add=state.beadMm;
   if(cur+add>cap+2*state.beadMm){ toast(`A ${state.wristCm}cm wrist truly can't fit more — go bigger on wrist size or remove a few`); return; }
-  state.recipe.push(k); state.mmList.push(null); state.autofilled=false; rebuild();
+  pushHistory(); state.displaced=[]; state.recipe.push(k); state.mmList.push(null); state.autofilled=false; rebuild();
   if(cur+add>cap) toast(`Running big — past a comfy fit for ${state.wristCm}cm`);
 }
-function removeStone(k){ const i=state.recipe.lastIndexOf(k); if(i>=0){state.recipe.splice(i,1);state.mmList.splice(i,1);} state.autofilled=false; rebuild(); }
-function removeAt(i){ if(i>=0&&i<state.recipe.length){ state.recipe.splice(i,1); state.mmList.splice(i,1); state.autofilled=false; rebuild(); } }
+function removeStone(k){ const i=state.recipe.lastIndexOf(k); if(i>=0){pushHistory(); state.displaced=[]; state.recipe.splice(i,1);state.mmList.splice(i,1);} state.autofilled=false; rebuild(); }
+function removeAt(i){ if(i>=0&&i<state.recipe.length){ pushHistory(); state.displaced=[]; state.recipe.splice(i,1); state.mmList.splice(i,1); state.autofilled=false; rebuild(); } }
 
 /* tap vs long-press helper (mouse + touch) */
 function attachPress(el,onTap,onLong){
@@ -1409,8 +1419,8 @@ function renderYourStones(){
     SIZES.forEach(mm=>{ const b2=document.createElement('b'); b2.textContent=mm;
       const _i0=state.recipe.indexOf(k);
       if(mm===(_i0>=0?mmAt(_i0):state.beadMm)) b2.className='on';
-      b2.onclick=()=>{ setTypeMm(k,mm);   // all beads of this stone; single-bead via long-press on the bracelet
-        while(state.recipe.length&&sumMm()>loopMm()+2*state.beadMm){ state.recipe.pop(); state.mmList.pop(); }
+      b2.onclick=()=>{ pushHistory(); setTypeMm(k,mm);
+        fitStrand();
         state.autofilled=false; rebuild(); };
       sz.appendChild(b2); });
     row.children[1].appendChild(sz);
@@ -1489,7 +1499,7 @@ function altsFor(key,slot){ const s=STONES[key]; if(!s)return[];
   const want=wantedWishes(), ji=new Set((state.prof&&state.prof.jishen)||[]);
   return CATALOG.filter(c=>c.el===s.el&&c.key!==key&&!inStrand.has(c.key)&&!ji.has(c.el))   // same element + not an avoid-element ⇒ five-element balance is untouched
     .sort((a,b)=>((b.wish||[]).filter(w=>want.has(w)).length)-((a.wish||[]).filter(w=>want.has(w)).length)).slice(0,8); }
-function swapBead(slot,newKey){ const oldKey=state.recipe[slot]; if(!STONES[newKey]||oldKey===newKey)return;
+function swapBead(slot,newKey){ const oldKey=state.recipe[slot]; if(!STONES[newKey]||oldKey===newKey)return; pushHistory();
   state.recipe[slot]=newKey;   // mmList[slot] (size) preserved on purpose
   const op=state.picks.find(p=>p.key===oldKey);   // inherit the role so the story card keeps its 因果 (same element ⇒ the element-based prose still holds)
   if(op&&!state.picks.find(p=>p.key===newKey)) state.picks.push({...STONES[newKey],ct:op.ct,role:op.role,e1:op.e1,e2:op.e2,bt:op.bt,tdir:op.tdir,hits:(STONES[newKey].wish||[]).filter(w=>wantedWishes().has(w)),key:newKey});
@@ -1508,8 +1518,8 @@ function openDetail(key,slot){const s=STONES[key]; if(!s)return;
     const lab=document.createElement('span'); lab.className='m-size-l'; lab.textContent='This bead:'; ms.appendChild(lab);
     SIZES.forEach(mm=>{ const b3=document.createElement('b'); b3.textContent=mm;
       if(mm===mmAt(slot)) b3.className='on';
-      b3.onclick=()=>{ state.mmList[slot]=(mm===state.beadMm?null:mm);
-        while(state.recipe.length&&sumMm()>loopMm()+2*state.beadMm){ state.recipe.pop(); state.mmList.pop(); }
+      b3.onclick=()=>{ pushHistory(); state.mmList[slot]=(mm===state.beadMm?null:mm);
+        fitStrand();
         state.autofilled=false; rebuild(); openDetail(key, slot<state.recipe.length?slot:-1); };
       ms.appendChild(b3); });
   } else ms.style.display='none';
@@ -1612,7 +1622,7 @@ $('zoomBtn').onclick=openZoom;
 $('sizeMeta').onclick=()=>{ const f=$('fitPop'); f.style.display=(f.style.display==='block')?'none':'block'; };
 $('openPicker').onclick=()=>{ const sh=$('pickSheet'); sh.style.bottom=(document.querySelector('.cta-bar').offsetHeight||0)+'px'; sh.classList.add('show'); };
 $('psClose').onclick=()=>$('pickSheet').classList.remove('show');
-$('clearAll').onclick=()=>{ if(!state.recipe.length)return; const bak=state.recipe.slice(), bakM=state.mmList.slice();
+$('clearAll').onclick=()=>{ if(!state.recipe.length)return; pushHistory(); state.displaced=[]; const bak=state.recipe.slice(), bakM=state.mmList.slice();
   state.recipe=[]; state.mmList=[]; state.basePattern=null; state.autofilled=false; rebuild();
   toast('Strand cleared','Undo',()=>{ state.recipe=bak; state.mmList=bakM; rebuild(); }); };
 $('zoomX').onclick=()=>$('zoomModal').classList.remove('show'); $('zoomModal').onclick=e=>{if(e.target===$('zoomModal'))$('zoomModal').classList.remove('show');};
@@ -1854,6 +1864,7 @@ $('shareModal').onclick=e=>{if(e.target===$('shareModal'))$('shareModal').classL
 /* lucky — with a chart it walks the causal chain (random among each step's top-3); without, pure luck */
 function luckyStrand(){
   if(!CATALOG.length) return;
+  pushHistory(); state.displaced=[];
   if(state.prof){
     const picks=selectStones(state.intents,state.prof,true);
     if(!picks.length)return;
@@ -1873,7 +1884,7 @@ function luckyStrand(){
   state.autofilled=true; state._repour=true; rebuild();
   toast(state.prof?'A lucky strand — same causal chain, different cards':'A lucky strand — add your birthday and luck gets smarter');
 }
-$('luckyBtn').onclick=luckyStrand;
+$('luckyBtn').onclick=luckyStrand; $('undoBtn').onclick=undo;
 $('wristX').onclick=()=>$('wristModal').classList.remove('show'); $('wristModal').onclick=e=>{if(e.target===$('wristModal'))$('wristModal').classList.remove('show');};
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){$('zoomModal').classList.remove('show');$('wristModal').classList.remove('show');$('storyModal').classList.remove('show');$('shareModal').classList.remove('show');}});
 
