@@ -1066,8 +1066,8 @@ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded'
     });
   }
   (function layoutStrand(){
-    const imgs=["amethyst","citrine","aqua","redagate","greenph","rose","lapis","tiger","jx-077","clear","jx-097","jx-030","jx-082","fluorite","moonstone","smoky"];
-    const ELBY={amethyst:"fire",citrine:"earth",aqua:"water",redagate:"fire",greenph:"wood",rose:"fire",lapis:"water",tiger:"earth","jx-077":"water",clear:"metal","jx-097":"fire","jx-030":"fire","jx-082":"wood",fluorite:"wood",moonstone:"metal",smoky:"earth"};
+    const imgs=["amethyst","citrine","aqua","redagate","jx-051","rose","lapis","tiger","jx-077","clear","jx-097","jx-030","jx-082","jx-043","moonstone","smoky"];
+    const ELBY={amethyst:"fire",citrine:"earth",aqua:"water",redagate:"fire","jx-051":"earth",rose:"fire",lapis:"water",tiger:"earth","jx-077":"water",clear:"metal","jx-097":"fire","jx-030":"fire","jx-082":"wood","jx-043":"fire",moonstone:"metal",smoky:"earth"};
     STRAND.list.forEach((d,i)=>{ d.img=imgs[i%imgs.length]; d.el=ELBY[d.img]||d.el; });
     projectStrand(STRAND.baseYaw);
     STRAND.list.forEach(d=>{ d.mx=Math.max(52,Math.min(94,d.x-9)); d.my=Math.max(34,Math.min(76,d.y+12)); d.ms=Math.round(d.s*.72); });
