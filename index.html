@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Stone Whisper — preview</title>
+<link rel="icon" href="sw-website-redesign/favicon.ico">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--gold:#E3BC77;--ink:#F1E7D6;--body:#C8B79E;--muted:#8C7E6B;--serif:'Cormorant Garamond',serif;--ui:'DM Sans',sans-serif}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{min-height:100%}
+  body{font-family:var(--ui);color:var(--body);
+    background:radial-gradient(125% 85% at 50% -10%,#1c1636 0%,#0d0a16 52%,#08060e 100%);
+    min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:32px 20px;text-align:center;gap:6px}
+  .eyebrow{font-size:12px;letter-spacing:.34em;text-transform:uppercase;color:var(--gold);opacity:.9}
+  h1{font-family:var(--serif);font-weight:500;font-size:clamp(2.6rem,11vw,4rem);color:var(--ink);line-height:1;margin:6px 0 2px}
+  .sub{font-size:15px;line-height:1.6;color:var(--body);max-width:30ch;margin:0 auto 30px}
+  .cards{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;width:100%;max-width:560px}
+  a.card{flex:1 1 220px;text-decoration:none;color:var(--ink);border:1px solid rgba(241,231,214,.14);
+    background:rgba(255,255,255,.04);border-radius:18px;padding:30px 22px;transition:.2s;display:block}
+  a.card:hover,a.card:active{border-color:rgba(227,188,119,.55);background:rgba(255,255,255,.07);transform:translateY(-2px)}
+  .card .k{font-family:var(--serif);font-size:26px;margin-bottom:8px}
+  .card .d{font-size:13.5px;line-height:1.6;color:var(--body)}
+  .card .go{display:inline-block;margin-top:16px;font-size:13px;letter-spacing:.04em;color:var(--gold)}
+  .foot{margin-top:34px;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+  @media(max-width:560px){.cards{flex-direction:column}}
+</style>
+</head>
+<body>
+  <p class="eyebrow">Stone Whisper · preview</p>
+  <h1>Stone Whisper</h1>
+  <p class="sub">Custom crystal bracelets, built around you — bead by bead.</p>
+  <div class="cards">
+    <a class="card" href="sw-crystal-customizer/index.html">
+      <div class="k">The Studio</div>
+      <div class="d">Build your own bracelet — by hand, by your pattern, or by the moment you're walking into.</div>
+      <span class="go">Open the Studio →</span>
+    </a>
+    <a class="card" href="sw-website-redesign/sw-site.html">
+      <div class="k">The Site</div>
+      <div class="d">The Stone Whisper homepage — what we make, why it matters, and how it works.</div>
+      <span class="go">Visit the site →</span>
+    </a>
+  </div>
+  <p class="foot">Works on iPhone &amp; Android</p>
+</body>
+</html>
