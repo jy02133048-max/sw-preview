@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>First Day — Stone Whisper</title>
+<link rel="icon" href="favicon.ico">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--gold:#E3BC77;--ink:#F1E7D6;--body:#C8B79E;--muted:#8C7E6B;--line:rgba(241,231,214,.13);
+    --panel:rgba(255,255,255,.04);--serif:'Cormorant Garamond',serif;--ui:'DM Sans',sans-serif}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{overflow-x:hidden}
+  body{font-family:var(--ui);color:var(--body);line-height:1.6;
+    background:radial-gradient(120% 70% at 50% -8%,#1b1533 0%,#0d0a16 55%,#08060e 100%);
+    background-attachment:fixed;min-height:100dvh}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 22px}
+  a{color:inherit;text-decoration:none}
+  .eyebrow{font-size:11.5px;letter-spacing:.3em;text-transform:uppercase;color:var(--gold);opacity:.9}
+  /* hero */
+  .hero{display:grid;grid-template-columns:1fr 1fr;gap:50px;align-items:center;padding:54px 0 40px}
+  .hero__img{border-radius:20px;overflow:hidden;background:#0c0a16;border:1px solid var(--line);aspect-ratio:1;position:relative}
+  .hero__img img{width:100%;height:100%;object-fit:cover;display:block}
+  .hero h1{font-family:var(--serif);font-weight:500;font-size:clamp(2.6rem,6vw,4rem);color:var(--ink);line-height:1.02;margin:14px 0 8px}
+  .hero__moment{font-size:16.5px;color:var(--body);max-width:36ch;margin-bottom:22px}
+  .price{font-family:var(--serif);font-size:30px;color:var(--ink);margin:4px 0 18px}
+  .price small{font-family:var(--ui);font-size:12.5px;color:var(--muted);letter-spacing:.04em;margin-left:8px}
+  .sizes{display:flex;gap:8px;margin:0 0 22px;flex-wrap:wrap}
+  .sizes b{font-weight:500;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);align-self:center;margin-right:4px}
+  .sizes span{border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:14px;cursor:pointer;transition:.18s}
+  .sizes span:hover{border-color:var(--gold);color:var(--ink)}
+  .sizes span.on{background:var(--gold);border-color:var(--gold);color:#1a1410;font-weight:600}
+  .cta-row{display:flex;gap:12px;flex-wrap:wrap}
+  .btn{border-radius:999px;padding:15px 26px;font-size:15px;font-weight:600;letter-spacing:.02em;cursor:pointer;border:1px solid var(--gold);transition:.18s;display:inline-block}
+  .btn--gold{background:var(--gold);color:#1a1410}.btn--gold:hover{filter:brightness(1.06)}
+  .btn--ghost{background:transparent;color:var(--ink);border-color:var(--line)}.btn--ghost:hover{border-color:var(--gold)}
+  /* sections */
+  section{padding:46px 0;border-top:1px solid var(--line)}
+  .sec-h{font-family:var(--serif);font-weight:500;font-size:clamp(1.9rem,4vw,2.5rem);color:var(--ink);margin:0 0 10px;line-height:1.1}
+  .why p{font-size:17px;max-width:60ch;color:var(--body)}
+  .why .turn{color:var(--ink)}
+  /* stones */
+  .stones{display:grid;gap:16px}
+  .stone{display:grid;grid-template-columns:84px 1fr;gap:18px;align-items:center;border:1px solid var(--line);background:var(--panel);border-radius:16px;padding:16px 18px}
+  .stone img{width:84px;height:84px;border-radius:50%;object-fit:cover;box-shadow:0 6px 18px rgba(0,0,0,.45)}
+  .stone__n{font-family:var(--serif);font-size:21px;color:var(--ink);margin-bottom:3px}
+  .stone__role{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:6px}
+  .stone__w{font-size:14.5px;color:var(--body);line-height:1.65}
+  /* trust */
+  .trust{display:flex;gap:22px;flex-wrap:wrap}
+  .trust div{flex:1 1 220px;border:1px solid var(--line);border-radius:14px;padding:20px;background:var(--panel)}
+  .trust b{font-family:var(--serif);font-size:18px;color:var(--ink);display:block;margin-bottom:6px}
+  .trust p{font-size:14px;color:var(--body)}
+  /* final */
+  .final{text-align:center;border-top:1px solid var(--line);padding:54px 0 70px}
+  .final h2{font-family:var(--serif);font-weight:500;font-size:clamp(2rem,5vw,2.8rem);color:var(--ink);margin:0 0 10px}
+  .final p{color:var(--body);margin:0 0 22px}
+  .foot{text-align:center;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);padding:0 0 30px}
+  @media(max-width:760px){
+    .hero{grid-template-columns:1fr;gap:24px;padding:30px 0}
+    .stone{grid-template-columns:64px 1fr;gap:14px}.stone img{width:64px;height:64px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero__img"><img src="assets/designs/first-day.png" alt="First Day bracelet — pale aquamarine, citrine, clear quartz and moonstone"></div>
+    <div>
+      <p class="eyebrow">A Stone Whisper design · for the morning everything's new</p>
+      <h1>First Day</h1>
+      <p class="hero__moment">A first day, a fresh start, a clean page — built to walk in light, not loud.</p>
+      <div class="price">$54 <small>~16 beads · adjusts with wrist &amp; bead size</small></div>
+      <div class="sizes"><b>Bead size</b><span>6</span><span>8</span><span class="on">10</span><span>12</span></div>
+      <div class="cta-row">
+        <a class="btn btn--gold" href="../sw-crystal-customizer/index.html">Make it yours →</a>
+        <a class="btn btn--ghost" href="#stones">See the stones</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- WHY -->
+  <section class="why">
+    <h2 class="sec-h">A first day doesn't need armor.</h2>
+    <p>It needs light. <span class="turn">Most jewelry for a big day reaches for something bold — this one goes the other way.</span> It runs pale and clear: a misty aquamarine, a clear quartz that just lets the light through, a warm citrine, and a moonstone with that shifting blue sheen. Fresh, not loud — something to start clean in.</p>
+  </section>
+
+  <!-- STONES -->
+  <section id="stones">
+    <p class="eyebrow" style="margin-bottom:18px">Four stones · each with a job</p>
+    <div class="stones">
+      <div class="stone">
+        <img src="../sw-crystal-customizer/beadwork/beads/jx-047.png" alt="Citrine">
+        <div><div class="stone__role">The warmth</div><div class="stone__n">Citrine</div>
+          <p class="stone__w">Clear light gold — not orange, not heavy. It reads as the warm, forward pull: the colour of moving toward the bright side, kept where you can glance down and see it.</p></div>
+      </div>
+      <div class="stone">
+        <img src="../sw-crystal-customizer/beadwork/beads/jx-078.png" alt="Aquamarine">
+        <div><div class="stone__role">The cool head</div><div class="stone__n">Aquamarine</div>
+          <p class="stone__w">A pale, sea-through-fog blue — not a bright gem blue, a soft misty one. The old read on it is the pause before you snap back: a cool place to land when the morning runs fast.</p></div>
+      </div>
+      <div class="stone">
+        <img src="../sw-crystal-customizer/beadwork/beads/jx-010.png" alt="Clear Quartz">
+        <div><div class="stone__role">The breath</div><div class="stone__n">Clear Quartz</div>
+          <p class="stone__w">Almost colourless and clean — it doesn't take a colour, it gives the light room. The blank space on the strand, for when you want to clear the deck and start over.</p></div>
+      </div>
+      <div class="stone">
+        <img src="../sw-crystal-customizer/beadwork/beads/jx-004.png" alt="White Moonstone">
+        <div><div class="stone__role">The fresh start</div><div class="stone__n">White Moonstone</div>
+          <p class="stone__w">Cool milky white with a blue sheen that slides across it when you turn your wrist. Its old name is the stone for beginning again — the quiet one that holds the whole idea.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TRUST -->
+  <section>
+    <h2 class="sec-h">Real stone, close up.</h2>
+    <div class="trust">
+      <div><b>Natural, not flawless</b><p>The faint clouds, the inclusions, the moonstone's moving sheen — that's the stone being real, not a flaw to hide.</p></div>
+      <div><b>Checked &amp; sourced</b><p>Every bead is checked and sourced before it's strung and shipped. No dyed or glass stand-ins.</p></div>
+      <div><b>Sized to your wrist</b><p>Pick your wrist and bead size and the count adjusts — a 10mm bead and a 6mm bead carry different weight.</p></div>
+    </div>
+  </section>
+
+  <!-- FINAL -->
+  <div class="final">
+    <h2>Make it yours.</h2>
+    <p>Keep First Day as it is, or open it in the studio and swap a stone, change the size, build from here.</p>
+    <a class="btn btn--gold" href="../sw-crystal-customizer/index.html">Open the Studio →</a>
+  </div>
+
+  <p class="foot">Stone Whisper · works on iPhone &amp; Android</p>
+</div>
+</body>
+</html>
