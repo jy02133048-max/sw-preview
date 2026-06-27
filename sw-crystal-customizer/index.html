@@ -1941,14 +1941,14 @@ function paintReading(){
   $('whyQuote').textContent=`The read points to ${support} first.`;
   const wd=$('whyDetail'); wd.style.display='block';
   if(!scenes.length){   // birthday only, no scene: speak from the chart, nudge a scene
-    wd.innerHTML=`Your profile comes back with ${strongest} already loud and ${weakest} quieter, with a support line of ${support} and ${temp}. That is why the strand opens with <em>${topName}</em>, then uses quieter spacer stones so the result feels wearable rather than overloaded.<br><span style="color:var(--faint);font-size:12.5px">Want it tied to right now? Pick a moment under Scene.</span>`;
+    wd.innerHTML=`Your chart comes back with one side of you running loud and another running quiet. That is why the strand opens with <em>${topName}</em>, then uses quieter spacer stones so the result feels wearable rather than overloaded.<br><span style="color:var(--faint);font-size:12.5px">Want it tied to right now? Pick a moment under Scene.</span>`;
   } else if(sc&&sc.custom){
-    wd.innerHTML=`You wrote “${esc((state.customText||'').slice(0,60))}”. The profile still points to ${support} first, with ${strongest} already loud and ${weakest} quieter. That is why <em>${topName}</em> leads the strand instead of a random pretty stone, and why the rest of the beads are spaced to keep the whole thing calm enough to wear.`;
+    wd.innerHTML=`You wrote “${esc((state.customText||'').slice(0,60))}”. Your chart still points to one clear correction first. That is why <em>${topName}</em> leads the strand instead of a random pretty stone, and why the rest of the beads are spaced to keep the whole thing calm enough to wear.`;
   } else {
     const sName=scenes.length>1?scenes[0].t.toLowerCase()+" and "+scenes[1].t.toLowerCase():scenes[0].t.toLowerCase();
     const riskTxt=sc&&sc.risk?`In the “${sName}” state, it's easy to slip toward: ${sc.risk}. `:'';
     const human=chartHumanLead(state.prof, sc&&sc.g, topName);
-    wd.innerHTML = human || `${riskTxt}The profile says ${strongest} is already loud and ${weakest} runs quieter; the support line is ${support}, with ${temp}. That is why <em>${topName}</em> leads this “${sName}” bracelet, and why the rest of the stones are chosen to support the request without piling on the same pressure.`;
+    wd.innerHTML = human || `${riskTxt}Your chart runs loud one way and quiet another. That is why <em>${topName}</em> leads this “${sName}” bracelet, and why the rest of the stones are chosen to support the request without piling on the same pressure.`;
   }
   $('energyBlock').style.display='block';
   const bc=$('barChart'); bc.innerHTML="";
