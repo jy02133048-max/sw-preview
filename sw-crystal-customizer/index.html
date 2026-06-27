@@ -1473,19 +1473,29 @@ function pickMainStone(el,ji,used){
   pool.sort((a,b)=>(b.focal?1:0)-(a.focal?1:0));                      // prefer a focal/hero-worthy stone for a main bead
   return pool[0];
 }
+function pickFavStone(fav,ji,used){ for(const e of fav){ const s=pickMainStone(e,ji,used); if(s)return s; } return null; }
 function selectByAnalysis(prof,intentIds,mode){
   if(!prof) return [];
   const fav=(prof.favorable&&prof.favorable.length?prof.favorable:['water','earth','metal','wood','fire']);
   const ji=new Set(prof.jishen||[]);
   const used=new Set(), findings=[];
+  const add=(label,judg,el,actEl)=>{ if(!judg) return; let stone=pickMainStone(el,ji,used)||pickFavStone(fav,ji,used); if(!stone) return; used.add(stone.en); findings.push({label,judgment:judg,stone,action:STONE_ACTION.default[actEl||el]||STONE_ACTION.default.water}); };
+  // ── structural reads first: whole-chart, general → specific (top-to-bottom) ──
+  const strong=prof.strongest, weak=prof.weakest;
+  if(strong) add('Your core engine', `Your strongest pull is toward ${E_GIFT[strong]||'one clear direction'} — that is the engine of you. Under pressure it tips into ${E_SHADOW[strong]||'too much of a good thing'}.`, fav[0]||'water', fav[0]);
+  if(weak&&weak!==strong) add('Your quiet side', `What runs quietest in you is ${E_GIFT[weak]||'the softer side'} — the part that rarely gets fed, so it is where you run thin when things get hard.`, weak, weak);
+  if(fav[0]) add('What to add first', `The one thing your chart asks for first is more ${E_GIFT[fav[0]]||'balance'} — every other piece leans on getting that right.`, fav[0], fav[0]);
+  if(fav[1]&&fav[1]!==fav[0]) add('Right under that', `Just beneath it, your chart also wants ${E_GIFT[fav[1]]||'a second support'} — the quieter back-up so the first correction is not carrying the whole thing alone.`, fav[1], fav[1]);
+  const strTxt={strong:'runs full of force — so the work is aiming it, not piling on more',weak:'runs a little light — so the work is feeding it, gently and steadily','follow-strong':'runs all one way — so the smart move is flowing with it, not fighting it','follow-weak':'leans hard on its strongest current — so the move is to borrow that force, not block it'}[prof.strength];
+  if(strTxt) add('The overall shape', `Step back, and your chart ${strTxt}.`, fav[0]||'water', fav[0]);
+  // ── then per-domain reads ──
   activeDomains(prof,intentIds,mode).forEach((dom,i)=>{
     const dr=(prof.domain_reads&&prof.domain_reads[dom])||(prof.domainRead&&prof.domainRead[dom])||null;
     const loudEl=(dr&&dr.loudEl)||prof.strongest;
     const fixEl=(dr&&dr.fixEl)||fav[i%fav.length]||fav[0]||'water';   // engine's per-domain correction, else spread across favorable so each finding gets its own stone
     const judg=(CHART_HUMAN[dom]||{})[loudEl];
     if(!judg) return;                                                  // no human copy for this finding → don't fake it (User: 别假装算过)
-    let stone=pickMainStone(fixEl,ji,used);
-    if(!stone){ for(const e of fav){ stone=pickMainStone(e,ji,used); if(stone)break; } }
+    let stone=pickMainStone(fixEl,ji,used)||pickFavStone(fav,ji,used);
     if(!stone) return;
     used.add(stone.en);
     const acts=STONE_ACTION[dom]||STONE_ACTION.default;
@@ -1538,7 +1548,7 @@ function renderBracelet(svg,seq){
   const vh2=vbHalf(seq); svg.setAttribute('viewBox',`${(150-vh2).toFixed(1)} ${(150-vh2).toFixed(1)} ${(2*vh2).toFixed(1)} ${(2*vh2).toFixed(1)}`);
   let s=`<circle cx="${cx}" cy="${cy}" r="${R.toFixed(1)}" fill="none" stroke="rgba(200,180,140,.16)" stroke-width="1.3"/>`;
   layoutRing(seq,R).forEach((p,i)=>{ const x=cx+R*Math.cos(p.a), y=cy+R*Math.sin(p.a), bd=p.bd;
-    s+=`<image data-k="${seq[i]}" href="${beadSrc(seq[i],i)}" x="${(x-bd/2).toFixed(1)}" y="${(y-bd/2).toFixed(1)}" width="${bd.toFixed(1)}" height="${bd.toFixed(1)}" transform="rotate(${jit(seq[i],i)%360} ${x.toFixed(1)} ${y.toFixed(1)})"/>`;});
+    s+=`<image data-k="${seq[i]}" href="${beadSrc(seq[i],i)}" onerror="this.onerror=null;this.setAttribute('href','${sprite(seq[i])}')" x="${(x-bd/2).toFixed(1)}" y="${(y-bd/2).toFixed(1)}" width="${bd.toFixed(1)}" height="${bd.toFixed(1)}" transform="rotate(${jit(seq[i],i)%360} ${x.toFixed(1)} ${y.toFixed(1)})"/>`;});
   svg.innerHTML=`<g>${s}</g>`;
 }
 function priceOf(seq){return seq.length?CLASP+seq.reduce((a,k,i)=>a+(STONES[k]?STONES[k].price*(mmAt(i)/8):0),0):0;}   // size factor mm/8 = placeholder pricing
@@ -1828,8 +1838,7 @@ async function maybeRead(){
     const mode=state.intents.length?'both':'chart';
     state.findings=selectByAnalysis(state.prof,state.intents,mode);
     if(state.findings.length){
-      const ctOrder=['lead','theme','echo','bridge'];
-      const fpicks=state.findings.map((f,i)=>({...f.stone,ct:ctOrder[i]||'echo',e1:f.stone.el,hits:[],role:'For '+f.label,finding:f}));
+      const fpicks=state.findings.map((f,i)=>({...f.stone,ct:(i===0?'lead':['theme','echo','bridge','balance'][(i-1)%4]),e1:f.stone.el,hits:[],role:f.label,finding:f}));   // every finding's stone goes in; ct only drives placement, the copy comes from .finding
       const br=MIXPOOL.find(s=>(s.color==='white_neutral'||s.color==='silver_gray')&&!fpicks.some(p=>p.en===s.en));
       if(br) fpicks.push({...br,ct:'breath',e1:br.el,hits:[],role:'The pause'});   // one neutral for breathing room; arrangeStrand harmonises + fills the rest
       state.picks=fpicks;
@@ -2000,6 +2009,7 @@ function beadWhy(st,prof,ct,hits,sceneName,want,pk,auto){
   if(!prof){
     return hits.length?`Answers the ${hits.join(' / ')} you asked for.`:`Because you're after “${sceneName}”, this stone is closest to that state.`;
   }
+  if(pk&&pk.finding){ return `${stoneName(st)} is the bead for ${pk.finding.label.toLowerCase()} — it ${pk.finding.action}.`; }   // Mode 2/3: every bead carries its own finding, no recycled role copy (User 2026-06-27)
   const problem=profileProblem(prof,want), action=stoneChartAction(st,prof), ask=hits.length?` It also answers the ${wishText(hits)} you asked for.`:'';
   const lane=elementLane(st.el,prof);
   if(ct==='lead') return `${stoneName(st)} leads here because it ${action}.${ask}`;   // de-dup: the story block already states the problem; the hero stone just gives its own reason (User 2026-06-27)
