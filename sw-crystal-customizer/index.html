@@ -49,6 +49,10 @@
     font-family:'Cormorant Garamond',serif;font-style:italic;font-size:15px;color:var(--faint);line-height:1.5;pointer-events:none;z-index:1}
   .preview-meta{display:flex;gap:16px;font-size:12px;color:var(--muted);margin-top:2px}
   .preview-meta b{color:var(--ink);font-weight:400}
+  .slots{display:flex;gap:7px;justify-content:center;margin-top:8px;flex-wrap:wrap}
+  .slots .slot{font-size:11px;letter-spacing:.04em;color:var(--muted);border:1px solid rgba(227,148,49,.28);border-radius:14px;padding:5px 12px;cursor:pointer;background:transparent;font-family:'Inter',sans-serif;transition:.15s}
+  .slots .slot.filled{color:var(--ink);background:rgba(227,148,49,.13);border-color:rgba(227,148,49,.5)}
+  .slots .slot:active{transform:scale(.96)} .slots .slot .x{margin-left:5px;opacity:.55}
   .preview-actions{position:absolute;top:8px;left:10px;right:10px;display:flex;justify-content:space-between;pointer-events:none;z-index:3}
   .preview-actions .pa-btn{pointer-events:auto}
   .pa-btn{font-size:12.5px;color:var(--gold);background:rgba(227,148,49,.08);border:1px solid rgba(227,148,49,.3);border-radius:20px;padding:7px 15px;cursor:pointer;font-family:'Inter',sans-serif}
@@ -614,6 +618,7 @@
       <div class="empty-hint" id="emptyHint">Your bracelet<br>takes shape here</div>
     </div>
     <div class="preview-meta"><span><b id="beadCount">—</b> beads</span><span id="sizeMeta">16cm · 8mm ✎</span><span class="meta-clear" id="undoBtn" style="display:none">↩ Undo</span><span class="meta-lucky" id="luckyBtn">🎲 Lucky</span><span class="meta-clear" id="clearAll" style="display:none">✕ Clear</span></div>
+    <div class="slots" id="slots" aria-label="Saved looks"></div>
     <div class="preview-meta2" id="patternMeta" style="display:none"></div>
     <div class="preview-meta2" id="metaFit" style="display:none"></div>
     <div class="preview-actions" id="previewActions" style="display:none">
@@ -1432,7 +1437,7 @@ function selectStones(intentIds,prof,rng){
   // fallback so a strand always exists
   if(picks.length<3){ for(const s of MIXPOOL){ if(picks.length>=3)break;
     if(!used.has(s.en)&&!ji.has(s.el)){ used.add(s.en); picks.push({...s,ct:'echo',hits:[]}); } } }
-  picks.forEach(p=>{ p.role=({lead:'Hero stone · sets the tone',bridge:'Carry · catches the main line',theme:'Second layer · personal theme',balance:'Balance · recentres',breath:'Negative space · let the colour breathe',echo:'Echo · answer it once more'})[p.ct]||''; });
+  picks.forEach(p=>{ p.role=({lead:'Leads it · sets the tone',bridge:'Holds the line together',theme:'The undercurrent · what you carry now',balance:'The counterweight · keeps it level',breath:'The pause · lets it breathe',echo:'Says it again, softer'})[p.ct]||''; });
   return picks;
 }
 
@@ -1776,6 +1781,30 @@ async function maybeRead(){
   if(first){ showTab('reading'); }
   else if(!document.querySelector('.tab[data-tab=reading]').classList.contains('on')){ $('readingBadge').classList.add('on'); }
 }
+/* ── chart-to-human copy bridge (LOVE done; see CHART-TO-HUMAN-COPY.md) — 盘象→机制(zero-term)→stone action; deterministic, no AI (CC 2026-06-27) ── */
+const CHART_HUMAN={love:{
+  fire:"Your real catch in love was never that people don't want you. It's that the second someone seems a little unsteady — not sharp enough, not reliable enough — your measuring stick goes up and you start hunting for the crack. You read people fast and hard, so you see the flaw before you see the person.",
+  water:"It's not that you don't feel enough in love — it's that you feel it on a loop. You replay the conversation, read the second meaning, give a little too much, and the feeling never quite lands in one place. You run deep and fast, so love keeps moving when what you want is for it to settle.",
+  wood:"You don't fall short in love — you over-tend it. You turn the person into a project, always nudging them somewhere better, and you get restless the moment it's just calm. You're built to grow things, so a relationship that isn't 'going anywhere' reads as broken when it might just be steady.",
+  metal:"The thing in love isn't that you're cold — it's that the wall stays up a beat too long. You keep a clean distance, open slowly, and quietly hold people to the standard; being soft first feels unsafe. You're built tight and precise, so letting someone past the line costs you more than it costs most.",
+  earth:"Your problem in love was never caring too little — it's that you give until there's no you left in it. You over-accommodate, hold the whole thing up, and stay long after it stopped being good, because leaving feels like dropping someone. You're built to carry, so love quietly becomes one more thing you carry."
+}};
+const STONE_ACTION={
+  water:"slows that first verdict, so next time you see the person before the problem",
+  earth:"gives it a floor to stand on, so one thing can finally hold still",
+  metal:"draws a clean line so you stop over-giving and keep some for yourself",
+  wood:"gives it room to grow instead of repeat, loosening the grip a notch",
+  fire:"warms the guard down a notch, so warmth gets in before you've checked it"
+};
+const GROUP_DOMAIN={'Love':'love','Career and money':'career'};
+function chartHumanLead(prof,group,topName){
+  if(!prof||!topName) return null;
+  const dom=GROUP_DOMAIN[group]; if(!dom) return null;
+  const judg=(CHART_HUMAN[dom]||{})[prof.strongest]; if(!judg) return null;   // domain cell not written yet → keep existing copy
+  const fix=(prof.favorable&&prof.favorable[0])||'water';
+  const act=STONE_ACTION[fix]||STONE_ACTION.water;
+  return `${judg} <em>${topName}</em> isn't here "for ${dom}" — it ${act}.`;
+}
 function supportLine(prof){ return ((prof&&prof.favorable)||[]).map(elName).filter(Boolean).slice(0,3).join(' + ')||'a steadier support line'; }
 function tempNeed(prof){ return prof&&prof.tiaohou==='cold'?'warmth first':(prof&&prof.tiaohou==='hot'?'cooling first':'steady balance'); }
 function elementPct(prof,el){ const n=prof&&prof.pct&&Number(prof.pct[el]); return Number.isFinite(n)?`${elName(el)} ${Math.round(n)}%`:elName(el); }
@@ -1910,7 +1939,8 @@ function paintReading(){
   } else {
     const sName=scenes.length>1?scenes[0].t.toLowerCase()+" and "+scenes[1].t.toLowerCase():scenes[0].t.toLowerCase();
     const riskTxt=sc&&sc.risk?`In the “${sName}” state, it's easy to slip toward: ${sc.risk}. `:'';
-    wd.innerHTML=`${riskTxt}The profile says ${strongest} is already loud and ${weakest} runs quieter; the support line is ${support}, with ${temp}. That is why <em>${topName}</em> leads this “${sName}” bracelet, and why the rest of the stones are chosen to support the request without piling on the same pressure.`;
+    const human=chartHumanLead(state.prof, sc&&sc.g, topName);
+    wd.innerHTML = human || `${riskTxt}The profile says ${strongest} is already loud and ${weakest} runs quieter; the support line is ${support}, with ${temp}. That is why <em>${topName}</em> leads this “${sName}” bracelet, and why the rest of the stones are chosen to support the request without piling on the same pressure.`;
   }
   $('energyBlock').style.display='block';
   const bc=$('barChart'); bc.innerHTML="";
@@ -2463,6 +2493,20 @@ function luckyStrand(){
   toast(state.prof?'A lucky strand — same causal chain, different cards':'Lucky pick ready: a designed palette');
 }
 $('luckyBtn').onclick=luckyStrand; $('undoBtn').onclick=undo;
+/* save slots — keep a few looks side by side; tap empty to save, tap filled to load, × to clear (User 2026-06-27) */
+const SLOT_KEY='sw_slots', SLOT_N=3;
+function loadSlots(){ try{return JSON.parse(localStorage.getItem(SLOT_KEY))||{};}catch(e){return {};} }
+function putSlots(s){ try{localStorage.setItem(SLOT_KEY,JSON.stringify(s));}catch(e){} }
+function designSnapshot(){ return {recipe:state.recipe,mmList:state.mmList,beadMm:state.beadMm,wristCm:state.wristCm,intents:state.intents,picks:state.picks,prof:state.prof,hasReading:state.hasReading,autofilled:state.autofilled,basePattern:state.basePattern,pattern:state.pattern,palette:state.palette,name:state.name}; }
+function renderSlots(){ const host=$('slots'); if(!host) return; const s=loadSlots(); let h='';
+  for(let i=1;i<=SLOT_N;i++){ const f=s[i]; h+=`<button class="slot${f?' filled':''}" data-slot="${i}">${f?('Look '+i):('Save '+i)}${f?` <span class="x" data-x="${i}">×</span>`:''}</button>`; }
+  host.innerHTML=h; }
+$('slots').addEventListener('click',e=>{
+  const x=e.target.closest('.x'); if(x){ const s=loadSlots(); delete s[x.dataset.x]; putSlots(s); renderSlots(); toast('Look cleared'); return; }
+  const b=e.target.closest('.slot'); if(!b) return; const i=b.dataset.slot, s=loadSlots();
+  if(s[i]){ pushHistory(); state.displaced=[]; Object.assign(state,JSON.parse(JSON.stringify(s[i]))); var _w=$('wrist'); if(_w&&s[i].wristCm)_w.value=s[i].wristCm; rebuild(); toast('Loaded Look '+i); }
+  else { if(!state.recipe.length){ toast('Build a bracelet first'); return; } s[i]=designSnapshot(); putSlots(s); renderSlots(); toast('Saved to Look '+i); }
+});
 function runColorSelfTest(){   // TEMP: objective proof best-of-N lifts 对味 score (score≥70 = "good" proxy)
   const N=beadCount(), draws=300;
   const oneDraw=()=>{ let picks; if(state.prof){picks=selectStones(state.intents,state.prof,true);}
@@ -2543,7 +2587,7 @@ fetch(ASSET+'beadwork/stones.json?v='+VER).then(r=>r.json()).then(cat=>{
   CATALOG=cat; cat.forEach(s=>STONES[s.key]=s); MIXPOOL=cat.filter(s=>!SOLO.has(s.key));
   // restore the last design (survives lock-screen / reload) unless a preset URL overrides it (User 2026-06-27)
   try{ if(!/[?&](seq|probe|autolucky|selftest)=/.test(location.search)){ var _sv=localStorage.getItem('sw_current'); if(_sv){ var _d=JSON.parse(_sv); if(_d&&_d.recipe&&_d.recipe.length){ Object.assign(state,_d); var _wi=$('wrist'); if(_wi&&_d.wristCm) _wi.value=_d.wristCm; } } } }catch(e){}
-  buildPalette(); renderAlbum(); rebuild();
+  buildPalette(); renderAlbum(); rebuild(); renderSlots();
   if(/selftest=1/.test(location.search)) setTimeout(runColorSelfTest,400);
   if(/autolucky=1/.test(location.search)) setTimeout(()=>{ luckyStrand(); try{ document.title='LUCKY:'+JSON.stringify({seq:state.seq,scheme:(state.palette||{}).name,pat:(state.pattern||{}).zh,meaning:(state.pattern||{}).meaning,src:(state.pattern||{}).src}); }catch(e){ document.title='ERR'; } },900);
   // ?seq=jx-061,jx-061,… → load an exact preset strand (shareable / preview a designed sequence)
