@@ -2507,7 +2507,7 @@ function renderSlots(){ const host=$('slots'); if(!host) return; const s=loadSlo
 $('slots').addEventListener('click',e=>{
   const x=e.target.closest('.x'); if(x){ const s=loadSlots(); delete s[x.dataset.x]; putSlots(s); renderSlots(); toast('Look cleared'); return; }
   const b=e.target.closest('.slot'); if(!b) return; const i=b.dataset.slot, s=loadSlots();
-  if(s[i]){ pushHistory(); state.displaced=[]; Object.assign(state,JSON.parse(JSON.stringify(s[i]))); var _w=$('wrist'); if(_w&&s[i].wristCm)_w.value=s[i].wristCm; rebuild(); toast('Loaded Look '+i); }
+  if(s[i]){ pushHistory(); state.displaced=[]; Object.assign(state,JSON.parse(JSON.stringify(s[i]))); state.intents=[]; state.hasReading=false; var _w=$('wrist'); if(_w&&s[i].wristCm)_w.value=s[i].wristCm; rebuild(); toast('Loaded Look '+i); }
   else { if(!state.recipe.length){ toast('Build a bracelet first'); return; } s[i]=designSnapshot(); putSlots(s); renderSlots(); toast('Saved to Look '+i); }
 });
 function runColorSelfTest(){   // TEMP: objective proof best-of-N lifts 对味 score (score≥70 = "good" proxy)
@@ -2589,7 +2589,7 @@ let _tt; function toast(m,act,fn){ const t=$('toast');
 fetch(ASSET+'beadwork/stones.json?v='+VER).then(r=>r.json()).then(cat=>{
   CATALOG=cat; cat.forEach(s=>STONES[s.key]=s); MIXPOOL=cat.filter(s=>!SOLO.has(s.key));
   // restore the last design (survives lock-screen / reload) unless a preset URL overrides it (User 2026-06-27)
-  try{ if(!/[?&](seq|probe|autolucky|selftest)=/.test(location.search)){ var _sv=localStorage.getItem('sw_current'); if(_sv){ var _d=JSON.parse(_sv); if(_d&&_d.recipe&&_d.recipe.length){ Object.assign(state,_d); var _wi=$('wrist'); if(_wi&&_d.wristCm) _wi.value=_d.wristCm; } } } }catch(e){}
+  try{ if(!/[?&](seq|probe|autolucky|selftest)=/.test(location.search)){ var _sv=localStorage.getItem('sw_current'); if(_sv){ var _d=JSON.parse(_sv); if(_d&&_d.recipe&&_d.recipe.length){ Object.assign(state,_d); state.intents=[]; state.hasReading=false; var _wi=$('wrist'); if(_wi&&_d.wristCm) _wi.value=_d.wristCm; } } } }catch(e){}   // restore the BRACELET only; don't carry old intents back or they jam the "pick up to two" limit and block new selections (User 2026-06-27)
   buildPalette(); renderAlbum(); rebuild(); renderSlots();
   if(/selftest=1/.test(location.search)) setTimeout(runColorSelfTest,400);
   if(/autolucky=1/.test(location.search)) setTimeout(()=>{ luckyStrand(); try{ document.title='LUCKY:'+JSON.stringify({seq:state.seq,scheme:(state.palette||{}).name,pat:(state.pattern||{}).zh,meaning:(state.pattern||{}).meaning,src:(state.pattern||{}).src}); }catch(e){ document.title='ERR'; } },900);
