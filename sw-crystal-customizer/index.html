@@ -43,6 +43,7 @@
   .stage::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:236px;height:236px;border-radius:50%;
     background:radial-gradient(circle,rgba(227,148,49,.17),rgba(227,148,49,.05) 46%,transparent 70%);filter:blur(20px);pointer-events:none}
   svg.bracelet{position:relative;z-index:1;width:min(58vw,250px);height:min(58vw,250px);display:block;touch-action:manipulation}
+  button,.pa-btn,.preview-meta,.preview-meta *,.tab,.sz-row,.sz-row *,.step,.step *,.szmini,.szmini *,.schip{touch-action:manipulation}   /* no double-tap-zoom while fast-tapping + (User 2026-06-27) */
   svg.bracelet .zb{transition:transform .44s cubic-bezier(.22,.72,.24,1),opacity .4s ease;will-change:transform,opacity}
   .empty-hint{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:150px;text-align:center;
     font-family:'Cormorant Garamond',serif;font-style:italic;font-size:15px;color:var(--faint);line-height:1.5;pointer-events:none;z-index:1}
@@ -112,6 +113,13 @@
   .why .q{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:19px;color:var(--ink);line-height:1.5}
   .why.placeholder .q{font-style:normal;font-size:14px;color:var(--faint);font-family:'Inter',sans-serif}
   .why .d{font-size:14px;color:var(--muted);margin-top:11px;line-height:1.65}
+  .analysis-steps{display:grid;gap:8px;margin-top:6px}
+  .analysis-step{display:grid;grid-template-columns:20px 1fr;gap:9px;align-items:start;padding:8px 9px;border:1px solid var(--line);border-radius:8px;background:rgba(255,255,255,.55)}
+  .analysis-step b{display:flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;font-size:10px;border:1px solid rgba(14,107,80,.25);color:var(--faint);font-family:'Inter',sans-serif;font-weight:500}
+  .analysis-step .st{font-size:13px;color:var(--ink);line-height:1.35}
+  .analysis-step .sd{font-size:12px;color:var(--faint);line-height:1.45;margin-top:2px}
+  .analysis-step.done b,.analysis-step.on b{background:var(--accent);border-color:var(--accent);color:white}
+  .analysis-step.on{border-color:rgba(14,107,80,.35);background:rgba(14,107,80,.06)}
   .energy{margin-top:22px}
   .bar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
   .bar-label{width:46px;font-size:11.5px;color:#b8a88a;text-align:right;flex-shrink:0}
@@ -634,7 +642,7 @@
         <div class="sz-row"><span class="sz-lbl">Bead size</span><div class="sizes" id="sizeChips"></div></div>
       </div>
       <div class="grid" id="intentGrid"></div>
-      <div class="custom-scene" id="customScene" style="display:none"><textarea id="customText" placeholder="上面都不准？用自己的话写下你卡在哪、想要什么感觉…"></textarea></div>
+        <div class="custom-scene" id="customScene" style="display:none"><textarea id="customText" placeholder="None of these fit? Write what you are in, stuck on, or trying to feel..."></textarea></div>
       <div class="nudge" id="sceneNudge" data-go="reading">Next: see why this strand holds together →</div>
     </div>
 
@@ -660,7 +668,7 @@
         <input type="date" id="bDate" min="1940-01-01" max="2014-12-31" aria-label="date of birth">
         <input type="time" id="bTime" aria-label="time of birth (optional)">
       </div>
-      <input list="cityList" id="bPlace" placeholder="出生城市（可选，会让判断更细）" autocomplete="off" aria-label="出生城市">
+      <input list="cityList" id="bPlace" placeholder="Birth city (optional, makes the read finer)" autocomplete="off" aria-label="birth city">
       <datalist id="cityList"></datalist>
       <div class="hint">Time and city are both optional. Add a city and we'll correct for true solar time by longitude, so the read gets finer. Not sure? Leave it blank.</div>
       <div class="err" id="birthErr"></div>
@@ -758,6 +766,10 @@ const VER=(location.hostname==='localhost'||location.hostname==='127.0.0.1')?Dat
 const ASSET=location.hostname.endsWith('github.io')?'https://cdn.jsdelivr.net/gh/jy02133048-max/sw-strand-preview@main/':'';   // jsDelivr reaches mainland users far better than github.io; ref pinned to a commit at publish time
 const deAsset=u=>(ASSET&&u&&u.indexOf(ASSET)===0)?u.slice(ASSET.length):null;
 const APIBASE=location.hostname.endsWith('github.io')?'https://sw-strand-relay-production.up.railway.app':'';   // public build: AI relay on Railway (key server-side, origin-gated, rate-capped)   // CDN miss → retry same-origin
+const CHART_PROFILE_API=(APIBASE||'')+'/api/chart-profile';   // server-side true chart engine; client lite engine stays as fallback
+let CHART_API_BACKOFF_UNTIL=0, READ_SEQ=0;
+const ANALYSIS_MIN_MS=5600;
+let PLACE_TIMER=0;
 let CATALOG=[], STONES={}, MIXPOOL=[]; const SOLO=new Set(['jx-083','jx-086']); /* 绿幽灵=单石专用,不进自动配串 */
 const sprite=k=>`${ASSET}beadwork/beads-day/${k}.webp?v=${VER}`;
 const CLASP=6.00, money=v=>"$"+v.toFixed(2), EASE=13.6;
@@ -772,10 +784,10 @@ const GAN_EL={"甲":"wood","乙":"wood","丙":"fire","丁":"fire","戊":"earth",
 const ZHI_EL={"子":"water","丑":"earth","寅":"wood","卯":"wood","辰":"earth","巳":"fire","午":"fire","未":"earth","申":"metal","酉":"metal","戌":"earth","亥":"water"};
 const EL_EN={wood:"Wood",fire:"Fire",earth:"Earth",metal:"Metal",water:"Water"};
 const EL_ZH={wood:"Wood",fire:"Fire",earth:"Earth",metal:"Metal",water:"Water"};
-const stoneName=s=>s?(s.cn||s.en||'Crystals'):'Crystals';
+const stoneName=s=>s?(s.en||s.cn||'Crystals'):'Crystals';
 const elName=el=>EL_ZH[el]||EL_EN[el]||el||'';
-const patternName=p=>p?(p.zh||p.name||'Structure'):'Structure';
-const paletteName=p=>p?(p.zh||p.name||'Color'):'Color';
+const patternName=p=>p?(p.name||p.zh||'Structure'):'Structure';
+const paletteName=p=>p?(p.name||p.zh||'Color'):'Color';
 // Concrete micro-moments, grouped by life area. The more specific, the more likely one lands on the user's real point.
 // g=group · t=the moment · s=the need · r=reading phrase · risk=how a pattern tips under it · wish=stone roles it pulls
 const INTENTS=[
@@ -868,6 +880,97 @@ function elementProfile(y,m,d,h,mi){
   const pct={}; for(const k in s) pct[k]=Math.round(s[k]/total*100);
   const order=Object.keys(s).sort((a,b)=>s[b]-s[a]);
   return {dm,pct,strong:strength==='strong'||strength==='follow-strong',strength,favorable,jishen,tiaohou,strongest:order[0],weakest:order[4]};
+}
+function normEl(e){ const m={木:'wood',火:'fire',土:'earth',金:'metal',水:'water'}; const k=String(e||'').trim().toLowerCase(); return m[k] || (['wood','fire','earth','metal','water'].includes(k) ? k : null); }
+function normEls(v){ const arr=Array.isArray(v)?v:(v?[v]:[]); return [...new Set(arr.map(normEl).filter(Boolean))]; }
+function normPct(pct,fallback){
+  const out={}, base=(fallback&&fallback.pct)||{};
+  ['wood','fire','earth','metal','water'].forEach(el=>{ const n=Number(pct&&pct[el]); out[el]=Number.isFinite(n)?Math.max(0,Math.min(100,Math.round(n))):(base[el]||0); });
+  return out;
+}
+function pctOrder(pct){ return ['wood','fire','earth','metal','water'].slice().sort((a,b)=>(pct[b]||0)-(pct[a]||0)); }
+function normWeightMap(input,allowed){
+  const out={}; const ok=new Set(allowed||[]);
+  if(Array.isArray(input)){ input.forEach((k,i)=>{ if(ok.has(k)) out[k]=Math.max(out[k]||0, 6-i); }); return out; }
+  if(input&&typeof input==='object'){ Object.entries(input).forEach(([k,v])=>{ if(ok.has(k)) out[k]=Number(v)||0; }); }
+  return out;
+}
+function normalizeEngineProfile(data,fallback){
+  const raw=(data&&data.profile)||data||{}, pct=normPct(raw.pct||raw.percentages||raw.fiveElements,fallback);
+  const order=pctOrder(pct), favorable=normEls(raw.favorable||raw.yongshen||raw.yongshen_elements||raw.useful_elements);
+  const jishen=normEls(raw.jishen||raw.avoid||raw.avoid_elements||raw.taboo_elements);
+  const hasServerFav=['favorable','yongshen','yongshen_elements','useful_elements'].some(k=>Object.prototype.hasOwnProperty.call(raw,k));
+  const hasServerJi=['jishen','avoid','avoid_elements','taboo_elements'].some(k=>Object.prototype.hasOwnProperty.call(raw,k));
+  const wishKeys=Object.keys(WISH_LABEL);
+  const ziwei=raw.ziwei||raw.palace_bias||raw.star_bias||{};
+  return {
+    ...(fallback||{}),
+    dm: raw.dm || raw.dayMasterElement || (fallback&&fallback.dm) || null,
+    pct,
+    strong: raw.strong!==undefined ? !!raw.strong : !!(fallback&&fallback.strong),
+    strength: raw.strength || (fallback&&fallback.strength) || 'weak',
+    favorable: hasServerFav ? favorable : ((fallback&&fallback.favorable)||[]),
+    jishen: hasServerJi ? jishen : ((fallback&&fallback.jishen)||[]),
+    tiaohou: raw.tiaohou || (fallback&&fallback.tiaohou) || null,
+    strongest: normEl(raw.strongest) || order[0],
+    weakest: normEl(raw.weakest) || order[order.length-1],
+    source: 'server-engine',
+    engine_version: data&&data.engine_version || raw.engine_version || null,
+    elementBias: normWeightMap(raw.element_bias||raw.elementBias||ziwei.element_bias, ['wood','fire','earth','metal','water']),
+    wishBias: normWeightMap(raw.wish_bias||raw.wishBias||ziwei.wish_bias||ziwei.intent_bias, wishKeys),
+    preferredWishes: (raw.preferred_wishes||raw.preferredWishes||ziwei.preferred_wishes||[]).filter(w=>wishKeys.includes(w)),
+    insights: Array.isArray(raw.insights) ? raw.insights.slice(0,6) : [],
+  };
+}
+async function profileFromEngine(payload,fallback){
+  if(!payload || Date.now()<CHART_API_BACKOFF_UNTIL) return null;
+  const ctl=new AbortController(), timer=setTimeout(()=>ctl.abort(),18000);
+  try{
+    const res=await fetch(CHART_PROFILE_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),signal:ctl.signal});
+    if(!res.ok){ if([404,501,503].includes(res.status)) CHART_API_BACKOFF_UNTIL=Date.now()+300000; return null; }
+    const data=await res.json();
+    return normalizeEngineProfile(data,fallback);
+  }catch(_){ CHART_API_BACKOFF_UNTIL=Date.now()+60000; return null; }
+  finally{ clearTimeout(timer); }
+}
+const PROFILE_STEPS=[
+  ['Birth time check','Correcting the clock time and place before any birth-based logic is used.'],
+  ['Core pattern','Measuring what runs loud, what runs quiet, and what can actually carry weight.'],
+  ['Support line','Choosing what the bracelet should add first instead of simply filling the weakest bar.'],
+  ['Second layer','Adding life-theme weights for love, work, calm, voice, protection, and confidence.'],
+  ['Stone map','Matching real stones by support line, colour temperature, your current request, and wearable balance.']
+];
+function delay(ms){ return new Promise(r=>setTimeout(r,ms)); }
+function analysisStepsHtml(step){
+  return '<div class="analysis-steps">'+PROFILE_STEPS.map((s,i)=>{
+    const cls=i<step?'done':(i===step?'on':'');
+    const mark=i<step?'✓':String(i+1);
+    return `<div class="analysis-step ${cls}"><b>${mark}</b><div><div class="st">${s[0]}</div><div class="sd">${s[1]}</div></div></div>`;
+  }).join('')+'</div>';
+}
+function showProfileWaiting(step=0){
+  $('whyBlock').classList.remove('placeholder');
+  $('whyQuote').textContent='Reading your birth pattern...';
+  const wd=$('whyDetail'); wd.style.display='block';
+  wd.innerHTML='The bracelet is paused while the full profile service checks your birth time, support line, secondary themes, and stone map. This usually takes a few seconds.'+analysisStepsHtml(step);
+  $('energyBlock').style.display='none';
+}
+function beginProfileProgress(seq){
+  let step=0;
+  showProfileWaiting(step);
+  const timer=setInterval(()=>{
+    if(seq!==READ_SEQ){ clearInterval(timer); return; }
+    step=Math.min(step+1, PROFILE_STEPS.length-1);
+    showProfileWaiting(step);
+  },1150);
+  return ()=>clearInterval(timer);
+}
+function showProfileUnavailable(){
+  $('whyBlock').classList.remove('placeholder');
+  $('whyQuote').textContent='The full chart reading is not connected right now.';
+  const wd=$('whyDetail'); wd.style.display='block';
+  wd.textContent='You can still build from your current moment, but birthday-based stone logic stays off until the deeper analysis service answers.';
+  $('energyBlock').style.display='none';
 }
 function fallbackPillars(y,m,d){
   const G="甲乙丙丁戊己庚辛壬癸",Z="子丑寅卯辰巳午未申酉戌亥";
@@ -1049,11 +1152,11 @@ const PATTERNS=(()=>{
   A({id:'taiji',name:'Taiji',zh:'Taiji',meaning:'Split black and white, two fish eyes — light inside dark, dark inside light',src:'Taiji',lane:'statement',colors:0,min:6,fixed:['white_neutral','black'],styleNote:'核心锁强黑白对比;鱼眼=样式轴待落:两眼应改用异样式珠(雕花/异光泽)强化阴中有阳',build:taiji});
   A({id:'xiaoxigua',name:'Waxing & Waning',zh:'Waxing & Waning Hexagrams',meaning:'Light returning, rising to full, then easing back to dark — a year\'s tide of bright and shadow',src:'Han-era hexagram cycle',lane:'statement',colors:0,min:8,fixed:['black','blue','purple','green','yellow_gold','pink','white_neutral'],build:xiaoxi});
   A({id:'wuxing',name:'Elements相生 Five Phases',zh:'Elements',meaning:'WoodFireEarthMetalWater相生不息,青赤黄白黑闭环',src:'Book of Documents · Hong Fan',lane:'statement',colors:0,min:5,fixed:['green','red','yellow_gold','white_neutral','black'],build:fixedStations(5)});
-  A({id:'dizhi',name:'Twelve Branches',zh:'Branches',meaning:'子午卯酉周天十二,各配Elements之色',src:'干支',lane:'statement',colors:0,min:12,fixed:['blue','yellow_gold','green','green','yellow_gold','red','red','yellow_gold','white_neutral','white_neutral','yellow_gold','blue'],build:n=>Array.from({length:n},(_,i)=>Math.round(i*12/n)%12)});
+  A({id:'dizhi',name:'Twelve-Step Orbit',zh:'Twelve-Step Orbit',meaning:'A twelve-station color cycle, each point mapped to an element tone.',src:'cycle',lane:'statement',colors:0,min:12,fixed:['blue','yellow_gold','green','green','yellow_gold','red','red','yellow_gold','white_neutral','white_neutral','yellow_gold','blue'],build:n=>Array.from({length:n},(_,i)=>Math.round(i*12/n)%12)});
   A({id:'ershiba',name:'Mansions四象 Mansions',zh:'Mansions',meaning:'青龙朱雀白虎玄武,四方各七宿',src:'Records of the Grand Historian · Treatise on the Celestial Offices',lane:'statement',colors:0,min:8,fixed:['green','red','white_neutral','black'],build:n=>{const o=Array(n).fill('N');for(let q=0;q<4;q++){const b=Math.round(q*n/4);for(let s=0;s<2;s++)o[(b+s)%n]=q;}return o;}});
   A({id:'qizheng',name:'Luminaries',zh:'Luminaries',meaning:'Sun & Moon与五星,七曜运行之纲',src:'Book of Documents · Canon of Yao',lane:'statement',colors:0,min:7,fixed:['yellow_gold','white_neutral','red','black','green','white_neutral','yellow_gold'],build:fixedStations(7)});
   A({id:'jiuxing',name:'Nine Star',zh:'Nine Star',meaning:'One white through nine purple, nine colours circling the ring',src:'Flying Stars',lane:'statement',colors:0,min:9,fixed:['white_neutral','black','green','green','yellow_gold','white_neutral','red','white_neutral','purple'],build:fixedStations(9)});
-  A({id:'tiangan',name:'Heavenly Stems',zh:'Heavenly Stems',meaning:'Ten stems in order, each element split light and dark — green, red, gold, white, black, paired',src:'干支',lane:'statement',colors:0,min:10,fixed:['green','green','red','red','yellow_gold','yellow_gold','white_neutral','white_neutral','black','black'],build:fixedStations(10)});
+  A({id:'tiangan',name:'Ten-Step Pairing',zh:'Ten-Step Pairing',meaning:'Ten stations in paired light and deep element tones: green, red, gold, white, and black.',src:'cycle',lane:'statement',colors:0,min:10,fixed:['green','green','red','red','yellow_gold','yellow_gold','white_neutral','white_neutral','black','black'],build:fixedStations(10)});
   A({id:'sancai',name:'Three Powers',zh:'Three Powers',meaning:'天玄·人赤·地黄,Three PowersTriad定乾坤(系辞兼Three Powers而两之)',src:'Xici · Three Powers',lane:'statement',colors:0,raw:1,min:6,fixed:['blue','red','yellow_gold'],build:fixedBands(3)});
   A({id:'hetu',name:'He Tu (River Map)',zh:'He Tu',meaning:'Five directions — water north, wood east, fire south, metal west — with earth at the centre as the focal point',src:'He Tu',lane:'statement',colors:0,focal:true,min:8,fixed:['black','green','red','white_neutral'],build:n=>{const o=Array(n).fill('N');for(let i=0;i<4;i++)o[Math.round((i+0.5)*n/4)%n]=i;o[0]='F';return o;}});
   A({id:'beidou',name:'Big Dipper',zh:'Big Dipper',meaning:'The dipper\'s handle marks the seasons, the pole star at the pivot — the seven stars',src:'Records of the Grand Historian · Treatise on the Celestial Offices',lane:'statement',colors:1,focal:true,min:14,build:n=>{const o=Array(n).fill('N');for(let i=1;i<7;i++)o[Math.round(i*n/7)%n]='A';o[0]='F';return o;}});
@@ -1249,18 +1352,50 @@ function arrangeStrand(picks,n,patId,colorForward){
   try{ state.pattern={id:pat.id,name:pat.name,zh:pat.zh,size:pat.size,fidx:(fidx==null?0:fidx),meaning:pat.meaning,src:pat.src}; }catch(e){}
   return out;
 }
+function ensureVisiblePicks(recipe,picks){
+  const out=(recipe||[]).slice();
+  if(!out.length||!picks||!picks.length) return out;
+  const required=[];
+  const seenReq=new Set();
+  picks.forEach(p=>{ if(p.key&&!seenReq.has(p.key)&&required.length<out.length){ seenReq.add(p.key); required.push(p); } });
+  const locked=new Set(required.map(p=>p.key));
+  required.forEach((p,ri)=>{
+    if(out.includes(p.key)) return;
+    const counts={}; out.forEach(k=>counts[k]=(counts[k]||0)+1);
+    let idx=out.findIndex(k=>!locked.has(k)&&counts[k]>1);
+    if(idx<0) idx=out.findIndex(k=>!locked.has(k));
+    if(idx<0) idx=Math.min(out.length-1, Math.round((ri+1)*out.length/(required.length+1)));
+    out[idx]=p.key;
+  });
+  const pool=required.map(p=>p.key);
+  const maxCount=Math.max(4,Math.ceil(out.length*0.42));
+  const counts={}; out.forEach(k=>counts[k]=(counts[k]||0)+1);
+  for(const key of Object.keys(counts)){
+    while(counts[key]>maxCount){
+      const repl=pool.find(k=>k!==key&&(counts[k]||0)<maxCount);
+      if(!repl) break;
+      const idx=out.findIndex(k=>k===key);
+      if(idx<0) break;
+      out[idx]=repl; counts[key]--; counts[repl]=(counts[repl]||0)+1;
+    }
+  }
+  return out;
+}
 
 // causal-chain strand builder — every pick is the previous step's "so" and the next step's "because".
 // Spec: STONE-LOGIC.md. rng=true (lucky): each step picks randomly among its top-3 candidates.
 function selectStones(intentIds,prof,rng){
   const want=new Set();
   intentIds.forEach(id=>{ if(id==='custom'){ customWishes(state.customText).forEach(w=>want.add(w)); return; } const I=INTENTS.find(x=>x.id===id); if(I)I.wish.forEach(w=>want.add(w));});
+  if(prof&&prof.preferredWishes) prof.preferredWishes.forEach(w=>want.add(w));
   if(!prof){ const _sc={}; MIXPOOL.forEach(s=>{ const h=(s.wish||[]).filter(w=>want.has(w)).length; if(h)_sc[s.el]=(_sc[s.el]||0)+h; });
     prof={favorable:['wood','fire','earth','metal','water'].slice().sort((a,b)=>(_sc[b]||0)-(_sc[a]||0)), jishen:[], synthetic:true}; }   // scene-only: no chart → rank elements by how many wished stones they carry
   const ji=new Set(prof.jishen||[]), fav=prof.favorable, used=new Set();
   const hitsOf=s=>(s.wish||[]).filter(w=>want.has(w)).length;
+  const wishBias=prof.wishBias||{}, elementBias=prof.elementBias||{};
+  const fitOf=s=>hitsOf(s)*10 + (elementBias[s.el]||0) + (s.wish||[]).reduce((n,w)=>n+(wishBias[w]||0),0);
   const pickFrom=pool=>{ if(!pool.length)return null;
-    pool.sort((a,b)=>hitsOf(b)-hitsOf(a));
+    pool.sort((a,b)=>fitOf(b)-fitOf(a));
     const s=pool[rng?Math.floor(Math.random()*Math.min(3,pool.length)):0];
     used.add(s.en); return s; };
   const inEl=el=>MIXPOOL.filter(s=>s.el===el&&!used.has(s.en)&&!ji.has(s.el));
@@ -1273,10 +1408,19 @@ function selectStones(intentIds,prof,rng){
   if(ji.has(e2)||e2===e1||!inEl(e2).length){ e2=fav.find(e=>e!==e1&&inEl(e).length)||e1; bt='second'; }
   const bridge=pickFrom(inEl(e2));
   if(bridge) picks.push({...bridge,ct:'bridge',e1,e2,bt,hits:(bridge.wish||[]).filter(w=>want.has(w))});
+  // 2.5 · second chart layer — let current-life themes visibly affect the strand without overriding use/avoid.
+  const zwEls=Object.entries(elementBias).sort((a,b)=>b[1]-a[1]).map(([el])=>el);
+  const themePool=MIXPOOL.filter(s=>!used.has(s.en)&&!ji.has(s.el)&&(
+    (zwEls.includes(s.el) && (elementBias[s.el]||0)>=1.6) ||
+    (s.wish||[]).some(w=>prof.preferredWishes&&prof.preferredWishes.includes(w)) ||
+    (s.wish||[]).some(w=>want.has(w))
+  ));
+  const theme=pickFrom(themePool);
+  if(theme) picks.push({...theme,ct:'theme',ze:theme.el,hits:(theme.wish||[]).filter(w=>want.has(w))});
   // 3 · balance — counter the temperature of lead+bridge
   const t12=picks.reduce((a,p)=>a+tempOf(p),0);
   let balPool=MIXPOOL.filter(s=>!used.has(s.en)&&!ji.has(s.el)&&s.el!==e1&&s.el!==e2&&(t12>0?COOLC.has(s.color):(t12<0?WARMC.has(s.color):true)));
-  balPool.sort((a,b)=>((fav.includes(b.el)?2:0)+hitsOf(b))-((fav.includes(a.el)?2:0)+hitsOf(a)));
+  balPool.sort((a,b)=>((fav.includes(b.el)?20:0)+fitOf(b))-((fav.includes(a.el)?20:0)+fitOf(a)));
   const bal=balPool.length?balPool[rng?Math.floor(Math.random()*Math.min(3,balPool.length)):0]:null;
   if(bal){ used.add(bal.en); picks.push({...bal,ct:'balance',tdir:t12>0?'cool':(t12<0?'warm':'free'),hits:(bal.wish||[]).filter(w=>want.has(w))}); }
   // 4 · breath — white space
@@ -1288,7 +1432,7 @@ function selectStones(intentIds,prof,rng){
   // fallback so a strand always exists
   if(picks.length<3){ for(const s of MIXPOOL){ if(picks.length>=3)break;
     if(!used.has(s.en)&&!ji.has(s.el)){ used.add(s.en); picks.push({...s,ct:'echo',hits:[]}); } } }
-  picks.forEach(p=>{ p.role=({lead:'Hero stone · sets the tone',bridge:'Carry · catches the main line',balance:'Balance · recentres',breath:'Negative space · let the colour breathe',echo:'Echo · answer it once more'})[p.ct]||''; });
+  picks.forEach(p=>{ p.role=({lead:'Hero stone · sets the tone',bridge:'Carry · catches the main line',theme:'Second layer · personal theme',balance:'Balance · recentres',breath:'Negative space · let the colour breathe',echo:'Echo · answer it once more'})[p.ct]||''; });
   return picks;
 }
 
@@ -1297,7 +1441,9 @@ const SIZES=[6,8,10,12,16];
 function beadCount(){ return Math.max(4, Math.round(loopMm()/state.beadMm)); }   // capacity from the calibrated string length (loopMm = wrist inner circle + ease + πd)
 function fillToCount(recipe,n){ if(!recipe.length)return[]; const o=[]; let i=0; while(o.length<n){o.push(recipe[i%recipe.length]);i++} return o; }
 function recipeFromPicks(picks){ const r=[]; picks.forEach((p,i)=>{r.push(p.key); if(i<2)r.push(p.key);}); return r; }
-function rebuild(){ state.seq=state.recipe.slice(); renderAll(); }   // the ring IS the beads you placed — one bead per entry
+function rebuild(){ state.seq=state.recipe.slice(); renderAll();
+  try{ if(state.recipe.length) localStorage.setItem('sw_current',JSON.stringify({recipe:state.recipe,mmList:state.mmList,beadMm:state.beadMm,wristCm:state.wristCm,intents:state.intents,picks:state.picks,prof:state.prof,hasReading:state.hasReading,autofilled:state.autofilled,basePattern:state.basePattern,pattern:state.pattern,palette:state.palette,name:state.name})); }catch(e){}
+}   // the ring IS the beads you placed; also auto-cache the design so a lock-screen/reload never loses it (User 2026-06-27)
 /* ---- undo history + non-destructive fit (User 2026-06-26) ---- */
 function snap(){ return JSON.stringify({recipe:state.recipe,mmList:state.mmList,autofilled:state.autofilled,basePattern:state.basePattern,picks:state.picks,beadMm:state.beadMm,wristCm:state.wristCm,pattern:state.pattern,palette:state.palette,displaced:state.displaced||[]}); }
 function pushHistory(){ (state.history=state.history||[]).push(snap()); if(state.history.length>60)state.history.shift(); updateUndoBtn(); }
@@ -1310,7 +1456,7 @@ function fitStrand(){ state.displaced=state.displaced||[];
     if(sumMm()+add<=loopMm()+state.beadMm/2){ state.displaced.pop(); state.recipe.push(d[0]); state.mmList.push(d[1]); } else break; } }
 function refit(){
   const target=beadCount();
-  if(state.autofilled && state.picks && state.picks.length){ state.recipe=arrangeStrand(state.picks, target);   // re-run the 对味 arranger on resize so spacing/buffering stays correct at the new count
+  if(state.autofilled && state.picks && state.picks.length){ state.recipe=ensureVisiblePicks(arrangeStrand(state.picks, target),state.picks);   // re-run the 对味 arranger on resize so spacing/buffering stays correct at the new count
     state.basePattern=state.recipe.slice(); state.mmList=mmFor(); }
   else if(state.autofilled && state.basePattern && state.basePattern.length){ state.recipe=fillToCount(state.basePattern, target);
     state.mmList=state.recipe.map(()=>null); }
@@ -1394,7 +1540,7 @@ function renderBraceletMain(seq){
       im.setAttribute('data-k',seq[i]);
       if(im.getAttribute('href')!==src){ im.setAttributeNS('http://www.w3.org/1999/xlink','href',src); im.setAttribute('href',src); }
       im.setAttribute('width',bd.toFixed(1)); im.setAttribute('height',bd.toFixed(1)); im.setAttribute('x',(-bd/2).toFixed(1)); im.setAttribute('y',(-bd/2).toFixed(1)); im.setAttribute('transform',`rotate(${rot})`);
-      if(!el._pouring){ el.style.opacity='1'; el.setAttribute('transform',`translate(${pp.x.toFixed(1)},${pp.y.toFixed(1)}) scale(${pp.sc.toFixed(3)})`); } }   // a rebuild mid-pour must not stomp the choreography
+      el.style.opacity='1'; el.setAttribute('transform',`translate(${pp.x.toFixed(1)},${pp.y.toFixed(1)}) scale(${pp.sc.toFixed(3)})`); el._pouring=false; }   // always snap existing beads to their final spot — a rebuild from fast +tap must never strand a mid-pour bead at the center (User 2026-06-27)
     el.dataset.slot=i;
   }
   for(let i=n;i<els.length;i++){ const el=els[i]; el.classList.add('removing'); el.style.opacity='0';
@@ -1593,20 +1739,33 @@ $('sceneNudge').onclick=()=>showTab($('sceneNudge').dataset.go);
 $('customText').addEventListener('input',()=>{ state.customText=$('customText').value; maybeRead(); });
 $('bDate').addEventListener('change',maybeRead); $('bTime').addEventListener('change',maybeRead);
 (function(){const dl=$('cityList'); Object.keys(CITY).forEach(c=>{const o=document.createElement('option');o.value=c;dl.appendChild(o);});})();
-$('bPlace').addEventListener('input',()=>{ state.place=$('bPlace').value; maybeRead(); });
+$('bPlace').addEventListener('input',()=>{ state.place=$('bPlace').value; clearTimeout(PLACE_TIMER); PLACE_TIMER=setTimeout(maybeRead,650); });
 
-function maybeRead(){
+async function maybeRead(){
+  const seq=++READ_SEQ;
   const dv=$('bDate').value;
   const ready=state.intents.some(id=>id!=='custom')||(state.intents.includes('custom')&&(state.customText||'').trim());
   if((!ready&&!dv)||!CATALOG.length) return;   // scene OR birthday — either one alone builds a strand now (User 2026-06-13)
   let prof=null;
-  if(dv){ let [y,m,d]=dv.split('-').map(Number); const tv=$('bTime').value; let h=-1,mi=0; if(tv){const t=tv.split(':');h=+t[0];mi=+t[1]||0;}
+  if(dv){ let [rawY,rawM,rawD]=dv.split('-').map(Number), y=rawY, m=rawM, d=rawD; const tv=$('bTime').value; let h=-1,mi=0, rawH=null, rawMi=null; if(tv){const t=tv.split(':');h=+t[0];mi=+t[1]||0; rawH=h; rawMi=mi;}
     const city=CITY[($('bPlace').value||'').trim()];
     if(city && h>=0){ const off=Math.round((city.lon-city.tz*15)*4); const c=new Date(new Date(y,m-1,d,h,mi,0).getTime()+off*60000); y=c.getFullYear();m=c.getMonth()+1;d=c.getDate();h=c.getHours();mi=c.getMinutes(); }
-    prof=elementProfile(y,m,d,h,mi); }
+    const started=Date.now();
+    const stopProgress=beginProfileProgress(seq);
+    state.prof=null; state.picks=[]; state.recipe=[]; state.seq=[]; state.autofilled=false; rebuild(); showTab('reading');
+    const fallback=elementProfile(y,m,d,h,mi); fallback.source='client-lite';
+    const payload={year:rawY,month:rawM,day:rawD,hour:rawH,minute:rawMi,place:($('bPlace').value||'').trim(),intents:state.intents,customText:state.customText||'',timezone:city?city.tz:null,longitude:city?city.lon:null};
+    try{
+      const wait=Math.max(0,ANALYSIS_MIN_MS-(Date.now()-started));
+      [prof]=await Promise.all([profileFromEngine(payload,fallback),delay(wait)]);
+    }finally{ stopProgress(); }
+    if(seq!==READ_SEQ) return;
+    if(!prof){ prof=fallback; state.profileStatus='client-lite';   // no backend reachable (e.g. static GitHub-Pages preview) → fall back to the on-device estimate so the tool still builds; the copy labels it a quick preview, not a full chart reading (User 2026-06-27)
+    } else state.profileStatus='server-engine'; }
+  else state.profileStatus='scene_only';
   state.prof=prof;
   state.picks=selectStones(state.intents,state.prof); state.palette=null;
-  state.recipe=arrangeStrand(state.picks, beadCount());       // colour layer: pattern × (their chart stones) → named 对味 strand
+  state.recipe=ensureVisiblePicks(arrangeStrand(state.picks, beadCount()),state.picks);       // colour layer: pattern × (their chart stones) → named 对味 strand
   state.basePattern=state.recipe.slice();
   state.mmList=mmFor(); state._leadBump=false;   // scene reco = all one size (User 2026-06-13; lead no longer bumped, matches lucky)
   while(state.recipe.length&&sumMm()>loopMm()+state.beadMm/2){ state.recipe.pop(); state.mmList.pop(); }
@@ -1617,6 +1776,117 @@ function maybeRead(){
   if(first){ showTab('reading'); }
   else if(!document.querySelector('.tab[data-tab=reading]').classList.contains('on')){ $('readingBadge').classList.add('on'); }
 }
+function supportLine(prof){ return ((prof&&prof.favorable)||[]).map(elName).filter(Boolean).slice(0,3).join(' + ')||'a steadier support line'; }
+function tempNeed(prof){ return prof&&prof.tiaohou==='cold'?'warmth first':(prof&&prof.tiaohou==='hot'?'cooling first':'steady balance'); }
+function elementPct(prof,el){ const n=prof&&prof.pct&&Number(prof.pct[el]); return Number.isFinite(n)?`${elName(el)} ${Math.round(n)}%`:elName(el); }
+function topWeights(map,limit){
+  return Object.entries(map||{}).filter(([,v])=>Number(v)>0).sort((a,b)=>b[1]-a[1]).slice(0,limit||2).map(([k])=>k);
+}
+const E_SHADOW={
+  wood:'pushing the pace and getting restless when growth is slow',
+  fire:'reacting fast, wanting proof now, and burning through patience',
+  earth:'testing for certainty, holding back, and getting tense when plans feel loose',
+  metal:'judging quickly, tightening standards, and cutting off softness',
+  water:'over-reading every signal, going quiet, and carrying too much in your head'
+};
+const E_GIFT={
+  wood:'flexibility and room to grow',
+  fire:'warmth, visibility, and courage',
+  earth:'stability without extra pressure',
+  metal:'clean boundaries and a sharper sense of what matters',
+  water:'softness, flow, and a cooler reaction before pressure builds'
+};
+function wishDomain(want){
+  if(want.has('love')||want.has('self_love')) return 'love';
+  if(want.has('career')||want.has('wealth')||want.has('focus')) return 'work';
+  if(want.has('communication')||want.has('confidence')) return 'voice';
+  if(want.has('calm')||want.has('sleep_light')) return 'calm';
+  if(want.has('protection')||want.has('grounding')) return 'boundary';
+  return 'life';
+}
+function profileProblem(prof,want){
+  if(!prof) return '';
+  const loud=prof.strongest, quiet=prof.weakest, domain=wishDomain(want);
+  const base={
+    love:'The point is not that love is unavailable; it is that when someone feels unstable, unclear, or not responsible enough',
+    work:'The point is not that you lack ability; it is that when stakes rise and the next step is not clean',
+    voice:'The point is not that you have nothing to say; it is that when the room starts judging back',
+    calm:'The point is not that you are weak; it is that when your system has been running too long',
+    boundary:'The point is not that you have no strength; it is that when other people take up too much space',
+    life:'The point is not to add random luck; it is that when life stops feeling steady'
+  }[domain];
+  return `${base}, ${elementPct(prof,loud)} runs loud and can become ${E_SHADOW[loud]||'too much pressure'}, while ${elementPct(prof,quiet)} needs more ${E_GIFT[quiet]||'support'}.`;
+}
+function profileSecondLayer(prof,want){
+  if(!prof) return '';
+  const wishes=(prof.preferredWishes||[]).filter(w=>WISH_LABEL[w]).slice(0,2);
+  const els=topWeights(prof.elementBias,2).map(elName).filter(Boolean);
+  if(!wishes.length&&!els.length) return '';
+  const wtxt=wishes.length?wishes.map(w=>WISH_LABEL[w]).join(' / '):'your current-life theme';
+  const etxt=els.length?` and leans toward ${els.join(' / ')}`:'';
+  return `The second layer puts extra weight on ${wtxt}${etxt}.`;
+}
+function profileHeadline(prof,want){
+  if(!prof) return 'No birth info yet. Add your birth date and every stone picks up the logic of your pattern.';
+  const line=profileProblem(prof,want);
+  const second=profileSecondLayer(prof,want);
+  const support=supportLine(prof), temp=tempNeed(prof);
+  return `${line} The main bracelet line is ${support}, with ${temp}.${second?' '+second:''}`;
+}
+function elementLane(el,prof){
+  if(!prof||!el) return '';
+  const fav=prof.favorable||[], ji=prof.jishen||[];
+  if(el===fav[0]) return 'primary support';
+  if(fav.includes(el)) return 'secondary support';
+  if(el===prof.weakest) return 'quiet gap';
+  if(el===prof.strongest) return 'loud pressure';
+  if(ji.includes(el)) return 'soft warning';
+  if((prof.elementBias||{})[el]>=1.6) return 'second-layer pull';
+  return 'visual bridge';
+}
+function wishText(hits){
+  return (hits||[]).filter(Boolean).slice(0,2).join(' / ');
+}
+function trimPeriod(s){ return String(s||'').replace(/[.。]+$/,''); }
+function stoneChartAction(st,prof){
+  if(!st||!prof) return '';
+  const fav=(prof.favorable||[]), ji=(prof.jishen||[]);
+  if(st.el===prof.weakest) return `brings back ${E_GIFT[st.el]||elName(st.el)} where the chart runs quiet`;
+  if(st.el===prof.strongest && fav.includes(st.el)) return `uses the softer side of ${elName(st.el)}: ${E_GIFT[st.el]||'support'}, not more raw pressure`;
+  if(st.el===fav[0]) return `carries the first useful direction: ${E_GIFT[st.el]||elName(st.el)}`;
+  if(fav.includes(st.el)) return `holds the second useful direction: ${E_GIFT[st.el]||elName(st.el)}`;
+  if(ji.includes(st.el)) return `is a style choice rather than the main correction, so it should stay secondary`;
+  if(st.el===CTRL[prof.strongest]) return `checks the overreaction of ${elName(prof.strongest)} before it gets sharp`;
+  if(st.el===GEN[prof.strongest]) return `gives the loud ${elName(prof.strongest)} a cleaner outlet`;
+  if((prof.elementBias||{})[st.el]>=1.6) return `answers the second chart layer through ${E_GIFT[st.el]||elName(st.el)}`;
+  return `adds a small counterweight without changing the main correction`;
+}
+function beadTierLabel(ct,prof,auto){
+  if(auto) return 'Pattern bead';
+  return {lead:'Hero stone',bridge:'Carry forward',theme:'Second layer',balance:'Balance',breath:'White space',echo:'Echo',own:(prof?'Supporting bead':'Pick your own')}[ct]||'Supporting bead';
+}
+function beadWhy(st,prof,ct,hits,sceneName,want,pk,auto){
+  if(!prof){
+    return hits.length?`Answers the ${hits.join(' / ')} you asked for.`:`Because you're after “${sceneName}”, this stone is closest to that state.`;
+  }
+  const problem=profileProblem(prof,want), action=stoneChartAction(st,prof), ask=hits.length?` It also answers the ${wishText(hits)} you asked for.`:'';
+  const lane=elementLane(st.el,prof);
+  if(ct==='lead') return `${problem} ${stoneName(st)} leads because it ${action}.${ask}`;
+  if(ct==='bridge') return pk&&pk.bt==='flow'
+    ? `${stoneName(st)} is the bridge: the first stone starts ${elName(pk.e1)}, this one carries it toward ${elName(pk.e2)}, so the bracelet has a reasoned sequence instead of one repeated mood.`
+    : `${stoneName(st)} is not filler; it ${action} after the lead stone, so the correction has a second leg.`;
+  if(ct==='theme'){
+    const second=trimPeriod(profileSecondLayer(prof,want)) || 'the current-life theme gets its own bead';
+    const hit=wishText(hits);
+    return `${stoneName(st)} gives that second layer a visible place: ${second}${hit?`; this stone speaks to ${hit}`:''}. It ${action}.${ask}`;
+  }
+  if(ct==='balance') return `${stoneName(st)} sits in the middle because the first colors can lean too ${pk&&pk.tdir==='cool'?'cool':'warm'}; this bead ${action}.`;
+  if(ct==='breath') return `${stoneName(st)} gives the strand quiet space, so the correction can be worn daily instead of feeling like another demand.`;
+  if(ct==='echo') return `${stoneName(st)} repeats the useful direction once more: it ${action}.${ask}`;
+  if(auto && prof.jishen && prof.jishen.includes(st.el)) return `${stoneName(st)} stays secondary because ${elName(st.el)} is not the main correction for this chart; it can support the look, but it should not lead the bracelet.`;
+  if(auto) return `${stoneName(st)} appears here as a ${lane}: it ${action}. That makes it part of the chart logic, not a random extra bead.`;
+  return `${stoneName(st)} ${action}.${ask}`;
+}
 function paintReading(){
   const scenes=state.intents.map(id=> id==='custom'?{custom:true,t:"the moment you described"}:INTENTS.find(x=>x.id===id)).filter(Boolean);
   const sc=scenes[0], top=state.picks[0], topName=top?stoneName(top):"This set of crystals";
@@ -1625,21 +1895,22 @@ function paintReading(){
     const sN=scenes.length>1?scenes[0].t.toLowerCase()+' and '+scenes[1].t.toLowerCase():(scenes[0]?scenes[0].t.toLowerCase():'this moment');
     $('whyQuote').textContent=`What you asked for: ${sN}.`;
     const wd0=$('whyDetail'); wd0.style.display='block';
-    wd0.innerHTML=`This set follows the state you described — it leans on <em>${topName}</em> to carry it, then uses warm/cool balance and a little white space to pull the whole strand back to a comfortable place.<br><span style="color:var(--faint);font-size:12.5px">Want it sharper? Add your birthday under Reading and every bead's reason gets more personal.</span>`;
+    const chartOff=state.profileStatus==='engine_unavailable';
+    wd0.innerHTML=`This set follows the state you described — it leans on <em>${topName}</em> to carry it, then uses warm/cool balance and a little white space to pull the whole strand back to a comfortable place.<br><span style="color:var(--faint);font-size:12.5px">${chartOff?'Your birthday was entered, but the full chart service is not connected, so this preview is not using birth-chart logic.':"Want it sharper? Add your birthday under Reading and every bead's reason gets more personal."}</span>`;
     $('energyBlock').style.display='none'; return;
   }
-  const strongest=EL_ZH[state.prof.strongest], weakest=EL_ZH[state.prof.weakest];
+  const strongest=EL_ZH[state.prof.strongest], weakest=EL_ZH[state.prof.weakest], support=supportLine(state.prof), temp=tempNeed(state.prof);
   $('whyBlock').classList.remove('placeholder');
-  $('whyQuote').textContent=`In your pattern, ${strongest} leads and ${weakest} runs quieter.`;
+  $('whyQuote').textContent=`The read points to ${support} first.`;
   const wd=$('whyDetail'); wd.style.display='block';
   if(!scenes.length){   // birthday only, no scene: speak from the chart, nudge a scene
-    wd.innerHTML=`So this set follows your pattern: it leans on <em>${topName}</em> to catch what you need most, keeps a little ${weakest} to pull you back to center, and spaces the brighter stones so it stays calm to wear every day.<br><span style="color:var(--faint);font-size:12.5px">Want it tied to right now? Pick a moment under Scene.</span>`;
+    wd.innerHTML=`Your profile comes back with ${strongest} already loud and ${weakest} quieter, with a support line of ${support} and ${temp}. That is why the strand opens with <em>${topName}</em>, then uses quieter spacer stones so the result feels wearable rather than overloaded.<br><span style="color:var(--faint);font-size:12.5px">Want it tied to right now? Pick a moment under Scene.</span>`;
   } else if(sc&&sc.custom){
-    wd.innerHTML=`You wrote “${esc((state.customText||'').slice(0,60))}”. This isn't a template: it leans on <em>${topName}</em> to carry what you described, keeps a little ${weakest} so the whole thing stays balanced, and spaces the brighter stones rather than clustering them, so it's better to actually wear.`;
+    wd.innerHTML=`You wrote “${esc((state.customText||'').slice(0,60))}”. The profile still points to ${support} first, with ${strongest} already loud and ${weakest} quieter. That is why <em>${topName}</em> leads the strand instead of a random pretty stone, and why the rest of the beads are spaced to keep the whole thing calm enough to wear.`;
   } else {
     const sName=scenes.length>1?scenes[0].t.toLowerCase()+" and "+scenes[1].t.toLowerCase():scenes[0].t.toLowerCase();
     const riskTxt=sc&&sc.risk?`In the “${sName}” state, it's easy to slip toward: ${sc.risk}. `:'';
-    wd.innerHTML=`${riskTxt}So this isn't a generic “${sName}” bracelet: it leans on <em>${topName}</em> to carry the main line, keeps a little ${weakest} to pull you back to center, and lets the brighter stones keep room to breathe.`;
+    wd.innerHTML=`${riskTxt}The profile says ${strongest} is already loud and ${weakest} runs quieter; the support line is ${support}, with ${temp}. That is why <em>${topName}</em> leads this “${sName}” bracelet, and why the rest of the stones are chosen to support the request without piling on the same pressure.`;
   }
   $('energyBlock').style.display='block';
   const bc=$('barChart'); bc.innerHTML="";
@@ -2035,40 +2306,32 @@ $('wristBtn').onclick=()=>openScene('cafe');
 function wantedWishes(){ const want=new Set();
   state.intents.forEach(id=>{ if(id==='custom'){ customWishes(state.customText).forEach(w=>want.add(w)); return; }
     const I=INTENTS.find(x=>x.id===id); if(I)I.wish.forEach(w=>want.add(w)); });
+  if(state.prof&&state.prof.preferredWishes) state.prof.preferredWishes.forEach(w=>want.add(w));
   return want; }
 function openStory(){
   if(!state.seq.length){ toast('Make a bracelet first'); return; }
   renderBracelet($('storySvg'),state.seq);
   $('storyName').textContent=state.name||'Your bracelet';
   const scenes=state.intents.map(id=> id==='custom'?'The state you wrote down':(INTENTS.find(x=>x.id===id)||{}).t).filter(Boolean);
-  $('storyScene').textContent=scenes.length?('为「'+scenes.join('" and "')+'”'):'Strung the way you chose it';
+  const sceneLabel=scenes.length?scenes.join(' and '):'the state you are in right now';
+  $('storyScene').textContent=scenes.length?('For '+sceneLabel):(state.prof?'Built from your birth pattern':'Strung the way you chose it');
   const prof=state.prof;
-  let chartLine=prof?`${elName(prof.strongest)} leads in you and ${elName(prof.weakest)} runs quiet; this bracelet is built around that gap.`:'No birth info yet. Add your birth date and every stone picks up the logic of your pattern.';
-  if(prof&&prof.tiaohou==='cold') chartLine+=' Born in a cold month — it starts with a little warmth.';
-  if(prof&&prof.tiaohou==='hot') chartLine+=' Born at the height of summer, so it starts with a touch of cool.';
-  $('storyChart').textContent=chartLine;
   const want=wantedWishes(), host=$('storyList'); host.innerHTML='';
+  let chartLine=profileHeadline(prof,want);
+  $('storyChart').textContent=chartLine;
   const uniq=[],seen={}; state.seq.forEach((k,i)=>{ if(!(k in seen)){seen[k]=uniq.length;uniq.push({key:k,pos:[i]});} else uniq[seen[k]].pos.push(i); });
-  const tiaoTxt=prof&&prof.tiaohou==='cold'?', and born in a cold month':(prof&&prof.tiaohou==='hot'?', born at the height of summer':'');
-  const sceneName=scenes.length?scenes.join(' / '):'This state you\'re in right now';
+  const sceneName=scenes.length?scenes.join(' / '):'this state you are in right now';
   uniq.forEach((u,bi)=>{ const st=STONES[u.key]; if(!st)return;
     const pk=state.picks.find(p=>p.key===u.key);
-    const ct=pk?pk.ct:'own';
-    const tierLbl={lead:'Hero stone',bridge:'Carry forward',balance:'Balance',breath:'White space',echo:'Echo',own:'Pick your own'}[ct]||'Pick your own';
+    const auto=!!(prof&&state.autofilled&&!pk);
+    const ct=pk?pk.ct:(auto?'pattern':'own');
+    const tierLbl=beadTierLabel(ct,prof,auto);
     const hits=(pk&&pk.hits?pk.hits:(st.wish||[]).filter(w=>want.has(w))).map(w=>WISH_LABEL[w]||w);
-    let why='';
-    if(ct==='lead'&&prof){ why=`Because you're facing “${sceneName}” right now, ${elName(prof.strongest)} leads in you while ${elName(prof.weakest)} runs quiet${tiaoTxt}, so this strand sets its main line with ${elName(st.el)}${hits.length?`，Answers the ${hits.join(' / ')} you asked for`:''}。`; }
-    else if(ct==='lead'){ why=`Because you're after “${hits.join(' / ')||sceneName}”, this stone is closest to that state, so it sets the tone first.`; }
-    else if(ct==='bridge'&&prof){ why=pk.bt==='flow'?`The lead stone brings up ${elName(pk.e1)}, and ${elName(pk.e1)} feeds ${elName(pk.e2)}; this bead catches that momentum so the whole strand doesn't fall apart.`:`One note alone doesn't hold — this one carries the second thing your pattern asks for: ${elName(st.el)}.`; }
-    else if(ct==='bridge'){ why='One note alone doesn\'t hold — this one carries the lead and keeps the line steady.'; }
-    else if(ct==='balance'){ why=pk.tdir==='cool'?'The first two runs lean warm and start to heat up, so one cool stone slips in to press the rhythm back to centre.':(pk.tdir==='warm'?'The first two runs lean cool, so a warm stone lifts the mood back up.':`The main line already stands — this one fills in the ${hits.join(' / ')||'detail'}.`); }
-    else if(ct==='breath'){ why='Even a full story needs white space. A clear or pale stone competes with nothing — it\'s just there to let the whole strand breathe.'; }
-    else if(ct==='echo'){ why=hits.length?`The ${hits.join(' / ')} you're after is worth answering once more, so this bead is the echo.`:'It lays one more undertone beneath the strand.'; }
-    else { why=(hits.length?`Answers the ${hits.join(' / ')} you asked for`:(prof&&st.el===prof.weakest?`Feeds the ${elName(st.el)} that runs quiet in you`:(prof&&prof.favorable.includes(st.el)?`Flows with the ${elName(st.el)} your pattern favours`:cap(doesOf(st)))))+'。'; }
-    let place={lead:'Opens in a pair to set the tone.',bridge:'A matched pair echoes the lead stone so the rhythm holds together.',balance:'A single bead set between the bright ones, pulling the warmth back to center.',breath:'Single, leaving room around the bright notes.',echo:'A single bead to close, echoing the wish from the start one more time.',own:`你自己放进去的位置：第 ${u.pos.map(p2=>p2+1).join('、')} beads。`}[ct];
+    let why=beadWhy(st,prof,ct,hits,sceneName,want,pk,auto);
+    let place={lead:'Opens in a pair to set the tone.',bridge:'A matched pair echoes the lead stone so the rhythm holds together.',theme:'Placed as the second-layer bead, so the personal theme is not swallowed by the main support line.',balance:'A single bead set between the bright ones, pulling the warmth back to center.',breath:'Single, leaving room around the bright notes.',echo:'A single bead to close, echoing the wish from the start one more time.',pattern:`Placed by the bracelet pattern at bead ${u.pos.map(p2=>p2+1).join(', ')}.`,own:`Placed by you at bead ${u.pos.map(p2=>p2+1).join(', ')}.`}[ct];
     if(u.pos.length>=3&&ct!=='own'){ const g=Math.round((u.pos[u.pos.length-1]-u.pos[0])/(u.pos.length-1));
-      place+=` Returns every ~${g} beads — even breathing.`; }
-    if(ct==='own'&&prof&&prof.jishen&&prof.jishen.includes(st.el)) place+=` Heads up: ${elName(st.el)} pushes against your pattern a little — but if you love the colour, you can keep it.`;
+      place+=g<=1?' Runs as a continuous section, so this note stays present.':` Returns every ~${g} beads — even breathing.`; }
+    if(!auto&&ct==='own'&&prof&&prof.jishen&&prof.jishen.includes(st.el)) place+=` Heads up: ${elName(st.el)} pushes against your pattern a little — but if you love the colour, you can keep it.`;
     const bigMm=u.pos.map(p2=>state.mmList[p2]||0).filter(v=>v>state.beadMm)[0];
     if(ct==='lead'&&bigMm) place+=` This one sizes up to ${bigMm}mm — front and centre.`;
     const it=document.createElement('div'); it.className='s-item'; it.style.setProperty('--i',bi);
@@ -2078,7 +2341,7 @@ function openStory(){
       <div class="s-why">${why}</div>
       <div class="s-place">${place}</div></div>`;
     host.appendChild(it); });
-  $('storyFoot').textContent=`${state.seq.length}beads · ${money(priceOf(state.seq))} · 手工串制 · 发货前拍照确认`;
+  $('storyFoot').textContent=`${state.seq.length} beads · ${money(priceOf(state.seq))} · hand-strung · photo confirmed before shipping`;
   $('storyModal').classList.add('show');
 }
 document.querySelectorAll('.storyOpen').forEach(b=>b.onclick=openStory);
@@ -2120,12 +2383,13 @@ function buildShareImage(cb){
     x.fillText(state.name||'Your bracelet', W/2, 830);
     x.fillStyle=muted; x.font='300 26px Manrope, "PingFang SC", sans-serif';
     const scenes=state.intents.map(id=> id==='custom'?'The state you wrote down':(INTENTS.find(z=>z.id===id)||{}).t).filter(Boolean);
-    x.fillText(scenes.length?('为「'+scenes.join('" and "')+'”'):'Strung the way you chose it', W/2, 876);
+    x.fillText(scenes.length?('For '+scenes.join(' and ')):(state.prof?'Built from your birth pattern':'Strung the way you chose it'), W/2, 876);
+    const want=wantedWishes();
     // chart band
     const prof=state.prof;
     if(prof){ const bw=W-200;
       x.textAlign='left'; x.font='300 26px Manrope, "PingFang SC", sans-serif';
-      let chart=`${elName(prof.strongest)} leads in you and ${elName(prof.weakest)} runs quiet; this strand is built around that gap.`+(prof.tiaohou==='cold'?' Born in the cold months — warmth comes first.':(prof.tiaohou==='hot'?' Born in high summer — a little cool to start.':''));
+      let chart=profileHeadline(prof,want);
       const lines=wrapText(x,chart,bw-60).slice(0,2);
       x.fillStyle='rgba(14,107,80,.07)'; roundRect(x,100,906,bw,34+lines.length*36,10); x.fill();
       x.fillStyle=green; x.fillRect(100,906,6,34+lines.length*36);
@@ -2133,19 +2397,20 @@ function buildShareImage(cb){
       lines.forEach((l,i)=>x.fillText(l,130,950+i*36)); }
     // stone rows
     const uniq=[],seen={}; seq.forEach((k,i)=>{ if(!(k in seen)){seen[k]=uniq.length;uniq.push({key:k,pos:[i]});} else uniq[seen[k]].pos.push(i); });
-    const want=wantedWishes(), rows=uniq.slice(0,4), y0=prof?1064:980;
+    const rows=uniq.slice(0,4), y0=prof?1064:980;
     x.textAlign='left';
     rows.forEach((u,ri)=>{ const st=STONES[u.key]; if(!st)return; const y=y0+ri*82;
       const im=imgs[beadSrc(u.key,u.pos[0])]||imgs[srcs[0]];
       if(im&&im.naturalWidth){ x.save();x.shadowColor='rgba(0,0,0,.22)';x.shadowBlur=8;x.shadowOffsetY=4; x.drawImage(im,108,y-30,64,64);x.restore(); }
       const pk2=state.picks.find(p=>p.key===u.key);
-      const tier=pk2?({lead:'Hero stone',bridge:'Carry forward',balance:'Balance',breath:'White space',echo:'Echo'})[pk2.ct]||'Pick your own':'Pick your own';
+      const auto=!!(prof&&state.autofilled&&!pk2), ct=pk2?pk2.ct:(auto?'pattern':'own');
+      const tier=beadTierLabel(ct,prof,auto);
       x.fillStyle=green; x.font='600 17px Manrope, "PingFang SC", sans-serif';
       x.fillText(tier+' ×'+u.pos.length, 196, y-6);
       x.fillStyle=ink; x.font='400 28px Manrope, "PingFang SC", sans-serif';
       x.fillText(stoneName(st), 196, y+26);
       const hits=(st.wish||[]).filter(w=>want.has(w)).map(w=>WISH_LABEL[w]||w);
-      let why=hits.length?`Answers the ${hits.join(' / ')} you asked for`:(prof&&st.el===prof.weakest?`Feeds the ${elName(st.el)} that runs quiet in you`:(prof&&prof.favorable.includes(st.el)?`Flows with the ${elName(st.el)} your pattern favours`:doesOf(st)));
+      let why=beadWhy(st,prof,ct,hits,scenes.length?scenes.join(' / '):'this state you are in right now',want,pk2,auto);
       x.fillStyle=faint; x.font='300 22px Manrope, "PingFang SC", sans-serif';
       x.fillText(wrapText(x,why,W-420)[0]||'', 196, y+56);
     });
@@ -2221,7 +2486,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){$('zoomModal').clas
 
 /* confirm */
 $('addBtn').onclick=()=>{ if(!state.seq.length)return;
-  alert("Prototype — Add to cart wires into the SW store.\\n\\n"+(state.name||"Your bracelet")+" · "+state.seq.length+"beads ("+state.beadMm+"mm · wrist "+state.wristCm+"cm）\\nCrystals: "+[...new Set(state.seq)].map(k=>stoneName(STONES[k])).join("、")+(state.request?"\\nNote: "+state.request:"")+"\n合计："+money(priceOf(state.seq))); };
+  alert("Prototype — Add to cart wires into the SW store.\\n\\n"+(state.name||"Your bracelet")+" · "+state.seq.length+" beads ("+state.beadMm+"mm · wrist "+state.wristCm+"cm)\\nCrystals: "+[...new Set(state.seq)].map(k=>stoneName(STONES[k])).join(", ")+(state.request?"\\nNote: "+state.request:"")+"\nTotal: "+money(priceOf(state.seq))); };
 
 /* album (localStorage) */
 function loadAlbum(){ try{return JSON.parse(localStorage.getItem('sw_album')||'[]');}catch(e){return[];} }
@@ -2276,6 +2541,8 @@ let _tt; function toast(m,act,fn){ const t=$('toast');
 /* load catalog */
 fetch(ASSET+'beadwork/stones.json?v='+VER).then(r=>r.json()).then(cat=>{
   CATALOG=cat; cat.forEach(s=>STONES[s.key]=s); MIXPOOL=cat.filter(s=>!SOLO.has(s.key));
+  // restore the last design (survives lock-screen / reload) unless a preset URL overrides it (User 2026-06-27)
+  try{ if(!/[?&](seq|probe|autolucky|selftest)=/.test(location.search)){ var _sv=localStorage.getItem('sw_current'); if(_sv){ var _d=JSON.parse(_sv); if(_d&&_d.recipe&&_d.recipe.length){ Object.assign(state,_d); var _wi=$('wrist'); if(_wi&&_d.wristCm) _wi.value=_d.wristCm; } } } }catch(e){}
   buildPalette(); renderAlbum(); rebuild();
   if(/selftest=1/.test(location.search)) setTimeout(runColorSelfTest,400);
   if(/autolucky=1/.test(location.search)) setTimeout(()=>{ luckyStrand(); try{ document.title='LUCKY:'+JSON.stringify({seq:state.seq,scheme:(state.palette||{}).name,pat:(state.pattern||{}).zh,meaning:(state.pattern||{}).meaning,src:(state.pattern||{}).src}); }catch(e){ document.title='ERR'; } },900);
