@@ -1838,16 +1838,21 @@ function wishDomain(want){
 }
 function profileProblem(prof,want){
   if(!prof) return '';
-  const loud=prof.strongest, quiet=prof.weakest, domain=wishDomain(want);
+  const domain=wishDomain(want);
+  const myDom={love:'love',work:'career',voice:'career',calm:'health',boundary:'health',life:'career'}[domain]||null;
+  const dr=myDom&&((prof.domain_reads&&prof.domain_reads[myDom])||(prof.domainRead&&prof.domainRead[myDom]));
+  const loudEl=(dr&&dr.loudEl)||prof.strongest;
+  const cell=myDom&&(CHART_HUMAN[myDom]||{})[loudEl];
+  if(cell) return cell;   // my zero-term human judgment (love written; other domains fall through to the zero-term base)
   const base={
     love:'The point is not that love is unavailable; it is that when someone feels unstable, unclear, or not responsible enough',
-    work:'The point is not that you lack ability; it is that when stakes rise and the next step is not clean',
+    work:'The point is not that you lack ability; it is that when the stakes rise and the next step is not clean',
     voice:'The point is not that you have nothing to say; it is that when the room starts judging back',
     calm:'The point is not that you are weak; it is that when your system has been running too long',
     boundary:'The point is not that you have no strength; it is that when other people take up too much space',
     life:'The point is not to add random luck; it is that when life stops feeling steady'
-  }[domain];
-  return `${base}, ${elementPct(prof,loud)} runs loud and can become ${E_SHADOW[loud]||'too much pressure'}, while ${elementPct(prof,quiet)} needs more ${E_GIFT[quiet]||'support'}.`;
+  }[domain]||'The point is not what you are missing';
+  return `${base}, your wiring runs loud one way and can tip into too much, while the quieter side of you needs more room.`;   // zero-term: never show element % or element names to the user (US cold traffic)
 }
 function profileSecondLayer(prof,want){
   if(!prof) return '';
@@ -1863,7 +1868,7 @@ function profileHeadline(prof,want){
   const line=profileProblem(prof,want);
   const second=profileSecondLayer(prof,want);
   const support=supportLine(prof), temp=tempNeed(prof);
-  return `${line} The main bracelet line is ${support}, with ${temp}.${second?' '+second:''}`;
+  return line;   // the human judgment IS the story — drop the "main bracelet line is Wood+Fire+Earth" term-readout tail (User 2026-06-27)
 }
 function elementLane(el,prof){
   if(!prof||!el) return '';
@@ -1888,8 +1893,8 @@ function stoneChartAction(st,prof){
   if(st.el===fav[0]) return `carries the first useful direction: ${E_GIFT[st.el]||elName(st.el)}`;
   if(fav.includes(st.el)) return `holds the second useful direction: ${E_GIFT[st.el]||elName(st.el)}`;
   if(ji.includes(st.el)) return `is a style choice rather than the main correction, so it should stay secondary`;
-  if(st.el===CTRL[prof.strongest]) return `checks the overreaction of ${elName(prof.strongest)} before it gets sharp`;
-  if(st.el===GEN[prof.strongest]) return `gives the loud ${elName(prof.strongest)} a cleaner outlet`;
+  if(st.el===CTRL[prof.strongest]) return `cools your loud side before it gets sharp`;
+  if(st.el===GEN[prof.strongest]) return `gives your loud side a cleaner outlet`;
   if((prof.elementBias||{})[st.el]>=1.6) return `answers the second chart layer through ${E_GIFT[st.el]||elName(st.el)}`;
   return `adds a small counterweight without changing the main correction`;
 }
@@ -1903,7 +1908,7 @@ function beadWhy(st,prof,ct,hits,sceneName,want,pk,auto){
   }
   const problem=profileProblem(prof,want), action=stoneChartAction(st,prof), ask=hits.length?` It also answers the ${wishText(hits)} you asked for.`:'';
   const lane=elementLane(st.el,prof);
-  if(ct==='lead') return `${problem} ${stoneName(st)} leads because it ${action}.${ask}`;
+  if(ct==='lead') return `${stoneName(st)} leads here because it ${action}.${ask}`;   // de-dup: the story block already states the problem; the hero stone just gives its own reason (User 2026-06-27)
   if(ct==='bridge') return pk&&pk.bt==='flow'
     ? `${stoneName(st)} is the bridge: the first stone starts ${elName(pk.e1)}, this one carries it toward ${elName(pk.e2)}, so the bracelet has a reasoned sequence instead of one repeated mood.`
     : `${stoneName(st)} is not filler; it ${action} after the lead stone, so the correction has a second leg.`;
