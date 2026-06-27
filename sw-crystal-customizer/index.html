@@ -943,14 +943,16 @@ function normalizeEngineProfile(data,fallback){
 }
 async function profileFromEngine(payload,fallback){
   if(!payload || Date.now()<CHART_API_BACKOFF_UNTIL) return null;
-  const ctl=new AbortController(), timer=setTimeout(()=>ctl.abort(),18000);
+  const post=async(body)=>{ const ctl=new AbortController(), timer=setTimeout(()=>ctl.abort(),18000);
+    try{ return await fetch(CHART_PROFILE_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:ctl.signal}); }
+    finally{ clearTimeout(timer); } };
   try{
-    const res=await fetch(CHART_PROFILE_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),signal:ctl.signal});
+    let res=await post(payload);
+    if(!res.ok && res.status>=500 && payload.place){ res=await post({...payload,place:'',longitude:null,timezone:null}); }   // engine 500s when it can't geocode the birth city → drop place, keep the real chart instead of dropping to lite (User 2026-06-27)
     if(!res.ok){ if([404,501,503].includes(res.status)) CHART_API_BACKOFF_UNTIL=Date.now()+300000; return null; }
     const data=await res.json();
     return normalizeEngineProfile(data,fallback);
   }catch(_){ CHART_API_BACKOFF_UNTIL=Date.now()+60000; return null; }
-  finally{ clearTimeout(timer); }
 }
 const PROFILE_STEPS=[
   ['Reading your birth time','Pinning the exact moment and place before anything else.'],
