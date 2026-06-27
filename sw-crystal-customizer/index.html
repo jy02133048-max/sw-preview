@@ -342,7 +342,8 @@
   #storySvg{width:176px;height:176px;display:block;margin:0 auto 2px}
   .s-name{font-family:'Marcellus',serif;font-size:24px;color:var(--ink);text-align:center}
   .s-scene{text-align:center;font-size:12.5px;color:var(--muted);margin-top:3px}
-  .s-chart{margin:14px 0 6px;padding:11px 13px;background:rgba(14,107,80,.06);border-left:3px solid #0e6b50;border-radius:0 8px 8px 0;font-size:13px;color:#3c4a45;line-height:1.6}
+  .s-chart{margin:14px 0 10px;padding:14px 16px;background:rgba(14,107,80,.07);border-left:3px solid #0e6b50;border-radius:0 8px 8px 0;font-size:15px;color:#222a26;line-height:1.62}
+  .s-chart .s-eyebrow{display:block;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:#0e6b50;margin-bottom:7px;font-weight:600}
   .s-item{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);animation:fade .35s cubic-bezier(.25,1,.5,1) backwards;animation-delay:calc(var(--i,0)*70ms)}
   .s-item:last-child{border-bottom:none}
   .s-bead{width:46px;height:46px;border-radius:50%;flex-shrink:0;background-size:cover;background-position:center;filter:drop-shadow(0 2px 6px rgba(28,30,30,.3));margin-top:2px}
@@ -1794,15 +1795,42 @@ const CHART_HUMAN={love:{
   wood:"You don't fall short in love — you over-tend it. You turn the person into a project, always nudging them somewhere better, and you get restless the moment it's just calm. You're built to grow things, so a relationship that isn't 'going anywhere' reads as broken when it might just be steady.",
   metal:"The thing in love isn't that you're cold — it's that the wall stays up a beat too long. You keep a clean distance, open slowly, and quietly hold people to the standard; being soft first feels unsafe. You're built tight and precise, so letting someone past the line costs you more than it costs most.",
   earth:"Your problem in love was never caring too little — it's that you give until there's no you left in it. You over-accommodate, hold the whole thing up, and stay long after it stopped being good, because leaving feels like dropping someone. You're built to carry, so love quietly becomes one more thing you carry."
+},career:{
+  fire:"At work it was never that you don't try hard enough — it's that you go all in on the new thing, and the moment it stops being exciting the follow-through quietly dies. You run hot, so you start things brilliantly and finish them late.",
+  water:"At work it's not that you can't do the job — it's that you see every angle at once, so you keep researching, second-guessing, and the deciding gets pushed to tomorrow. You run deep, so the thinking outruns the doing.",
+  wood:"At work it's not ambition you're missing — it's that you're already reaching for the next rung before you've stood on this one, so nothing gets to finish. You're built to grow, so holding a position can feel like falling behind even when it's just steady.",
+  metal:"At work the problem was never your standards — it's that they're so high you'd rather hold a thing back than ship it flawed, and 'almost ready' never quite goes out the door. You're built precise, so good-and-done keeps losing to perfect-and-late.",
+  earth:"At work it was never that you don't pull your weight — it's that you carry everyone's, quietly, until you're the one they can't run without and somehow still get passed over. You're built to hold, so you absorb the load instead of claiming the win."
+},health:{
+  fire:"Your system runs hot and fast — you blow past the tired signal and only stop when something makes you. It was never weakness; it's an engine with no idle, always one more thing before you rest.",
+  water:"Your mind doesn't clock out when you do — you lie down and the day replays, the worry loops, and the off-switch keeps sliding out of reach. You run deep, so the hard part was never the doing, it's the stopping.",
+  wood:"You're not bad at resting — you're bad at sitting still. The second a gap opens you fill it, so you never quite let things settle and catch up. You're built to move, so stillness reads as falling behind.",
+  metal:"You hold it together so cleanly that nobody sees the cost — the jaw stays tight, the breath stays shallow, and you call it 'fine.' You're built to keep order, so you carry the strain quiet instead of letting any of it out.",
+  earth:"You handle everyone else's needs first, so by the time it's your turn there's nothing left in the tank. You're built to carry, so your own upkeep sits at the very bottom of the list."
+},wealth:{
+  fire:"With money it was never that it doesn't come — it's that it goes out about as fast, on the thing that lights you up right now. You run hot, so money tends to move at the speed of the impulse.",
+  water:"With money it's not that you can't earn — it's that it runs through you; you make it in waves and spend on the feeling, so it never quite pools anywhere. You run fluid, so holding it is the harder skill than making it.",
+  wood:"With money it's not that you don't grow it — it's that it's always rolled straight into the next thing, so it stays in motion and never at rest. You're built to grow, so letting it just sit can feel like wasting it.",
+  metal:"With money you're careful — sometimes a little too careful; you hold the line so tight that the move which would've grown it slips past. You're built to protect, so safe quietly wins over bigger almost every time.",
+  earth:"With money it was never that you overspend on yourself — it's that you cover everyone else first, so your own pile stays thin. You're built to provide, so your own needs keep queuing behind everybody else's."
 }};
 const STONE_ACTION={
-  water:"slows that first verdict, so next time you see the person before the problem",
-  earth:"gives it a floor to stand on, so one thing can finally hold still",
-  metal:"draws a clean line so you stop over-giving and keep some for yourself",
-  wood:"gives it room to grow instead of repeat, loosening the grip a notch",
-  fire:"warms the guard down a notch, so warmth gets in before you've checked it"
+  love:{
+    water:"slows that first verdict, so next time you see the person before the problem",
+    earth:"gives it a floor to stand on, so one thing can finally hold still",
+    metal:"draws a clean line so you stop over-giving and keep some for yourself",
+    wood:"gives it room to grow instead of repeat, loosening the grip a notch",
+    fire:"warms the guard down a notch, so warmth gets in before you've checked it"
+  },
+  default:{
+    water:"slows the first reaction by half a beat, so you move on the read instead of the impulse",
+    earth:"gives it a floor to stand on, so one thing can finally hold still",
+    metal:"draws a clean line, so you stop spreading yourself thin and keep something back",
+    wood:"gives it room to move forward instead of loop, loosening the grip a notch",
+    fire:"puts a little warmth and forward push back in, so you lean in instead of holding back"
+  }
 };
-const GROUP_DOMAIN={'Love':'love','Career and money':'career'};
+const GROUP_DOMAIN={'Love':'love','Career and money':'career','Inner state':'health','Body and mind':'health'};   // Social + Change still fall to the generic read until their copy is written (User 2026-06-27)
 function chartHumanLead(prof,group,topName){
   if(!prof||!topName) return null;
   const dom=GROUP_DOMAIN[group]; if(!dom) return null;
@@ -1810,8 +1838,10 @@ function chartHumanLead(prof,group,topName){
   const loudEl=(dr&&dr.loudEl)||prof.strongest;          // real domain loudEl when the engine is connected; else approximate from the general chart (lite)
   const fixEl=(dr&&dr.fixEl)||(prof.favorable&&prof.favorable[0])||'water';
   const judg=(CHART_HUMAN[dom]||{})[loudEl]; if(!judg) return null;   // domain cell not written yet (career/wealth/health) → keep existing copy
-  const act=STONE_ACTION[fixEl]||STONE_ACTION.water;
-  return `${judg} <em>${topName}</em> isn't here "for ${dom}" — it ${act}.`;
+  const acts=STONE_ACTION[dom]||STONE_ACTION.default;
+  const act=acts[fixEl]||STONE_ACTION.default[fixEl]||STONE_ACTION.default.water;
+  const dw={love:'love',career:'your career',health:'your health',wealth:'money'};
+  return `${judg} <em>${topName}</em> isn't here "for ${dw[dom]||dom}" — it ${act}.`;
 }
 function supportLine(prof){ return ((prof&&prof.favorable)||[]).map(elName).filter(Boolean).slice(0,3).join(' + ')||'a steadier support line'; }
 function tempNeed(prof){ return prof&&prof.tiaohou==='cold'?'warmth first':(prof&&prof.tiaohou==='hot'?'cooling first':'steady balance'); }
@@ -1915,7 +1945,7 @@ function beadWhy(st,prof,ct,hits,sceneName,want,pk,auto){
   const lane=elementLane(st.el,prof);
   if(ct==='lead') return `${stoneName(st)} leads here because it ${action}.${ask}`;   // de-dup: the story block already states the problem; the hero stone just gives its own reason (User 2026-06-27)
   if(ct==='bridge') return pk&&pk.bt==='flow'
-    ? `${stoneName(st)} is the bridge: the first stone starts ${elName(pk.e1)}, this one carries it toward ${elName(pk.e2)}, so the bracelet has a reasoned sequence instead of one repeated mood.`
+    ? `${stoneName(st)} is the hand-off — it carries the strand from the lead stone into the rest, so it reads as one reasoned line instead of one repeated mood.`
     : `${stoneName(st)} is not filler; it ${action} after the lead stone, so the correction has a second leg.`;
   if(ct==='theme'){
     const second=trimPeriod(profileSecondLayer(prof,want)) || 'the current-life theme gets its own bead';
@@ -1925,7 +1955,7 @@ function beadWhy(st,prof,ct,hits,sceneName,want,pk,auto){
   if(ct==='balance') return `${stoneName(st)} sits in the middle because the first colors can lean too ${pk&&pk.tdir==='cool'?'cool':'warm'}; this bead ${action}.`;
   if(ct==='breath') return `${stoneName(st)} gives the strand quiet space, so the correction can be worn daily instead of feeling like another demand.`;
   if(ct==='echo') return `${stoneName(st)} repeats the useful direction once more: it ${action}.${ask}`;
-  if(auto && prof.jishen && prof.jishen.includes(st.el)) return `${stoneName(st)} stays secondary because ${elName(st.el)} is not the main correction for this chart; it can support the look, but it should not lead the bracelet.`;
+  if(auto && prof.jishen && prof.jishen.includes(st.el)) return `${stoneName(st)} stays in a supporting role — it isn't the main thing your chart is asking for, so it backs the look without leading the strand.`;
   if(auto) return `${stoneName(st)} appears here as a ${lane}: it ${action}. That makes it part of the chart logic, not a random extra bead.`;
   return `${stoneName(st)} ${action}.${ask}`;
 }
@@ -2361,7 +2391,7 @@ function openStory(){
   const prof=state.prof;
   const want=wantedWishes(), host=$('storyList'); host.innerHTML='';
   let chartLine=profileHeadline(prof,want);
-  $('storyChart').textContent=chartLine;
+  $('storyChart').innerHTML=(prof&&chartLine)?`<span class="s-eyebrow">Your reading</span>${esc(chartLine)}`:esc(chartLine||'');
   const uniq=[],seen={}; state.seq.forEach((k,i)=>{ if(!(k in seen)){seen[k]=uniq.length;uniq.push({key:k,pos:[i]});} else uniq[seen[k]].pos.push(i); });
   const sceneName=scenes.length?scenes.join(' / '):'this state you are in right now';
   uniq.forEach((u,bi)=>{ const st=STONES[u.key]; if(!st)return;
