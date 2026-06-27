@@ -124,6 +124,10 @@
   .analysis-step .sd{font-size:12px;color:var(--faint);line-height:1.45;margin-top:2px}
   .analysis-step.done b,.analysis-step.on b{background:var(--accent);border-color:var(--accent);color:white}
   .analysis-step.on{border-color:rgba(14,107,80,.35);background:rgba(14,107,80,.06)}
+  .profmsg{font-size:13px;color:var(--ink);line-height:1.5;margin-bottom:9px;opacity:.85}
+  .profbar{height:5px;background:rgba(14,107,80,.12);border-radius:3px;overflow:hidden;margin:2px 0 13px}
+  .profbar-fill{height:100%;width:0;background:linear-gradient(90deg,var(--accent),#3fae86);border-radius:3px}
+  .readbtn{margin-top:12px}
   .energy{margin-top:22px}
   .bar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
   .bar-label{width:46px;font-size:11.5px;color:#b8a88a;text-align:right;flex-shrink:0}
@@ -677,6 +681,7 @@
       <datalist id="cityList"></datalist>
       <div class="hint">Time and city are both optional. Add a city and we'll correct for true solar time by longitude, so the read gets finer. Not sure? Leave it blank.</div>
       <div class="err" id="birthErr"></div>
+      <button class="btn readbtn" id="readBtn">Read my chart →</button>
     </div>
 
     <!-- 3 · stones -->
@@ -773,7 +778,7 @@ const deAsset=u=>(ASSET&&u&&u.indexOf(ASSET)===0)?u.slice(ASSET.length):null;
 const APIBASE=location.hostname.endsWith('github.io')?'https://sw-strand-relay-production.up.railway.app':'';   // public build: AI relay on Railway (key server-side, origin-gated, rate-capped)   // CDN miss → retry same-origin
 const CHART_PROFILE_API=(APIBASE||'')+'/api/chart-profile';   // server-side true chart engine; client lite engine stays as fallback
 let CHART_API_BACKOFF_UNTIL=0, READ_SEQ=0;
-const ANALYSIS_MIN_MS=5600;
+const ANALYSIS_MIN_MS=9000;   // 8-10s window — long enough to feel like a real deep read, not an instant guess (User 2026-06-27)
 let PLACE_TIMER=0;
 let CATALOG=[], STONES={}, MIXPOOL=[]; const SOLO=new Set(['jx-083','jx-086']); /* 绿幽灵=单石专用,不进自动配串 */
 const sprite=k=>`${ASSET}beadwork/beads-day/${k}.webp?v=${VER}`;
@@ -939,35 +944,34 @@ async function profileFromEngine(payload,fallback){
   finally{ clearTimeout(timer); }
 }
 const PROFILE_STEPS=[
-  ['Birth time check','Correcting the clock time and place before any birth-based logic is used.'],
-  ['Core pattern','Measuring what runs loud, what runs quiet, and what can actually carry weight.'],
-  ['Support line','Choosing what the bracelet should add first instead of simply filling the weakest bar.'],
-  ['Second layer','Adding life-theme weights for love, work, calm, voice, protection, and confidence.'],
-  ['Stone map','Matching real stones by support line, colour temperature, your current request, and wearable balance.']
+  ['Reading your birth time','Pinning the exact moment and place before anything else.'],
+  ['Finding your pattern','Seeing what runs loud in you, and what runs quiet.'],
+  ['Choosing the balance','Deciding what to steady first — not just the weakest spot.'],
+  ['Reading this season','Weighing what you need most right now.'],
+  ['Matching the stones','Pairing real crystals to all of the above.']
 ];
 function delay(ms){ return new Promise(r=>setTimeout(r,ms)); }
-function analysisStepsHtml(step){
-  return '<div class="analysis-steps">'+PROFILE_STEPS.map((s,i)=>{
-    const cls=i<step?'done':(i===step?'on':'');
-    const mark=i<step?'✓':String(i+1);
-    return `<div class="analysis-step ${cls}"><b>${mark}</b><div><div class="st">${s[0]}</div><div class="sd">${s[1]}</div></div></div>`;
-  }).join('')+'</div>';
+function profileWaitHtml(){
+  return '<div class="profbar"><div class="profbar-fill" id="profbarFill"></div></div>'+
+    '<div class="analysis-steps">'+PROFILE_STEPS.map((s,i)=>`<div class="analysis-step" data-i="${i}"><b>${i+1}</b><div><div class="st">${s[0]}</div><div class="sd">${s[1]}</div></div></div>`).join('')+'</div>';
 }
 function showProfileWaiting(step=0){
   $('whyBlock').classList.remove('placeholder');
-  $('whyQuote').textContent='Reading your birth pattern...';
+  $('whyQuote').textContent='Reading your chart…';
   const wd=$('whyDetail'); wd.style.display='block';
-  wd.innerHTML='The bracelet is paused while the full profile service checks your birth time, support line, secondary themes, and stone map. This usually takes a few seconds.'+analysisStepsHtml(step);
+  if(!wd.querySelector('.profbar')) wd.innerHTML='<div class="profmsg">Casting your chart and matching the stones — give it a few seconds.</div>'+profileWaitHtml();
+  wd.querySelectorAll('.analysis-step').forEach((el,i)=>{ el.className='analysis-step '+(i<step?'done':(i===step?'on':'')); const b=el.querySelector('b'); if(b) b.textContent=i<step?'✓':String(i+1); });
   $('energyBlock').style.display='none';
 }
 function beginProfileProgress(seq){
-  let step=0;
-  showProfileWaiting(step);
+  let step=0; showProfileWaiting(step);
+  const f=document.getElementById('profbarFill');   // smooth fill 0→100% over the whole window
+  if(f){ requestAnimationFrame(()=>requestAnimationFrame(()=>{ if(seq===READ_SEQ){ f.style.transition='width '+ANALYSIS_MIN_MS+'ms cubic-bezier(.25,.55,.3,1)'; f.style.width='100%'; } })); }
   const timer=setInterval(()=>{
     if(seq!==READ_SEQ){ clearInterval(timer); return; }
     step=Math.min(step+1, PROFILE_STEPS.length-1);
     showProfileWaiting(step);
-  },1150);
+  }, Math.round(ANALYSIS_MIN_MS/PROFILE_STEPS.length));
   return ()=>clearInterval(timer);
 }
 function showProfileUnavailable(){
@@ -1743,9 +1747,10 @@ $('sceneNudge').onclick=()=>showTab($('sceneNudge').dataset.go);
   [...host.querySelectorAll('.chip')].forEach((c,i)=>c.style.setProperty('--i',i));
 })();
 $('customText').addEventListener('input',()=>{ state.customText=$('customText').value; maybeRead(); });
-$('bDate').addEventListener('change',maybeRead); $('bTime').addEventListener('change',maybeRead);
+$('bDate').addEventListener('change',()=>{$('birthErr').textContent='';}); $('bTime').addEventListener('change',()=>{$('birthErr').textContent='';});   // birth no longer auto-reads — the Confirm button gates the deep read (User 2026-06-27)
 (function(){const dl=$('cityList'); Object.keys(CITY).forEach(c=>{const o=document.createElement('option');o.value=c;dl.appendChild(o);});})();
-$('bPlace').addEventListener('input',()=>{ state.place=$('bPlace').value; clearTimeout(PLACE_TIMER); PLACE_TIMER=setTimeout(maybeRead,650); });
+$('bPlace').addEventListener('input',()=>{ state.place=$('bPlace').value; });
+$('readBtn').addEventListener('click',()=>{ if(!$('bDate').value){ $('birthErr').textContent='Add your birth date first.'; return; } $('birthErr').textContent=''; maybeRead(); });   // the deliberate Confirm tap that fires the deep read + 9s progress (User 2026-06-27)
 
 async function maybeRead(){
   const seq=++READ_SEQ;
