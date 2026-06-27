@@ -1801,9 +1801,11 @@ const GROUP_DOMAIN={'Love':'love','Career and money':'career'};
 function chartHumanLead(prof,group,topName){
   if(!prof||!topName) return null;
   const dom=GROUP_DOMAIN[group]; if(!dom) return null;
-  const judg=(CHART_HUMAN[dom]||{})[prof.strongest]; if(!judg) return null;   // domain cell not written yet → keep existing copy
-  const fix=(prof.favorable&&prof.favorable[0])||'water';
-  const act=STONE_ACTION[fix]||STONE_ACTION.water;
+  const dr=(prof.domain_reads&&prof.domain_reads[dom])||(prof.domainRead&&prof.domainRead[dom])||null;   // codex engine: real per-domain read
+  const loudEl=(dr&&dr.loudEl)||prof.strongest;          // real domain loudEl when the engine is connected; else approximate from the general chart (lite)
+  const fixEl=(dr&&dr.fixEl)||(prof.favorable&&prof.favorable[0])||'water';
+  const judg=(CHART_HUMAN[dom]||{})[loudEl]; if(!judg) return null;   // domain cell not written yet (career/wealth/health) → keep existing copy
+  const act=STONE_ACTION[fixEl]||STONE_ACTION.water;
   return `${judg} <em>${topName}</em> isn't here "for ${dom}" — it ${act}.`;
 }
 function supportLine(prof){ return ((prof&&prof.favorable)||[]).map(elName).filter(Boolean).slice(0,3).join(' + ')||'a steadier support line'; }
