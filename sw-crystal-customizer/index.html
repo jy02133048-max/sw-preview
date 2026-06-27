@@ -128,6 +128,14 @@
   .profbar{height:5px;background:rgba(14,107,80,.12);border-radius:3px;overflow:hidden;margin:2px 0 13px}
   .profbar-fill{height:100%;width:0;background:linear-gradient(90deg,var(--accent),#3fae86);border-radius:3px}
   .readbtn{margin-top:12px}
+  .findings{display:flex;flex-direction:column;gap:13px;margin-top:4px}
+  .finding{padding:13px 14px;border:1px solid var(--line);border-radius:11px;background:rgba(255,255,255,.5)}
+  .f-domain{font-size:10.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:7px}
+  .f-judg{font-size:14px;color:var(--ink);line-height:1.6;margin-bottom:11px}
+  .f-stone{display:flex;align-items:center;gap:11px}
+  .f-bead{width:38px;height:38px;border-radius:50%;background-size:cover;background-position:center;flex:none;box-shadow:0 2px 7px rgba(0,0,0,.18)}
+  .f-stone-t{font-size:12.5px;color:var(--muted);line-height:1.5}
+  .f-stone-t b{color:var(--ink);font-weight:600}
   .energy{margin-top:22px}
   .bar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
   .bar-label{width:46px;font-size:11.5px;color:#b8a88a;text-align:right;flex-shrink:0}
@@ -1446,13 +1454,53 @@ function selectStones(intentIds,prof,rng){
   return picks;
 }
 
+/* ===== analysis-first selection (Mode 2 / Mode 3): chart → one finding per domain → one main stone each =====
+   This is what makes the chart visibly drive the crystals: every main stone is tied to a specific read about you. */
+const DOMAIN_LABEL={love:'Love & connection',career:'Work & direction',wealth:'Money & flow',health:'Body & mind'};
+function domainOfScene(id){ const I=INTENTS.find(x=>x.id===id); return I?(GROUP_DOMAIN[I.g]||null):null; }
+function activeDomains(prof,intentIds,mode){
+  const all=['love','career','wealth','health'];
+  if(mode==='both'&&intentIds&&intentIds.length){
+    const sceneDoms=[...new Set(intentIds.map(domainOfScene).filter(Boolean))];
+    return [...sceneDoms, ...all.filter(d=>!sceneDoms.includes(d))];   // the scene's own domain leads, the rest of the chart follows
+  }
+  return all;                                                          // chart-only: read all four areas
+}
+function pickMainStone(el,ji,used){
+  if(!el||ji.has(el)) return null;
+  const pool=MIXPOOL.filter(s=>s.el===el&&!used.has(s.en)&&!ji.has(s.el)&&!SOLO.has(s.key));
+  if(!pool.length) return null;
+  pool.sort((a,b)=>(b.focal?1:0)-(a.focal?1:0));                      // prefer a focal/hero-worthy stone for a main bead
+  return pool[0];
+}
+function selectByAnalysis(prof,intentIds,mode){
+  if(!prof) return [];
+  const fav=(prof.favorable&&prof.favorable.length?prof.favorable:['water','earth','metal','wood','fire']);
+  const ji=new Set(prof.jishen||[]);
+  const used=new Set(), findings=[];
+  activeDomains(prof,intentIds,mode).forEach((dom,i)=>{
+    const dr=(prof.domain_reads&&prof.domain_reads[dom])||(prof.domainRead&&prof.domainRead[dom])||null;
+    const loudEl=(dr&&dr.loudEl)||prof.strongest;
+    const fixEl=(dr&&dr.fixEl)||fav[i%fav.length]||fav[0]||'water';   // engine's per-domain correction, else spread across favorable so each finding gets its own stone
+    const judg=(CHART_HUMAN[dom]||{})[loudEl];
+    if(!judg) return;                                                  // no human copy for this finding → don't fake it (User: 别假装算过)
+    let stone=pickMainStone(fixEl,ji,used);
+    if(!stone){ for(const e of fav){ stone=pickMainStone(e,ji,used); if(stone)break; } }
+    if(!stone) return;
+    used.add(stone.en);
+    const acts=STONE_ACTION[dom]||STONE_ACTION.default;
+    findings.push({domain:dom,label:DOMAIN_LABEL[dom],loudEl,fixEl,judgment:judg,stone,action:acts[fixEl]||STONE_ACTION.default[fixEl]||STONE_ACTION.default.water});
+  });
+  return findings;
+}
+
 /* ---- size + recipe model (unchanged) ---- */
 const SIZES=[6,8,10,12,16];
 function beadCount(){ return Math.max(4, Math.round(loopMm()/state.beadMm)); }   // capacity from the calibrated string length (loopMm = wrist inner circle + ease + πd)
 function fillToCount(recipe,n){ if(!recipe.length)return[]; const o=[]; let i=0; while(o.length<n){o.push(recipe[i%recipe.length]);i++} return o; }
 function recipeFromPicks(picks){ const r=[]; picks.forEach((p,i)=>{r.push(p.key); if(i<2)r.push(p.key);}); return r; }
 function rebuild(){ state.seq=state.recipe.slice(); renderAll();
-  try{ if(state.recipe.length) localStorage.setItem('sw_current',JSON.stringify({recipe:state.recipe,mmList:state.mmList,beadMm:state.beadMm,wristCm:state.wristCm,intents:state.intents,picks:state.picks,prof:state.prof,hasReading:state.hasReading,autofilled:state.autofilled,basePattern:state.basePattern,pattern:state.pattern,palette:state.palette,name:state.name})); }catch(e){}
+  try{ if(state.recipe.length) localStorage.setItem('sw_current',JSON.stringify({recipe:state.recipe,mmList:state.mmList,beadMm:state.beadMm,wristCm:state.wristCm,intents:state.intents,picks:state.picks,prof:state.prof,findings:state.findings,hasReading:state.hasReading,autofilled:state.autofilled,basePattern:state.basePattern,pattern:state.pattern,palette:state.palette,name:state.name})); }catch(e){}
   try{ if(typeof renderSlots==='function') renderSlots(); }catch(e){}
 }   // the ring IS the beads you placed; also auto-cache the design so a lock-screen/reload never loses it (User 2026-06-27)
 /* ---- undo history + non-destructive fit (User 2026-06-26) ---- */
@@ -1776,7 +1824,18 @@ async function maybeRead(){
     } else state.profileStatus='server-engine'; }
   else state.profileStatus='scene_only';
   state.prof=prof;
-  state.picks=selectStones(state.intents,state.prof); state.palette=null;
+  if(state.prof){                                                       // Mode 2 (chart) / Mode 3 (chart+scene): analysis-first — every main stone is tied to one finding about you
+    const mode=state.intents.length?'both':'chart';
+    state.findings=selectByAnalysis(state.prof,state.intents,mode);
+    if(state.findings.length){
+      const ctOrder=['lead','theme','echo','bridge'];
+      const fpicks=state.findings.map((f,i)=>({...f.stone,ct:ctOrder[i]||'echo',e1:f.stone.el,hits:[],role:'For '+f.label,finding:f}));
+      const br=MIXPOOL.find(s=>(s.color==='white_neutral'||s.color==='silver_gray')&&!fpicks.some(p=>p.en===s.en));
+      if(br) fpicks.push({...br,ct:'breath',e1:br.el,hits:[],role:'The pause'});   // one neutral for breathing room; arrangeStrand harmonises + fills the rest
+      state.picks=fpicks;
+    } else state.picks=selectStones(state.intents,state.prof);
+  } else { state.findings=null; state.picks=selectStones(state.intents,state.prof); }
+  state.palette=null;
   state.recipe=ensureVisiblePicks(arrangeStrand(state.picks, beadCount()),state.picks);       // colour layer: pattern × (their chart stones) → named 对味 strand
   state.basePattern=state.recipe.slice();
   state.mmList=mmFor(); state._leadBump=false;   // scene reco = all one size (User 2026-06-13; lead no longer bumped, matches lucky)
@@ -1959,6 +2018,14 @@ function beadWhy(st,prof,ct,hits,sceneName,want,pk,auto){
   if(auto) return `${stoneName(st)} appears here as a ${lane}: it ${action}. That makes it part of the chart logic, not a random extra bead.`;
   return `${stoneName(st)} ${action}.${ask}`;
 }
+function renderFindingsHtml(findings){   // Mode 2/3: one card per finding — the read about you + the stone chosen for it
+  return '<div class="findings">'+findings.map(f=>
+    `<div class="finding"><div class="f-domain">${esc(f.label)}</div>`
+    +`<div class="f-judg">${esc(f.judgment)}</div>`
+    +`<div class="f-stone"><span class="f-bead" style="background-image:url(${sprite(f.stone.key)})"></span>`
+    +`<span class="f-stone-t"><b>${esc(stoneName(f.stone))}</b> — it ${esc(f.action)}</span></div></div>`
+  ).join('')+'</div>';
+}
 function paintReading(){
   const scenes=state.intents.map(id=> id==='custom'?{custom:true,t:"the moment you described"}:INTENTS.find(x=>x.id===id)).filter(Boolean);
   const sc=scenes[0], top=state.picks[0], topName=top?stoneName(top):"This set of crystals";
@@ -1975,7 +2042,10 @@ function paintReading(){
   $('whyBlock').classList.remove('placeholder');
   $('whyQuote').textContent=`The read points to ${support} first.`;
   const wd=$('whyDetail'); wd.style.display='block';
-  if(!scenes.length){   // birthday only, no scene: speak from the chart, nudge a scene
+  if(state.findings&&state.findings.length){   // Mode 2/3 analysis-first: the per-domain reading, each finding paired with the stone chosen for it
+    $('whyQuote').textContent='What your chart shows';
+    wd.innerHTML=renderFindingsHtml(state.findings);
+  } else if(!scenes.length){   // birthday only, no scene: speak from the chart, nudge a scene
     wd.innerHTML=`Your chart comes back with one side of you running loud and another running quiet. That is why the strand opens with <em>${topName}</em>, then uses quieter spacer stones so the result feels wearable rather than overloaded.<br><span style="color:var(--faint);font-size:12.5px">Want it tied to right now? Pick a moment under Scene.</span>`;
   } else if(sc&&sc.custom){
     wd.innerHTML=`You wrote “${esc((state.customText||'').slice(0,60))}”. Your chart still points to one clear correction first. That is why <em>${topName}</em> leads the strand instead of a random pretty stone, and why the rest of the beads are spaced to keep the whole thing calm enough to wear.`;
