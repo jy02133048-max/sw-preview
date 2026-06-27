@@ -49,9 +49,9 @@
     font-family:'Cormorant Garamond',serif;font-style:italic;font-size:15px;color:var(--faint);line-height:1.5;pointer-events:none;z-index:1}
   .preview-meta{display:flex;gap:16px;font-size:12px;color:var(--muted);margin-top:2px}
   .preview-meta b{color:var(--ink);font-weight:400}
-  .slots{display:flex;gap:7px;justify-content:center;margin-top:8px;flex-wrap:wrap}
-  .slots .slot{font-size:11px;letter-spacing:.04em;color:var(--muted);border:1px solid rgba(227,148,49,.28);border-radius:14px;padding:5px 12px;cursor:pointer;background:transparent;font-family:'Inter',sans-serif;transition:.15s}
-  .slots .slot.filled{color:var(--ink);background:rgba(227,148,49,.13);border-color:rgba(227,148,49,.5)}
+  .slots{position:absolute;top:46px;left:10px;z-index:4;display:none;flex-direction:column;gap:6px;align-items:flex-start;pointer-events:none}
+  .slots .slot{pointer-events:auto;font-size:11px;letter-spacing:.04em;color:var(--gold);border:1px solid rgba(227,148,49,.3);border-radius:16px;padding:5px 12px;cursor:pointer;background:rgba(227,148,49,.07);font-family:'Inter',sans-serif;transition:.15s;min-width:60px;text-align:left;backdrop-filter:blur(3px)}
+  .slots .slot.filled{color:var(--ink);background:rgba(227,148,49,.18);border-color:rgba(227,148,49,.55)}
   .slots .slot:active{transform:scale(.96)} .slots .slot .x{margin-left:5px;opacity:.55}
   .preview-actions{position:absolute;top:8px;left:10px;right:10px;display:flex;justify-content:space-between;pointer-events:none;z-index:3}
   .preview-actions .pa-btn{pointer-events:auto}
@@ -618,13 +618,13 @@
       <div class="empty-hint" id="emptyHint">Your bracelet<br>takes shape here</div>
     </div>
     <div class="preview-meta"><span><b id="beadCount">—</b> beads</span><span id="sizeMeta">16cm · 8mm ✎</span><span class="meta-clear" id="undoBtn" style="display:none">↩ Undo</span><span class="meta-lucky" id="luckyBtn">🎲 Lucky</span><span class="meta-clear" id="clearAll" style="display:none">✕ Clear</span></div>
-    <div class="slots" id="slots" aria-label="Saved looks"></div>
     <div class="preview-meta2" id="patternMeta" style="display:none"></div>
     <div class="preview-meta2" id="metaFit" style="display:none"></div>
     <div class="preview-actions" id="previewActions" style="display:none">
       <button class="pa-btn" id="zoomBtn">🔍 Zoom in</button>
       <button class="pa-btn" id="wristBtn">Scene preview</button>
     </div>
+    <div class="slots" id="slots" aria-label="Saved looks"></div>
     <div class="coach" id="coach" style="display:none"></div>
   </section>
 
@@ -1448,6 +1448,7 @@ function fillToCount(recipe,n){ if(!recipe.length)return[]; const o=[]; let i=0;
 function recipeFromPicks(picks){ const r=[]; picks.forEach((p,i)=>{r.push(p.key); if(i<2)r.push(p.key);}); return r; }
 function rebuild(){ state.seq=state.recipe.slice(); renderAll();
   try{ if(state.recipe.length) localStorage.setItem('sw_current',JSON.stringify({recipe:state.recipe,mmList:state.mmList,beadMm:state.beadMm,wristCm:state.wristCm,intents:state.intents,picks:state.picks,prof:state.prof,hasReading:state.hasReading,autofilled:state.autofilled,basePattern:state.basePattern,pattern:state.pattern,palette:state.palette,name:state.name})); }catch(e){}
+  try{ if(typeof renderSlots==='function') renderSlots(); }catch(e){}
 }   // the ring IS the beads you placed; also auto-cache the design so a lock-screen/reload never loses it (User 2026-06-27)
 /* ---- undo history + non-destructive fit (User 2026-06-26) ---- */
 function snap(){ return JSON.stringify({recipe:state.recipe,mmList:state.mmList,autofilled:state.autofilled,basePattern:state.basePattern,picks:state.picks,beadMm:state.beadMm,wristCm:state.wristCm,pattern:state.pattern,palette:state.palette,displaced:state.displaced||[]}); }
@@ -2500,7 +2501,7 @@ function putSlots(s){ try{localStorage.setItem(SLOT_KEY,JSON.stringify(s));}catc
 function designSnapshot(){ return {recipe:state.recipe,mmList:state.mmList,beadMm:state.beadMm,wristCm:state.wristCm,intents:state.intents,picks:state.picks,prof:state.prof,hasReading:state.hasReading,autofilled:state.autofilled,basePattern:state.basePattern,pattern:state.pattern,palette:state.palette,name:state.name}; }
 function renderSlots(){ const host=$('slots'); if(!host) return; const s=loadSlots(); let h='';
   for(let i=1;i<=SLOT_N;i++){ const f=s[i]; h+=`<button class="slot${f?' filled':''}" data-slot="${i}">${f?('Look '+i):('Save '+i)}${f?` <span class="x" data-x="${i}">×</span>`:''}</button>`; }
-  host.innerHTML=h; }
+  host.innerHTML=h; host.style.display=(state.recipe.length||Object.keys(s).length)?'flex':'none'; }
 $('slots').addEventListener('click',e=>{
   const x=e.target.closest('.x'); if(x){ const s=loadSlots(); delete s[x.dataset.x]; putSlots(s); renderSlots(); toast('Look cleared'); return; }
   const b=e.target.closest('.slot'); if(!b) return; const i=b.dataset.slot, s=loadSlots();
