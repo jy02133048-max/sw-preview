@@ -1586,16 +1586,21 @@ function selectByAnalysis(prof,intentIds,mode){
   });
   return findings;
 }
-function arrangeFindings(findings,n){   // colour layer: light stones as the field, dark/saturated ones spaced evenly as highlights → reads designed, not scattered (User 2026-06-28)
+function arrangeFindings(findings,n){   // colour layer: read the palette in hand, then APPLY the right principle — harmonious colours GROUP into blocks (gradient within), clashing groups SEPARATE across the light field, all BALANCED around the ring. Not one rigid rule. (User 2026-06-28)
   const keys=findings.map(f=>f&&f.stone&&f.stone.key).filter(Boolean);
   if(!keys.length) return [];
   const setPat=()=>{ try{ state.pattern={id:'reading',name:'Reading',zh:'Reading',meaning:'each bead is one thing your chart said',src:'chart'}; }catch(e){} };
-  const prom=k=>(Lof(k)<65||Cof(k)>20);   // dark OR saturated = stands out against the light field → a highlight to space
-  const acc=[...new Set(keys)].filter(prom), base=[...new Set(keys)].filter(k=>!prom(k));
-  if(!acc.length||!base.length){ const o=[]; let i=0; while(o.length<n){ o.push(keys[i%keys.length]); i++; } setPat(); return o; }
-  const out=new Array(n).fill(null), step=n/acc.length;
-  acc.forEach((k,j)=>{ let pos=Math.round(j*step+step/2)%n; while(out[pos]!==null) pos=(pos+1)%n; out[pos]=k; });   // one highlight per prominent stone, evenly spaced, buffered by the field
-  let bi=0; for(let p=0;p<n;p++){ if(out[p]===null){ out[p]=base[bi%base.length]; bi++; } }
+  const hue=k=>{ const s=STONES[k]; return s&&s.lch?s.lch[2]:0; };
+  const isField=k=>(Lof(k)>=65 && Cof(k)<20);                       // light + quiet = the calm field
+  const field=[...new Set(keys)].filter(isField);
+  const accents=[...new Set(keys)].filter(k=>!isField(k));
+  if(!accents.length || !field.length){ const o=[]; let i=0; while(o.length<n){ o.push(keys[i%keys.length]); i++; } setPat(); return o; }
+  const tempOf=k=>{ if(Cof(k)<14) return 'dark'; const h=hue(k); return (h<100||h>335)?'warm':'cool'; };   // group by temperature; near-grey darks are their own anchor group
+  const groups={}; accents.forEach(k=>{ (groups[tempOf(k)]=groups[tempOf(k)]||[]).push(k); });
+  const blocks=Object.keys(groups).sort().map(t=>groups[t].sort((a,b)=>Lof(b)-Lof(a)));   // each block = one harmonious group, light→dark (a small gradient inside the block)
+  const out=new Array(n).fill(null), G=blocks.length, gap=n/G, base0=Math.round(n*0.382);   // φ offset so no block sits at the very top
+  blocks.forEach((blk,gi)=>{ let pos=(base0+Math.round(gi*gap))%n; for(const k of blk){ while(out[pos]!==null) pos=(pos+1)%n; out[pos]=k; pos=(pos+1)%n; } });   // blocks spread evenly → clashing groups separated by the field
+  let fi=0; for(let p=0;p<n;p++){ if(out[p]===null){ out[p]=field[fi%field.length]; fi++; } }
   setPat();
   return out;
 }
