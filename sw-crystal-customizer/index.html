@@ -1486,7 +1486,7 @@ function pickMainStone(el,ji,used,rng){
   const pool=MIXPOOL.filter(s=>s.el===el&&!used.has(s.en)&&!ji.has(s.el)&&!SOLO.has(s.key));
   if(!pool.length) return null;
   pool.sort((a,b)=>(b.focal?1:0)-(a.focal?1:0));                      // prefer a focal/hero-worthy stone for a main bead
-  return rng ? pool[Math.floor(Math.random()*Math.min(3,pool.length))] : pool[0];   // lucky: vary among the top few same-element stones → same read, different crystal (User 2026-06-28)
+  return rng ? pool[Math.floor(Math.random()*pool.length)] : pool[0];   // lucky: draw from the WHOLE same-element pool (top-3 felt repetitive over many spins) so the crystal really varies; non-lucky keeps the best focal (User 2026-06-28: 几十次都一样)
 }
 /* ===== palace breadth (Mode 2/3): each of the 12 chart palaces → one finding, a DIFFERENT life area. This is where the breadth comes from — the moat (User 2026-06-28). Star natures are standard, not invented; brightness + sihua are computed → 3+ grounded features per read. ===== */
 const PALACE_AREA={
@@ -1594,7 +1594,11 @@ function chartPattern(prof, rng){   // structure↔chart: ordered candidate skel
   else if(fav[0]&&fav[1]) cls=['goldensection','goldentriple','triblock'];             // 两个用神 → 黄金比例 φ 切块(User 最爱)
   else if(s==='strong') cls=['crown','thirds','comet'];                                // 一气独大 → 焦点 hero(带点缀,非裸 solitaire)
   else cls=['bookend','crown','thirds'];                                               // 中和/默认 → 对称/焦点
-  if(rng && cls.length>1){ const i=1+Math.floor(Math.random()*(cls.length-1)); cls=[cls[i]].concat(cls.filter((_,j)=>j!==i)); }   // Lucky: lead with a different compatible skeleton, same class → strand re-rolls, stays on-chart
+  if(rng){   // Lucky: roam a BROAD set of compatible skeletons (incl. colour-heavy φ/blocks/gradient, not just the chart's white-dominant class) so the strand genuinely re-rolls each spin (User 2026-06-28: 几十次都一样)
+    const broad=['bookend','crown','thirds','station','heartbeat','crescent','comet','goldensection','goldentriple','triblock','ombre','weave','tide','morse'];
+    for(let i=broad.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); const t=broad[i];broad[i]=broad[j];broad[j]=t; }
+    return broad;
+  }
   return cls;
 }
 // Reading strand = ONE engine, all three layers: chart→findings(content) → a real PATTERNS skeleton(structure+story) → the findings' colour brain fills the skeleton's roles(colour). Every bead stays a finding-stone, so the per-bead story (keyed by stone, openStory) never breaks. (User 2026-06-28 plan — 三层合一,止狗熊掰棒子)
