@@ -128,6 +128,10 @@
   .profbar{height:5px;background:rgba(14,107,80,.12);border-radius:3px;overflow:hidden;margin:2px 0 13px}
   .profbar-fill{height:100%;width:0;background:linear-gradient(90deg,var(--accent),#3fae86);border-radius:3px}
   .readbtn{margin-top:12px}
+  .genderrow{display:flex;gap:8px;margin-top:9px}
+  .gbtn{flex:1;min-height:46px;border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--ink);font-size:14px;font-weight:500;cursor:pointer;transition:.15s;font-family:inherit}
+  .gbtn:active{transform:scale(.97)}
+  .gbtn.on{background:var(--accent);border-color:var(--accent);color:#fff}
   .findings{display:flex;flex-direction:column;gap:13px;margin-top:4px}
   .finding{padding:13px 14px;border:1px solid var(--line);border-radius:11px;background:rgba(255,255,255,.5)}
   .f-domain{font-size:10.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:7px}
@@ -685,6 +689,10 @@
       <div class="daterow">
         <input type="date" id="bDate" min="1940-01-01" max="2014-12-31" aria-label="date of birth">
         <input type="time" id="bTime" aria-label="time of birth (optional)">
+      </div>
+      <div class="genderrow" role="group" aria-label="sex at birth">
+        <button type="button" class="gbtn" data-g="female" id="gF">Female</button>
+        <button type="button" class="gbtn" data-g="male" id="gM">Male</button>
       </div>
       <input list="cityList" id="bPlace" placeholder="Birth city (optional, makes the read finer)" autocomplete="off" aria-label="birth city">
       <datalist id="cityList"></datalist>
@@ -1716,7 +1724,7 @@ function bloomAt(g,x,y,bd,k){
 }
 
 /* ===== state ===== */
-const state={intents:[],picks:[],recipe:[],seq:[],basePattern:null,autofilled:false,tilt:false,mmList:[],prof:null,hasReading:false,cat:"all",wristCm:16,beadMm:10,name:"",request:"",customText:"",place:"",pattern:null,palette:null,displaced:[],history:[]}; window.__state=state;
+const state={intents:[],picks:[],recipe:[],seq:[],basePattern:null,autofilled:false,tilt:false,mmList:[],prof:null,hasReading:false,cat:"all",wristCm:16,beadMm:10,name:"",request:"",customText:"",gender:"",place:"",pattern:null,palette:null,displaced:[],history:[]}; window.__state=state;
 const esc=s=>(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
 // map a free-text "in my own words" description to stone wishes by keyword
 const CUSTOM_WISH=[[/sleep|insomnia|awake at|can't sleep|dream/i,"sleep_light"],[/anxi|nervous|stress|overwhelm|panic|tense|calm|relax|on edge/i,"calm"],[/focus|distract|concentrat|procrastinat|scattered/i,"focus"],[/confiden|shy|timid|afraid to|scared to|doubt myself|imposter/i,"confidence"],[/money|wealth|income|broke|debt|business|sell|hustle/i,"wealth"],[/career|job|promotion|work|interview|boss/i,"career"],[/love|crush|relationship|dating|romance|heart|single|soulmate/i,"love"],[/myself|self[- ]?worth|not enough|accept|deserve|self[- ]?love/i,"self_love"],[/protect|boundar|drain|toxic|negative|say no|people[- ]?pleas/i,"protection"],[/ground|stable|settle|root|steady|belong|home/i,"grounding"],[/speak|talk|communicat|express|present|voice|public/i,"communication"],[/energy|tired|exhaust|motivat|drive|burnout|no spark/i,"energy"],[/intuition|gut|guidance|sign|spiritual|clarity/i,"intuition"]];
@@ -1811,7 +1819,8 @@ $('customText').addEventListener('input',()=>{ state.customText=$('customText').
 $('bDate').addEventListener('change',()=>{$('birthErr').textContent='';}); $('bTime').addEventListener('change',()=>{$('birthErr').textContent='';});   // birth no longer auto-reads — the Confirm button gates the deep read (User 2026-06-27)
 (function(){const dl=$('cityList'); Object.keys(CITY).forEach(c=>{const o=document.createElement('option');o.value=c;dl.appendChild(o);});})();
 $('bPlace').addEventListener('input',()=>{ state.place=$('bPlace').value; });
-$('readBtn').addEventListener('click',()=>{ if(!$('bDate').value){ $('birthErr').textContent='Add your birth date first.'; return; } $('birthErr').textContent=''; maybeRead(); });   // the deliberate Confirm tap that fires the deep read + 9s progress (User 2026-06-27)
+$('readBtn').addEventListener('click',()=>{ if(!$('bDate').value){ $('birthErr').textContent='Add your birth date first.'; return; } if(!state.gender){ $('birthErr').textContent='Pick Female or Male — the reading needs it to be accurate.'; return; } $('birthErr').textContent=''; maybeRead(); });   // the deliberate Confirm tap that fires the deep read + 9s progress; sex is required because it sets the luck-cycle direction (User 2026-06-28)
+[...document.querySelectorAll('.gbtn')].forEach(b=>b.addEventListener('click',()=>{ state.gender=b.dataset.g; document.querySelectorAll('.gbtn').forEach(x=>x.classList.toggle('on',x===b)); $('birthErr').textContent=''; }));
 
 async function maybeRead(){
   const seq=++READ_SEQ;
@@ -1826,7 +1835,7 @@ async function maybeRead(){
     const stopProgress=beginProfileProgress(seq);
     state.prof=null; state.picks=[]; state.recipe=[]; state.seq=[]; state.autofilled=false; rebuild(); showTab('reading');
     const fallback=elementProfile(y,m,d,h,mi); fallback.source='client-lite';
-    const payload={year:rawY,month:rawM,day:rawD,hour:rawH,minute:rawMi,place:($('bPlace').value||'').trim(),intents:state.intents,customText:state.customText||'',timezone:city?city.tz:null,longitude:city?city.lon:null};
+    const payload={year:rawY,month:rawM,day:rawD,hour:rawH,minute:rawMi,gender:state.gender||'',place:($('bPlace').value||'').trim(),intents:state.intents,customText:state.customText||'',timezone:city?city.tz:null,longitude:city?city.lon:null};
     try{
       const wait=Math.max(0,ANALYSIS_MIN_MS-(Date.now()-started));
       [prof]=await Promise.all([profileFromEngine(payload,fallback),delay(wait)]);
