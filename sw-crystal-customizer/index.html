@@ -1586,30 +1586,67 @@ function selectByAnalysis(prof,intentIds,mode,rng){
   });
   return findings;
 }
-function arrangeFindings(findings,n){   // colour layer: read the palette in hand, then APPLY the right principle — harmonious colours GROUP into blocks (gradient within), clashing groups SEPARATE across the light field, all BALANCED around the ring. Not one rigid rule. (User 2026-06-28)
+function chartPattern(prof, rng){   // structure↔chart: ordered candidate skeletons that fit the chart's shape; arrangeFindingsStructured takes the first colour-compatible one. Palette-agnostic, non-fixed only. (User 2026-06-28 plan)
+  const s=(prof&&prof.strength)||'', fav=(prof&&prof.favorable)||[], ji=(prof&&prof.jishen)||[];
+  let cls;
+  if(/^follow/.test(s)) cls=['ombre','crescent','comet'];                              // 从势/顺流 → 渐变流动
+  else if((ji&&ji.length)>=2) cls=['station','heartbeat','bookend'];                   // 忌神多/要接地 → 念珠散点 + 锚
+  else if(fav[0]&&fav[1]) cls=['goldensection','goldentriple','triblock'];             // 两个用神 → 黄金比例 φ 切块(User 最爱)
+  else if(s==='strong') cls=['crown','thirds','comet'];                                // 一气独大 → 焦点 hero(带点缀,非裸 solitaire)
+  else cls=['bookend','crown','thirds'];                                               // 中和/默认 → 对称/焦点
+  if(rng && cls.length>1){ const i=1+Math.floor(Math.random()*(cls.length-1)); cls=[cls[i]].concat(cls.filter((_,j)=>j!==i)); }   // Lucky: lead with a different compatible skeleton, same class → strand re-rolls, stays on-chart
+  return cls;
+}
+// Reading strand = ONE engine, all three layers: chart→findings(content) → a real PATTERNS skeleton(structure+story) → the findings' colour brain fills the skeleton's roles(colour). Every bead stays a finding-stone, so the per-bead story (keyed by stone, openStory) never breaks. (User 2026-06-28 plan — 三层合一,止狗熊掰棒子)
+function arrangeFindingsStructured(findings,n,patHint){
   const keys=findings.map(f=>f&&f.stone&&f.stone.key).filter(Boolean);
-  if(!keys.length) return [];
-  const setPat=()=>{ try{ state.pattern={id:'reading',name:'Reading',zh:'Reading',meaning:'each bead is one thing your chart said',src:'chart'}; }catch(e){} };
+  if(!keys.length||n<1) return [];
   const hue=k=>{ const s=STONES[k]; return s&&s.lch?s.lch[2]:0; };
-  const isField=k=>{ const c=(STONES[k]||{}).color; return c==='white_neutral' || (Lof(k)>=60 && Cof(k)<10); };   // ONLY a true neutral (white/clear/light-grey) buffers. A low-chroma COLOUR like rose-pink (C12-15) is still a colour → it must GROUP, not get scattered as field (User 2026-06-28: 散粉就是这儿误判的)
-  const field=[...new Set(keys)].filter(isField);
-  const accents=[...new Set(keys)].filter(k=>!isField(k));
-  if(!accents.length){ const o=[]; let i=0; while(o.length<n){ o.push(keys[i%keys.length]); i++; } setPat(); return o; }   // all-neutral strand → order is moot
-  const tempOf=k=>{ if(Lof(k)<50 && Cof(k)<18) return 'dark'; const h=hue(k); return (h<100||h>335)?'warm':'cool'; };   // dark-neutral (black/smoky) = anchor group; everything with a hue groups by warm/cool — a low-chroma colour (rose) goes by its hue, not into 'dark'
+  const isField=k=>{ const c=(STONES[k]||{}).color; return c==='white_neutral' || (Lof(k)>=60 && Cof(k)<10); };   // true neutral only — rose-pink (C12-15) stays a colour and must group, not scatter
+  const field=[...new Set(keys)].filter(isField), accents=[...new Set(keys)].filter(k=>!isField(k));
+  const tempOf=k=>{ if(Lof(k)<50 && Cof(k)<18) return 'dark'; const h=hue(k); return (h<100||h>335)?'warm':'cool'; };
   const groups={}; accents.forEach(k=>{ (groups[tempOf(k)]=groups[tempOf(k)]||[]).push(k); });
-  const blocks=Object.keys(groups).sort().map(t=>groups[t].sort((a,b)=>Lof(b)-Lof(a)));   // each block = one harmonious group, light→dark (a small gradient inside the block)
-  const out=new Array(n).fill(null);
-  if(field.length){                                                                  // colour highlights on a neutral field: one bead per accent in temperature blocks; the neutral field fills the rest
-    const G=blocks.length, gap=n/G, base0=Math.round(n*0.382);                        // φ offset so no block sits at the very top
-    blocks.forEach((blk,gi)=>{ let pos=(base0+Math.round(gi*gap))%n; for(const k of blk){ while(out[pos]!==null) pos=(pos+1)%n; out[pos]=k; pos=(pos+1)%n; } });   // blocks spread evenly → clashing groups separated by the field
-    let fi=0; for(let p=0;p<n;p++){ if(out[p]===null){ out[p]=field[fi%field.length]; fi++; } }
-  } else {                                                                           // NO neutral at all → whole ring is colour: lay the temperature-ordered accents as contiguous BANDS (a gradient round the ring), never round-robin — that scatters (User 2026-06-28)
-    const order=[]; blocks.forEach(function(blk){ order.push.apply(order, blk); });
-    for(let p=0;p<n;p++) out[p]=order[Math.min(order.length-1, Math.floor(p*order.length/n))];
+  const blocks=Object.values(groups).map(g=>g.sort((a,b)=>Lof(b)-Lof(a))).sort((x,y)=>y.length-x.length);   // harmonious groups, biggest first = A; light→dark inside each
+  const groundField = field.length?field.slice():accents.slice().sort((a,b)=>Lof(b)-Lof(a));   // no neutral → quiet ground = the lightest colours
+  const naccent=Math.max(blocks.length,1);
+  const ok=p=> p && !p.fixed && (p.colors||0)<=naccent && patMinN(p)<=n;               // allow raw φ-block structures; exclude only fixed external-colour symbols (chakra/elements…)
+  const cands=Array.isArray(patHint)?patHint:(patHint?[patHint]:[]);
+  let pat=null; for(const id of cands){ const p=PATTERNS.find(x=>x.id===id); if(ok(p)){ pat=p; break; } }
+  if(!pat){ const pool=PATTERNS.filter(p=>!p.fixed && !p.quiet && (p.colors||0)<=naccent && patMinN(p)<=n);
+    pat = pool.find(p=>p.id==='bookend') || pool.find(p=>p.id==='crown') || pool[0] || PATTERNS.find(p=>p.id==='whisper') || PATTERNS[0]; }
+  const setRealPat=()=>{ try{ state.pattern={id:pat.id,name:pat.name,zh:pat.zh,size:pat.size,meaning:pat.meaning,src:pat.src}; state._lastPat=pat.id; state._lastLane=pat.lane; }catch(e){} };
+  if(pat.kind==='ombre'){   // value gradient straight from the findings' stones (light→dark→light), its own thing
+    const ramp=[...new Set([...groundField, ...blocks.reduce((a,b)=>a.concat(b),[])])].sort((a,b)=>Lof(b)-Lof(a)); const rr=ramp.length?ramp:keys;
+    setRealPat(); return Array.from({length:n},(_,i)=>{ const f=2*Math.min(i,n-i)/n; return rr[Math.min(rr.length-1,Math.round(f*(rr.length-1)))]; });
   }
-  setPat();
+  let toks = pat.build ? pat.build(n) : (pat.kind==='repeat'?expandRepeat(pat.motif,n):expandFrame(pat.motif,n));   // role-token skeleton (N/A/B/C/F/K)
+  if(toks.length>n)toks=toks.slice(0,n); while(toks.length<n)toks.push('N');
+  const heroKey = accents.length ? accents.slice().sort((a,b)=>(Cof(b)-Cof(a))||(Lof(b)-Lof(a)))[0] : (groundField[0]||keys[0]);   // focal F = the most optical finding-stone
+  const darkKey = accents.length ? accents.slice().sort((a,b)=>Lof(a)-Lof(b))[0] : (groundField[groundField.length-1]||keys[0]);     // anchor K = the darkest
+  const poolFor=t=> t==='A'?blocks[0] : t==='B'?(blocks[1]||blocks[0]) : t==='C'?(blocks[2]||blocks[1]||blocks[0]) : null;
+  const rot={A:0,B:0,C:0,N:0};
+  let out=toks.map(t=>{                                                               // fill each role from finding-stones — never an injected SKU → story stays intact
+    if(typeof t==='number'){ const b=blocks[t%naccent]||groundField; return b[(rot.A++)%b.length]; }
+    if(t==='F') return heroKey; if(t==='K') return darkKey;
+    if(t==='N') return groundField[(rot.N++)%groundField.length];
+    const p=poolFor(t); if(p&&p.length) return p[(rot[t]++)%p.length];
+    return groundField[(rot.N++)%groundField.length];
+  });
+  if(!pat.raw){                                                                       // raw φ/symmetry structures place colour by design (don't buffer); else never two different-hue accents adjacent (Albers)
+    const _col=k=>(STONES[k]||{}).color;
+    for(let pass=0;pass<n;pass++){ let did=false;
+      for(let i=0;i<n;i++){ const a=out[i],b=out[(i+1)%n];
+        if(a&&b&&!isNeutral(a)&&!isHero(a)&&!isNeutral(b)&&!isHero(b)&&_col(a)!==_col(b)){
+          let j=out.findIndex((x,idx)=>isNeutral(x)&&idx!==i&&idx!==(i+1)%n&&isNeutral(out[(idx+1)%n])&&isNeutral(out[(idx-1+n)%n]));
+          if(j<0) j=out.findIndex((x,idx)=>isNeutral(x)&&idx!==i&&idx!==(i+1)%n);
+          if(j>=0){ out[(i+1)%n]=out[j]; out[j]=b; did=true; }
+          else if(groundField.length){ out[(i+1)%n]=groundField[(rot.N++)%groundField.length]; did=true; } } }
+      if(!did) break; }
+  }
+  setRealPat();
   return out;
 }
+function arrangeFindings(findings,n){ return arrangeFindingsStructured(findings,n,chartPattern(state&&state.prof)); }   // back-compat wrapper (any stray caller still gets structure+colour)
 
 /* ---- size + recipe model (unchanged) ---- */
 const SIZES=[6,8,10,12,16];
@@ -1634,7 +1671,7 @@ function fitStrand(){ state.displaced=state.displaced||[];
     if(sumMm()+add<=loopMm()+state.beadMm/2){ state.displaced.pop(); state.recipe.push(d[0]); state.mmList.push(d[1]); } else break; } }
 function refit(){
   const target=beadCount();
-  if(state.autofilled && state.findings && state.findings.length){ state.recipe=arrangeFindings(state.findings, target);   // reading mode: re-run the analysis-first SMART-colour arranger — NOT arrangeStrand, which was silently clobbering the grouped strand on every resize/size-change (User 2026-06-28: 改了没生效就是这儿盖掉的)
+  if(state.autofilled && state.findings && state.findings.length){ state.recipe=arrangeFindingsStructured(state.findings, target, (state.pattern&&state.pattern.id));   // reading mode: re-fill the SAME chosen structure at the new bead count — never arrangeStrand (clobber), never re-roll the skeleton on resize (User 2026-06-28)
     state.basePattern=state.recipe.slice(); state.mmList=state.recipe.map(()=>null); }
   else if(state.autofilled && state.picks && state.picks.length){ state.recipe=ensureVisiblePicks(arrangeStrand(state.picks, target),state.picks);   // scene-only: the 对味 pattern arranger
     state.basePattern=state.recipe.slice(); state.mmList=mmFor(); }
@@ -1951,7 +1988,7 @@ async function maybeRead(){
   state.findings = state.prof ? selectByAnalysis(state.prof,state.intents,_mode) : null;    // Mode 2/3 analysis-first
   if(state.findings && state.findings.length){
     state.picks=state.findings.map((f,i)=>({...f.stone,ct:(i===0?'lead':['theme','echo','bridge','balance'][(i-1)%4]),e1:f.stone.el,hits:[],role:f.label,finding:f}));   // picks carry .finding for the story
-    state.recipe=arrangeFindings(state.findings, beadCount());                               // every bead = a finding's stone — no generic fill (User 2026-06-28)
+    state.recipe=arrangeFindingsStructured(state.findings, beadCount(), chartPattern(state.prof));   // content → chart-chosen structure → colour fills its roles; every bead a finding-stone (User 2026-06-28)
   } else {
     state.picks=selectStones(state.intents,state.prof);
     state.recipe=ensureVisiblePicks(arrangeStrand(state.picks, beadCount()),state.picks);    // scene-only / no-copy fallback: colour-pattern strand
@@ -2709,7 +2746,7 @@ function luckyStrand(){
     if(pf&&pf.length){
       state.findings=pf;
       state.picks=pf.map((f,i)=>({...f.stone,ct:(i===0?'lead':['theme','echo','bridge','balance'][(i-1)%4]),e1:f.stone.el,hits:[],role:f.label,finding:f}));
-      state.recipe=arrangeFindings(pf,N); state.palette=null; state.basePattern=state.recipe.slice();
+      state.recipe=arrangeFindingsStructured(pf,N,chartPattern(state.prof,true)); state.palette=null; state.basePattern=state.recipe.slice();   // Lucky: re-roll the structure (same chart) → different skeleton + crystals, same 12 reads
     } else {                                                            // lite profile (no palaces/copy) → keep the old colour-pattern lucky
       let best=null,bestScore=-1;
       for(let c=0;c<14;c++){ const picks=selectStones(state.intents,state.prof,true); if(!picks||!picks.length)continue;
@@ -2833,7 +2870,7 @@ fetch(ASSET+'beadwork/stones.json?v='+VER).then(r=>r.json()).then(cat=>{
   CATALOG=cat; cat.forEach(s=>STONES[s.key]=s); MIXPOOL=cat.filter(s=>!SOLO.has(s.key));
   // restore the last design (survives lock-screen / reload) unless a preset URL overrides it (User 2026-06-27)
   try{ if(!/[?&](seq|probe|autolucky|selftest)=/.test(location.search)){ var _sv=localStorage.getItem('sw_current'); if(_sv){ var _d=JSON.parse(_sv); if(_d&&_d.recipe&&_d.recipe.length){ Object.assign(state,_d); state.intents=[]; state.hasReading=false; var _wi=$('wrist'); if(_wi&&_d.wristCm) _wi.value=_d.wristCm;
-    if(state.autofilled && state.findings && state.findings.length){ state.recipe=arrangeFindings(state.findings, state.recipe.length); state.basePattern=state.recipe.slice(); state.mmList=state.recipe.map(function(){return null;}); }   // re-arrange a restored AUTO reading strand with the current colour logic so an old cached strand reflects code changes on reload; manual edits (autofilled=false) left exactly as saved (User 2026-06-28)
+    if(state.autofilled && state.findings && state.findings.length){ state.recipe=arrangeFindingsStructured(state.findings, state.recipe.length, (state.pattern&&state.pattern.id)); state.basePattern=state.recipe.slice(); state.mmList=state.recipe.map(function(){return null;}); }   // re-fill the restored strand's SAME structure with current logic on reload; manual edits (autofilled=false) left as saved (User 2026-06-28)
   } } } }catch(e){}   // restore the BRACELET only; don't carry old intents back or they jam the "pick up to two" limit and block new selections (User 2026-06-27)
   buildPalette(); renderAlbum(); rebuild(); renderSlots();
   if(/selftest=1/.test(location.search)) setTimeout(runColorSelfTest,400);
