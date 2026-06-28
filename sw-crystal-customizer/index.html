@@ -1524,7 +1524,7 @@ function sihuaMod(types){ if(types.includes('化忌')) return ' This is the tend
 function palaceFindings(prof){
   const pals=prof.palaces||[]; if(!pals.length) return [];
   const fav=(prof.favorable&&prof.favorable.length?prof.favorable:['water','earth','metal','wood','fire']);
-  const ji=new Set(prof.jishen||[]); const used=new Set(); const out=[];
+  const ji=new Set(prof.jishen||[]); const used=new Set(); const out=[]; const avar={};
   pals.forEach((p,i)=>{
     const A=PALACE_AREA[p.name]; if(!A) return;
     const star=(p.mainStars||[])[0]; if(!star||!STAR_NATURE[star.name]) return;   // empty / borrowed-chart palace → skip, don't fake a read (R1)
@@ -1533,7 +1533,8 @@ function palaceFindings(prof){
     const fixEl=fav[i%fav.length]||'water';
     let stone=pickMainStone(fixEl,ji,used)||pickFavStone(fav,ji,used); if(!stone) return;
     used.add(stone.en);
-    out.push({label:A.label,judgment:judg,stone,action:'',palace:p.name});
+    const aL=actListFor(null,fixEl); const ai=(avar[fixEl]=(avar[fixEl]||0)+1)-1;   // what this crystal does for you (the chart's correction), varied so same fix element doesn't repeat verbatim (User 2026-06-28)
+    out.push({label:A.label,judgment:judg,stone,action:aL[ai%aL.length],palace:p.name});
   });
   return out;
 }
