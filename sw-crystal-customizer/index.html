@@ -2826,7 +2826,9 @@ let _tt; function toast(m,act,fn){ const t=$('toast');
 fetch(ASSET+'beadwork/stones.json?v='+VER).then(r=>r.json()).then(cat=>{
   CATALOG=cat; cat.forEach(s=>STONES[s.key]=s); MIXPOOL=cat.filter(s=>!SOLO.has(s.key));
   // restore the last design (survives lock-screen / reload) unless a preset URL overrides it (User 2026-06-27)
-  try{ if(!/[?&](seq|probe|autolucky|selftest)=/.test(location.search)){ var _sv=localStorage.getItem('sw_current'); if(_sv){ var _d=JSON.parse(_sv); if(_d&&_d.recipe&&_d.recipe.length){ Object.assign(state,_d); state.intents=[]; state.hasReading=false; var _wi=$('wrist'); if(_wi&&_d.wristCm) _wi.value=_d.wristCm; } } } }catch(e){}   // restore the BRACELET only; don't carry old intents back or they jam the "pick up to two" limit and block new selections (User 2026-06-27)
+  try{ if(!/[?&](seq|probe|autolucky|selftest)=/.test(location.search)){ var _sv=localStorage.getItem('sw_current'); if(_sv){ var _d=JSON.parse(_sv); if(_d&&_d.recipe&&_d.recipe.length){ Object.assign(state,_d); state.intents=[]; state.hasReading=false; var _wi=$('wrist'); if(_wi&&_d.wristCm) _wi.value=_d.wristCm;
+    if(state.autofilled && state.findings && state.findings.length){ state.recipe=arrangeFindings(state.findings, state.recipe.length); state.basePattern=state.recipe.slice(); state.mmList=state.recipe.map(function(){return null;}); }   // re-arrange a restored AUTO reading strand with the current colour logic so an old cached strand reflects code changes on reload; manual edits (autofilled=false) left exactly as saved (User 2026-06-28)
+  } } } }catch(e){}   // restore the BRACELET only; don't carry old intents back or they jam the "pick up to two" limit and block new selections (User 2026-06-27)
   buildPalette(); renderAlbum(); rebuild(); renderSlots();
   if(/selftest=1/.test(location.search)) setTimeout(runColorSelfTest,400);
   if(/autolucky=1/.test(location.search)) setTimeout(()=>{ luckyStrand(); try{ document.title='LUCKY:'+JSON.stringify({seq:state.seq,scheme:(state.palette||{}).name,pat:(state.pattern||{}).zh,meaning:(state.pattern||{}).meaning,src:(state.pattern||{}).src}); }catch(e){ document.title='ERR'; } },900);
