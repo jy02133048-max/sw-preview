@@ -1628,7 +1628,9 @@ function fitStrand(){ state.displaced=state.displaced||[];
     if(sumMm()+add<=loopMm()+state.beadMm/2){ state.displaced.pop(); state.recipe.push(d[0]); state.mmList.push(d[1]); } else break; } }
 function refit(){
   const target=beadCount();
-  if(state.autofilled && state.picks && state.picks.length){ state.recipe=ensureVisiblePicks(arrangeStrand(state.picks, target),state.picks);   // re-run the 对味 arranger on resize so spacing/buffering stays correct at the new count
+  if(state.autofilled && state.findings && state.findings.length){ state.recipe=arrangeFindings(state.findings, target);   // reading mode: re-run the analysis-first SMART-colour arranger — NOT arrangeStrand, which was silently clobbering the grouped strand on every resize/size-change (User 2026-06-28: 改了没生效就是这儿盖掉的)
+    state.basePattern=state.recipe.slice(); state.mmList=state.recipe.map(()=>null); }
+  else if(state.autofilled && state.picks && state.picks.length){ state.recipe=ensureVisiblePicks(arrangeStrand(state.picks, target),state.picks);   // scene-only: the 对味 pattern arranger
     state.basePattern=state.recipe.slice(); state.mmList=mmFor(); }
   else if(state.autofilled && state.basePattern && state.basePattern.length){ state.recipe=fillToCount(state.basePattern, target);
     state.mmList=state.recipe.map(()=>null); }
