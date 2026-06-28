@@ -1483,9 +1483,61 @@ function pickMainStone(el,ji,used){
   pool.sort((a,b)=>(b.focal?1:0)-(a.focal?1:0));                      // prefer a focal/hero-worthy stone for a main bead
   return pool[0];
 }
+/* ===== palace breadth (Mode 2/3): each of the 12 chart palaces → one finding, a DIFFERENT life area. This is where the breadth comes from — the moat (User 2026-06-28). Star natures are standard, not invented; brightness + sihua are computed → 3+ grounded features per read. ===== */
+const PALACE_AREA={
+  '命宫':{label:'Who you are',lead:'At your core, in how you show up'},
+  '兄弟':{label:'Your inner circle',lead:'With the people right beside you — siblings, the ones in your corner'},
+  '夫妻':{label:'Love & partnership',lead:'In love and partnership'},
+  '子女':{label:'What you grow',lead:'With what you create and nurture — kids, projects, the things you grow'},
+  '财帛':{label:'Money & flow',lead:'With money and how it moves through your hands'},
+  '疾厄':{label:'Body & stress',lead:'In how your body and your stress run'},
+  '迁移':{label:'Out in the world',lead:'Out in the world — moving, travelling, on new ground'},
+  '交友':{label:'Friends & people',lead:'With your friends and the people you keep around you'},
+  '仆役':{label:'Friends & people',lead:'With your friends and the people you keep around you'},
+  '官禄':{label:'Work & direction',lead:'In your work and where you are headed'},
+  '田宅':{label:'Home & roots',lead:'At home and with your roots'},
+  '福德':{label:'Your inner life',lead:'In your inner life — what settles you, what you reach for to feel okay'},
+  '父母':{label:'Family & roots',lead:'With family and the people who have held authority over you'}
+};
+const STAR_NATURE={
+  '紫微':'you carry yourself like you are meant to run things — high standards, and it stings when you do not get the respect you feel you earned',
+  '天机':'your mind never stops turning it over — you analyse, second-guess, and plan three moves ahead, sometimes past the point of just deciding',
+  '太阳':'you run warm and outward — you give, you show up, you want to be seen doing it, and you can burn yourself down keeping the light on for everyone',
+  '武曲':'you are blunt and decisive — you would rather act and earn than talk it out, and softness does not come easily',
+  '天同':'you reach for ease and good feeling — you smooth things over, dodge the fight, and can let things drift rather than push',
+  '廉贞':'you run intense under a calm surface — passionate, a little rule-bending, pulled toward what is complicated',
+  '天府':'you build a cushion and play it safe — you like a reserve, hate being exposed, and move only when the ground feels solid',
+  '太阴':'you feel everything quietly and deeply — you take care of people, keep a lot inside, and need your own quiet to refill',
+  '贪狼':'you want a lot and you are good at getting it — charming, many appetites, restless when life gets too plain',
+  '巨门':'you question what you are told and say the doubt out loud — sharp-eyed, quick to find the hole, and you can talk yourself into suspicion',
+  '天相':'you keep the peace and mind how things look — loyal, fair, the one who smooths it over, sometimes at your own cost',
+  '天梁':'you take the responsible, protective role — principled, the one who handles it, and you can slide into lecturing',
+  '七杀':'you go after it hard and on your own — decisive, independent, you would rather move first and handle the fallout than wait',
+  '破军':'you tear down and rebuild — you cannot leave a stale thing alone, you pioneer and disrupt, and you get restless once it is settled'
+};
+function brightMod(b){ return /陷|不|落/.test(b||'')?' Here it pushes against the grain, so it does not land as cleanly as you want.':''; }
+function sihuaMod(types){ if(types.includes('化忌')) return ' This is the tender spot for you — it snags, and it pays to handle with care.'; if(types.includes('化禄')) return ' This is a bright spot — when you lean in, it tends to open up.'; if(types.includes('化权')) return ' You have real force here when you choose to use it.'; if(types.includes('化科')) return ' This is where you quietly get the credit.'; return ''; }
+function palaceFindings(prof){
+  const pals=prof.palaces||[]; if(!pals.length) return [];
+  const fav=(prof.favorable&&prof.favorable.length?prof.favorable:['water','earth','metal','wood','fire']);
+  const ji=new Set(prof.jishen||[]); const used=new Set(); const out=[];
+  pals.forEach((p,i)=>{
+    const A=PALACE_AREA[p.name]; if(!A) return;
+    const star=(p.mainStars||[])[0]; if(!star||!STAR_NATURE[star.name]) return;   // empty / borrowed-chart palace → skip, don't fake a read (R1)
+    const types=(p.sihua||[]).map(h=>h.type);
+    const judg=`${A.lead}, ${STAR_NATURE[star.name]}.${brightMod(star.brightness)}${sihuaMod(types)}`;
+    const fixEl=fav[i%fav.length]||'water';
+    let stone=pickMainStone(fixEl,ji,used)||pickFavStone(fav,ji,used); if(!stone) return;
+    used.add(stone.en);
+    out.push({label:A.label,judgment:judg,stone,action:'',palace:p.name});
+  });
+  return out;
+}
 function pickFavStone(fav,ji,used){ for(const e of fav){ const s=pickMainStone(e,ji,used); if(s)return s; } return null; }
 function selectByAnalysis(prof,intentIds,mode){
   if(!prof) return [];
+  const pf=palaceFindings(prof);
+  if(pf.length>=6) return pf;   // real engine gives the 12 palaces → 12 DIFFERENT life-area reads = the breadth (User 2026-06-28). lite (no palaces) falls through to the element-based reads below.
   const fav=(prof.favorable&&prof.favorable.length?prof.favorable:['water','earth','metal','wood','fire']);
   const ji=new Set(prof.jishen||[]);
   const used=new Set(), findings=[];
@@ -2025,7 +2077,7 @@ function beadWhy(st,prof,ct,hits,sceneName,want,pk,auto){
   if(!prof){
     return hits.length?`Answers the ${hits.join(' / ')} you asked for.`:`Because you're after “${sceneName}”, this stone is closest to that state.`;
   }
-  if(pk&&pk.finding){ return `${stoneName(st)} is the bead for ${pk.finding.label.toLowerCase()} — it ${pk.finding.action}.`; }   // Mode 2/3: every bead carries its own finding, no recycled role copy (User 2026-06-27)
+  if(pk&&pk.finding){ return `${stoneName(st)} is the bead for ${pk.finding.label.toLowerCase()}${pk.finding.action?` — it ${pk.finding.action}`:''}.`; }   // Mode 2/3: every bead carries its own finding (User 2026-06-27)
   const problem=profileProblem(prof,want), action=stoneChartAction(st,prof), ask=hits.length?` It also answers the ${wishText(hits)} you asked for.`:'';
   const lane=elementLane(st.el,prof);
   if(ct==='lead') return `${stoneName(st)} leads here because it ${action}.${ask}`;   // de-dup: the story block already states the problem; the hero stone just gives its own reason (User 2026-06-27)
@@ -2049,7 +2101,7 @@ function renderFindingsHtml(findings){   // Mode 2/3: one card per finding — t
     `<div class="finding"><div class="f-domain">${esc(f.label)}</div>`
     +`<div class="f-judg">${esc(f.judgment)}</div>`
     +`<div class="f-stone"><span class="f-bead" style="background-image:url(${sprite(f.stone.key)})"></span>`
-    +`<span class="f-stone-t"><b>${esc(stoneName(f.stone))}</b> — it ${esc(f.action)}</span></div></div>`
+    +`<span class="f-stone-t"><b>${esc(stoneName(f.stone))}</b>${f.action?` — it ${esc(f.action)}`:' carries this one'}</span></div></div>`
   ).join('')+'</div>';
 }
 function paintReading(){
