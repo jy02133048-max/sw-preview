@@ -1489,7 +1489,8 @@ function selectByAnalysis(prof,intentIds,mode){
   const fav=(prof.favorable&&prof.favorable.length?prof.favorable:['water','earth','metal','wood','fire']);
   const ji=new Set(prof.jishen||[]);
   const used=new Set(), findings=[];
-  const add=(label,judg,el,actEl)=>{ if(!judg) return; let stone=pickMainStone(el,ji,used)||pickFavStone(fav,ji,used); if(!stone) return; used.add(stone.en); findings.push({label,judgment:judg,stone,action:STONE_ACTION.default[actEl||el]||STONE_ACTION.default.water}); };
+  const avar={}, pickVaried=(d,el)=>{ const L=actListFor(d,el); const k=el||'water'; const i=(avar[k]=(avar[k]||0)+1)-1; return L[i%L.length]; };   // cycle phrasings so same-element findings don't repeat verbatim (User 2026-06-28)
+  const add=(label,judg,el,actEl)=>{ if(!judg) return; let stone=pickMainStone(el,ji,used)||pickFavStone(fav,ji,used); if(!stone) return; used.add(stone.en); findings.push({label,judgment:judg,stone,action:pickVaried(null,actEl||el)}); };
   // ── structural reads first: whole-chart, general → specific (top-to-bottom) ──
   const strong=prof.strongest, weak=prof.weakest;
   if(strong) add('Your core engine', `Your strongest pull is toward ${E_GIFT[strong]||'one clear direction'} — that is the engine of you. Under pressure it tips into ${E_SHADOW[strong]||'too much of a good thing'}.`, fav[0]||'water', fav[0]);
@@ -1508,10 +1509,16 @@ function selectByAnalysis(prof,intentIds,mode){
     let stone=pickMainStone(fixEl,ji,used)||pickFavStone(fav,ji,used);
     if(!stone) return;
     used.add(stone.en);
-    const acts=STONE_ACTION[dom]||STONE_ACTION.default;
-    findings.push({domain:dom,label:DOMAIN_LABEL[dom],loudEl,fixEl,judgment:judg,stone,action:acts[fixEl]||STONE_ACTION.default[fixEl]||STONE_ACTION.default.water});
+    findings.push({domain:dom,label:DOMAIN_LABEL[dom],loudEl,fixEl,judgment:judg,stone,action:pickVaried(dom,fixEl)});
   });
   return findings;
+}
+function arrangeFindings(findings,n){   // every bead is a finding's stone — round-robin so they're evenly spaced, no generic fill (User 2026-06-28)
+  const keys=findings.map(f=>f&&f.stone&&f.stone.key).filter(Boolean);
+  if(!keys.length) return [];
+  const out=[]; let i=0; while(out.length<n){ out.push(keys[i%keys.length]); i++; }
+  try{ state.pattern={id:'reading',name:'One bead per read',zh:'One bead per read',meaning:'each bead is one thing your chart said',src:'chart'}; }catch(e){}
+  return out;
 }
 
 /* ---- size + recipe model (unchanged) ---- */
@@ -1845,18 +1852,16 @@ async function maybeRead(){
     } else state.profileStatus='server-engine'; }
   else state.profileStatus='scene_only';
   state.prof=prof;
-  if(state.prof){                                                       // Mode 2 (chart) / Mode 3 (chart+scene): analysis-first — every main stone is tied to one finding about you
-    const mode=state.intents.length?'both':'chart';
-    state.findings=selectByAnalysis(state.prof,state.intents,mode);
-    if(state.findings.length){
-      const fpicks=state.findings.map((f,i)=>({...f.stone,ct:(i===0?'lead':['theme','echo','bridge','balance'][(i-1)%4]),e1:f.stone.el,hits:[],role:f.label,finding:f}));   // every finding's stone goes in; ct only drives placement, the copy comes from .finding
-      const br=MIXPOOL.find(s=>(s.color==='white_neutral'||s.color==='silver_gray')&&!fpicks.some(p=>p.en===s.en));
-      if(br) fpicks.push({...br,ct:'breath',e1:br.el,hits:[],role:'The pause'});   // one neutral for breathing room; arrangeStrand harmonises + fills the rest
-      state.picks=fpicks;
-    } else state.picks=selectStones(state.intents,state.prof);
-  } else { state.findings=null; state.picks=selectStones(state.intents,state.prof); }
   state.palette=null;
-  state.recipe=ensureVisiblePicks(arrangeStrand(state.picks, beadCount()),state.picks);       // colour layer: pattern × (their chart stones) → named 对味 strand
+  const _mode=state.intents.length?'both':'chart';
+  state.findings = state.prof ? selectByAnalysis(state.prof,state.intents,_mode) : null;    // Mode 2/3 analysis-first
+  if(state.findings && state.findings.length){
+    state.picks=state.findings.map((f,i)=>({...f.stone,ct:(i===0?'lead':['theme','echo','bridge','balance'][(i-1)%4]),e1:f.stone.el,hits:[],role:f.label,finding:f}));   // picks carry .finding for the story
+    state.recipe=arrangeFindings(state.findings, beadCount());                               // every bead = a finding's stone — no generic fill (User 2026-06-28)
+  } else {
+    state.picks=selectStones(state.intents,state.prof);
+    state.recipe=ensureVisiblePicks(arrangeStrand(state.picks, beadCount()),state.picks);    // scene-only / no-copy fallback: colour-pattern strand
+  }
   state.basePattern=state.recipe.slice();
   state.mmList=mmFor(); state._leadBump=false;   // scene reco = all one size (User 2026-06-13; lead no longer bumped, matches lucky)
   while(state.recipe.length&&sumMm()>loopMm()+state.beadMm/2){ state.recipe.pop(); state.mmList.pop(); }
@@ -1902,13 +1907,14 @@ const STONE_ACTION={
     fire:"warms the guard down a notch, so warmth gets in before you've checked it"
   },
   default:{
-    water:"slows the first reaction by half a beat, so you move on the read instead of the impulse",
-    earth:"gives it a floor to stand on, so one thing can finally hold still",
-    metal:"draws a clean line, so you stop spreading yourself thin and keep something back",
-    wood:"gives it room to move forward instead of loop, loosening the grip a notch",
-    fire:"puts a little warmth and forward push back in, so you lean in instead of holding back"
+    water:["slows the first reaction by half a beat, so you move on the read, not the impulse","cools the rush just enough that you answer instead of react","sets a small pause between the trigger and your move"],
+    earth:["gives it a floor to stand on, so one thing can finally hold still","steadies the ground under it so it stops wobbling","adds the weight that lets the restless part settle"],
+    metal:["draws a clean line, so you stop spreading yourself thin","puts the edge back between what's yours and what isn't","holds the boundary at the spot where it keeps slipping"],
+    wood:["gives it room to move forward instead of loop","loosens the grip so it can grow, not just repeat","opens a little space so it stops circling the same thing"],
+    fire:["puts a little warmth and forward push back in","turns the heat up just enough to lean in","brings the spark back so you stop hanging back"]
   }
 };
+function actListFor(dom,el){ const acts=STONE_ACTION[dom]||STONE_ACTION.default; const a=acts[el]||STONE_ACTION.default[el]||STONE_ACTION.default.water; return Array.isArray(a)?a:[a]; }
 const GROUP_DOMAIN={'Love':'love','Career and money':'career','Inner state':'health','Body and mind':'health'};   // Social + Change still fall to the generic read until their copy is written (User 2026-06-27)
 function chartHumanLead(prof,group,topName){
   if(!prof||!topName) return null;
@@ -1917,8 +1923,7 @@ function chartHumanLead(prof,group,topName){
   const loudEl=(dr&&dr.loudEl)||prof.strongest;          // real domain loudEl when the engine is connected; else approximate from the general chart (lite)
   const fixEl=(dr&&dr.fixEl)||(prof.favorable&&prof.favorable[0])||'water';
   const judg=(CHART_HUMAN[dom]||{})[loudEl]; if(!judg) return null;   // domain cell not written yet (career/wealth/health) → keep existing copy
-  const acts=STONE_ACTION[dom]||STONE_ACTION.default;
-  const act=acts[fixEl]||STONE_ACTION.default[fixEl]||STONE_ACTION.default.water;
+  const act=actListFor(dom,fixEl)[0];
   const dw={love:'love',career:'your career',health:'your health',wealth:'money'};
   return `${judg} <em>${topName}</em> isn't here "for ${dw[dom]||dom}" — it ${act}.`;
 }
@@ -2489,13 +2494,17 @@ function openStory(){
     const pk=state.picks.find(p=>p.key===u.key);
     const auto=!!(prof&&state.autofilled&&!pk);
     const ct=pk?pk.ct:(auto?'pattern':'own');
-    const tierLbl=beadTierLabel(ct,prof,auto);
+    const tierLbl=(pk&&pk.finding)?pk.finding.label:beadTierLabel(ct,prof,auto);
     const hits=(pk&&pk.hits?pk.hits:(st.wish||[]).filter(w=>want.has(w))).map(w=>WISH_LABEL[w]||w);
     let why=beadWhy(st,prof,ct,hits,sceneName,want,pk,auto);
-    let place={lead:'Opens in a pair to set the tone.',bridge:'A matched pair echoes the lead stone so the rhythm holds together.',theme:'Placed as the second-layer bead, so the personal theme is not swallowed by the main support line.',balance:'A single bead set between the bright ones, pulling the warmth back to center.',breath:'Single, leaving room around the bright notes.',echo:'A single bead to close, echoing the wish from the start one more time.',pattern:`Placed by the bracelet pattern at bead ${u.pos.map(p2=>p2+1).join(', ')}.`,own:`Placed by you at bead ${u.pos.map(p2=>p2+1).join(', ')}.`}[ct];
+    let place;
+    if(pk&&pk.finding){ place=`Sits at bead ${u.pos.map(p2=>p2+1).join(', ')} in the strand.`; }   // findings: clean position line, no ct-role mechanics (User 2026-06-28)
+    else {
+    place={lead:'Opens in a pair to set the tone.',bridge:'A matched pair echoes the lead stone so the rhythm holds together.',theme:'Placed as the second-layer bead, so the personal theme is not swallowed by the main support line.',balance:'A single bead set between the bright ones, pulling the warmth back to center.',breath:'Single, leaving room around the bright notes.',echo:'A single bead to close, echoing the wish from the start one more time.',pattern:`Placed by the bracelet pattern at bead ${u.pos.map(p2=>p2+1).join(', ')}.`,own:`Placed by you at bead ${u.pos.map(p2=>p2+1).join(', ')}.`}[ct];
     if(u.pos.length>=3&&ct!=='own'){ const g=Math.round((u.pos[u.pos.length-1]-u.pos[0])/(u.pos.length-1));
       place+=g<=1?' Runs as a continuous section, so this note stays present.':` Returns every ~${g} beads — even breathing.`; }
     if(!auto&&ct==='own'&&prof&&prof.jishen&&prof.jishen.includes(st.el)) place+=` Heads up: ${elName(st.el)} pushes against your pattern a little — but if you love the colour, you can keep it.`;
+    }
     const bigMm=u.pos.map(p2=>state.mmList[p2]||0).filter(v=>v>state.beadMm)[0];
     if(ct==='lead'&&bigMm) place+=` This one sizes up to ${bigMm}mm — front and centre.`;
     const it=document.createElement('div'); it.className='s-item'; it.style.setProperty('--i',bi);
