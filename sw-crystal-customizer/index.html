@@ -1481,12 +1481,12 @@ function activeDomains(prof,intentIds,mode){
   }
   return all;                                                          // chart-only: read all four areas
 }
-function pickMainStone(el,ji,used){
+function pickMainStone(el,ji,used,rng){
   if(!el||ji.has(el)) return null;
   const pool=MIXPOOL.filter(s=>s.el===el&&!used.has(s.en)&&!ji.has(s.el)&&!SOLO.has(s.key));
   if(!pool.length) return null;
   pool.sort((a,b)=>(b.focal?1:0)-(a.focal?1:0));                      // prefer a focal/hero-worthy stone for a main bead
-  return pool[0];
+  return rng ? pool[Math.floor(Math.random()*Math.min(3,pool.length))] : pool[0];   // lucky: vary among the top few same-element stones → same read, different crystal (User 2026-06-28)
 }
 /* ===== palace breadth (Mode 2/3): each of the 12 chart palaces → one finding, a DIFFERENT life area. This is where the breadth comes from — the moat (User 2026-06-28). Star natures are standard, not invented; brightness + sihua are computed → 3+ grounded features per read. ===== */
 const PALACE_AREA={
@@ -1538,7 +1538,7 @@ const STAR_COUNTER={   // the crystal's job per star — each over-expression ge
 };
 function brightMod(b){ return /陷|不|落/.test(b||'')?' Here it pushes against the grain, so it does not land as cleanly as you want.':''; }
 function sihuaMod(types){ if(types.includes('化忌')) return ' This is the tender spot for you — it snags, and it pays to handle with care.'; if(types.includes('化禄')) return ' This is a bright spot — when you lean in, it tends to open up.'; if(types.includes('化权')) return ' You have real force here when you choose to use it.'; if(types.includes('化科')) return ' This is where you quietly get the credit.'; return ''; }
-function palaceFindings(prof){
+function palaceFindings(prof,rng){
   const pals=prof.palaces||[]; if(!pals.length) return [];
   const fav=(prof.favorable&&prof.favorable.length?prof.favorable:['water','earth','metal','wood','fire']);
   const ji=new Set(prof.jishen||[]); const used=new Set(); const out=[];
@@ -1548,22 +1548,22 @@ function palaceFindings(prof){
     const types=(p.sihua||[]).map(h=>h.type);
     const judg=`${A.lead}, ${STAR_NATURE[star.name]}.${brightMod(star.brightness)}${sihuaMod(types)}`;
     const fixEl=fav[i%fav.length]||'water';
-    let stone=pickMainStone(fixEl,ji,used)||pickFavStone(fav,ji,used); if(!stone) return;
+    let stone=pickMainStone(fixEl,ji,used,rng)||pickFavStone(fav,ji,used,rng); if(!stone) return;
     used.add(stone.en);
     out.push({label:A.label,judgment:judg,stone,action:STAR_COUNTER[star.name]||actListFor(null,fixEl)[0],palace:p.name});   // action tied to the STAR (per-finding) → no element-clustering repetition (User 2026-06-28)
   });
   return out;
 }
-function pickFavStone(fav,ji,used){ for(const e of fav){ const s=pickMainStone(e,ji,used); if(s)return s; } return null; }
-function selectByAnalysis(prof,intentIds,mode){
+function pickFavStone(fav,ji,used,rng){ for(const e of fav){ const s=pickMainStone(e,ji,used,rng); if(s)return s; } return null; }
+function selectByAnalysis(prof,intentIds,mode,rng){
   if(!prof) return [];
-  const pf=palaceFindings(prof);
+  const pf=palaceFindings(prof,rng);
   if(pf.length>=6) return pf;   // real engine gives the 12 palaces → 12 DIFFERENT life-area reads = the breadth (User 2026-06-28). lite (no palaces) falls through to the element-based reads below.
   const fav=(prof.favorable&&prof.favorable.length?prof.favorable:['water','earth','metal','wood','fire']);
   const ji=new Set(prof.jishen||[]);
   const used=new Set(), findings=[];
   const avar={}, pickVaried=(d,el)=>{ const L=actListFor(d,el); const k=el||'water'; const i=(avar[k]=(avar[k]||0)+1)-1; return L[i%L.length]; };   // cycle phrasings so same-element findings don't repeat verbatim (User 2026-06-28)
-  const add=(label,judg,el,actEl)=>{ if(!judg) return; let stone=pickMainStone(el,ji,used)||pickFavStone(fav,ji,used); if(!stone) return; used.add(stone.en); findings.push({label,judgment:judg,stone,action:pickVaried(null,actEl||el)}); };
+  const add=(label,judg,el,actEl)=>{ if(!judg) return; let stone=pickMainStone(el,ji,used,rng)||pickFavStone(fav,ji,used,rng); if(!stone) return; used.add(stone.en); findings.push({label,judgment:judg,stone,action:pickVaried(null,actEl||el)}); };
   // ── structural reads first: whole-chart, general → specific (top-to-bottom) ──
   const strong=prof.strongest, weak=prof.weakest;
   if(strong) add('Your core engine', `Your strongest pull is toward ${E_GIFT[strong]||'one clear direction'} — that is the engine of you. Under pressure it tips into ${E_SHADOW[strong]||'too much of a good thing'}.`, fav[0]||'water', fav[0]);
@@ -1579,7 +1579,7 @@ function selectByAnalysis(prof,intentIds,mode){
     const fixEl=(dr&&dr.fixEl)||fav[i%fav.length]||fav[0]||'water';   // engine's per-domain correction, else spread across favorable so each finding gets its own stone
     const judg=(CHART_HUMAN[dom]||{})[loudEl];
     if(!judg) return;                                                  // no human copy for this finding → don't fake it (User: 别假装算过)
-    let stone=pickMainStone(fixEl,ji,used)||pickFavStone(fav,ji,used);
+    let stone=pickMainStone(fixEl,ji,used,rng)||pickFavStone(fav,ji,used,rng);
     if(!stone) return;
     used.add(stone.en);
     findings.push({domain:dom,label:DOMAIN_LABEL[dom],loudEl,fixEl,judgment:judg,stone,action:pickVaried(dom,fixEl)});
@@ -2693,14 +2693,22 @@ function luckyStrand(){
   pushHistory(); state.displaced=[];
   const N=beadCount();
   if(state.prof){
-    // chart flow: element causal-chain + best-of-N 对味 score (喜用决定Stones)
-    let best=null,bestScore=-1;
-    for(let c=0;c<14;c++){ const picks=selectStones(state.intents,state.prof,true); if(!picks||!picks.length)continue;
-      const recipe=arrangeStrand(picks,N); const sc=scoreStrand(recipe); const patSnap=state.pattern?{...state.pattern}:null;
-      if(sc>bestScore){ bestScore=sc; best={picks,recipe,patSnap}; } }
-    if(!best) return;
-    state.picks=best.picks; state.palette=null; state.recipe=best.recipe.slice(); state.basePattern=best.recipe.slice();
-    if(best.patSnap){ state.pattern=best.patSnap; state._lastPat=best.patSnap.id; }
+    // chart flow: SAME analysis-first findings + smart colour layer as the main read; Lucky only re-rolls WHICH crystal carries each read (rng) → strand looks different, stays true to the chart, and the reading panel stays in sync. (User 2026-06-28: was selectStones+arrangeStrand, which bypassed the findings → panel/strand mismatch)
+    const lmode=state.intents.length?'both':'chart';
+    const pf=selectByAnalysis(state.prof,state.intents,lmode,true);
+    if(pf&&pf.length){
+      state.findings=pf;
+      state.picks=pf.map((f,i)=>({...f.stone,ct:(i===0?'lead':['theme','echo','bridge','balance'][(i-1)%4]),e1:f.stone.el,hits:[],role:f.label,finding:f}));
+      state.recipe=arrangeFindings(pf,N); state.palette=null; state.basePattern=state.recipe.slice();
+    } else {                                                            // lite profile (no palaces/copy) → keep the old colour-pattern lucky
+      let best=null,bestScore=-1;
+      for(let c=0;c<14;c++){ const picks=selectStones(state.intents,state.prof,true); if(!picks||!picks.length)continue;
+        const recipe=arrangeStrand(picks,N); const sc=scoreStrand(recipe); const patSnap=state.pattern?{...state.pattern}:null;
+        if(sc>bestScore){ bestScore=sc; best={picks,recipe,patSnap}; } }
+      if(!best) return;
+      state.picks=best.picks; state.palette=null; state.recipe=best.recipe.slice(); state.basePattern=best.recipe.slice();
+      if(best.patSnap){ state.pattern=best.patSnap; state._lastPat=best.patSnap.id; }
+    }
   } else {
     // pure luck: ROTATE the base hue each shuffle (forces red→amber→green→blue→… so all colours appear, not just low-chroma blue winning),
     // then best-of-N over schemes/structures WITHIN that hue → variety across shuffles + coordination within each.
@@ -2717,8 +2725,8 @@ function luckyStrand(){
   }
   state.mmList=mmFor(); state._leadBump=false;
   while(state.recipe.length&&sumMm()>loopMm()+state.beadMm/2){ state.recipe.pop(); state.mmList.pop(); }
-  state.autofilled=true; state._repour=true; rebuild();
-  toast(state.prof?'A lucky strand — same causal chain, different cards':'Lucky pick ready: a designed palette');
+  state.autofilled=true; state._repour=true; if(state.prof) paintReading(); rebuild();   // chart lucky: refresh the reading cards so the stones shown match the re-rolled strand (User 2026-06-28)
+  toast(state.prof?'A lucky strand — same reads, different crystals':'Lucky pick ready: a designed palette');
 }
 $('luckyBtn').onclick=luckyStrand; $('undoBtn').onclick=undo;
 /* save slots — keep a few looks side by side; tap empty to save, tap filled to load, × to clear (User 2026-06-27) */
