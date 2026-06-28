@@ -947,6 +947,10 @@ function normalizeEngineProfile(data,fallback){
     wishBias: normWeightMap(raw.wish_bias||raw.wishBias||ziwei.wish_bias||ziwei.intent_bias, wishKeys),
     preferredWishes: (raw.preferred_wishes||raw.preferredWishes||ziwei.preferred_wishes||[]).filter(w=>wishKeys.includes(w)),
     insights: Array.isArray(raw.insights) ? raw.insights.slice(0,6) : [],
+    domain_reads: raw.domain_reads || raw.domainRead || (fallback&&fallback.domain_reads) || null,   // these 3 were being DROPPED → the tool never saw the real per-domain reads, the 12 palaces, or codex's 80 findings, so it fell back to the 9 element reads (User 2026-06-28)
+    domainRead: raw.domain_reads || raw.domainRead || null,
+    palaces: Array.isArray(raw.palaces) ? raw.palaces : [],
+    findings: Array.isArray(raw.findings) ? raw.findings : [],
   };
 }
 async function profileFromEngine(payload,fallback){
