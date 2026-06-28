@@ -1613,12 +1613,14 @@ function recipeFromPicks(picks){ const r=[]; picks.forEach((p,i)=>{r.push(p.key)
 function rebuild(){ state.seq=state.recipe.slice(); renderAll();
   try{ if(state.recipe.length) localStorage.setItem('sw_current',JSON.stringify({recipe:state.recipe,mmList:state.mmList,beadMm:state.beadMm,wristCm:state.wristCm,intents:state.intents,picks:state.picks,prof:state.prof,findings:state.findings,hasReading:state.hasReading,autofilled:state.autofilled,basePattern:state.basePattern,pattern:state.pattern,palette:state.palette,name:state.name})); }catch(e){}
   try{ if(typeof renderSlots==='function') renderSlots(); }catch(e){}
+  try{ updateUndoBtn(); }catch(e){}                                                  // keep Undo's on-screen/greyed state in sync after every build, incl. a fresh read (User 2026-06-28)
 }   // the ring IS the beads you placed; also auto-cache the design so a lock-screen/reload never loses it (User 2026-06-27)
 /* ---- undo history + non-destructive fit (User 2026-06-26) ---- */
 function snap(){ return JSON.stringify({recipe:state.recipe,mmList:state.mmList,autofilled:state.autofilled,basePattern:state.basePattern,picks:state.picks,beadMm:state.beadMm,wristCm:state.wristCm,pattern:state.pattern,palette:state.palette,displaced:state.displaced||[]}); }
 function pushHistory(){ (state.history=state.history||[]).push(snap()); if(state.history.length>60)state.history.shift(); updateUndoBtn(); }
 function undo(){ if(!state.history||!state.history.length)return; const s=JSON.parse(state.history.pop()); Object.assign(state,s); rebuild(); updateUndoBtn(); }
-function updateUndoBtn(){ const u=$('undoBtn'); if(u) u.style.display=(state.history&&state.history.length)?'inline':'none'; }
+function updateUndoBtn(){ const u=$('undoBtn'); if(!u)return; const has=!!(state.history&&state.history.length); const show=has||state.hasReading||(state.recipe&&state.recipe.length);   // once a strand exists, keep Undo on screen (greyed when there's nothing to undo) so it never reads as "gone" (User 2026-06-28)
+  u.style.display=show?'inline':'none'; u.style.opacity=has?'1':'.32'; u.style.pointerEvents=has?'auto':'none'; }
 /* fit strand to wrist WITHOUT losing beads: overflow → displaced buffer; room reappears → restore */
 function fitStrand(){ state.displaced=state.displaced||[];
   while(state.recipe.length>4 && sumMm()>loopMm()+state.beadMm/2){ const k=state.recipe.pop(), m=state.mmList.pop(); state.displaced.push([k,m]); }
