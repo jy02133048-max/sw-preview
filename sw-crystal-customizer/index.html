@@ -135,7 +135,8 @@
   .findings{display:flex;flex-direction:column;gap:13px;margin-top:4px}
   .finding{padding:13px 14px;border:1px solid var(--line);border-radius:11px;background:rgba(255,255,255,.5)}
   .f-domain{font-size:10.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:7px}
-  .f-judg{font-size:14px;color:var(--ink);line-height:1.6;margin-bottom:11px}
+  .f-judg{font-size:14px;color:var(--ink);line-height:1.6;margin-bottom:9px}
+  .f-act{font-size:13px;color:var(--muted);line-height:1.55;margin-bottom:11px;padding-left:11px;border-left:2px solid var(--accent)}
   .f-stone{display:flex;align-items:center;gap:11px}
   .f-bead{width:38px;height:38px;border-radius:50%;background-size:cover;background-position:center;flex:none;box-shadow:0 2px 7px rgba(0,0,0,.18)}
   .f-stone-t{font-size:12.5px;color:var(--muted);line-height:1.5}
@@ -1519,12 +1520,28 @@ const STAR_NATURE={
   '七杀':'you go after it hard and on your own — decisive, independent, you would rather move first and handle the fallout than wait',
   '破军':'you tear down and rebuild — you cannot leave a stale thing alone, you pioneer and disrupt, and you get restless once it is settled'
 };
+const STAR_COUNTER={   // the crystal's job per star — each over-expression gets its OWN counter, so 10+ findings never repeat the same fix (User 2026-06-28)
+  '紫微':'eases the standards a notch, so you stop holding everyone — and yourself — to the bar',
+  '天机':'quiets the over-analysis, so you can settle on a call without running it ten more times',
+  '太阳':'keeps a little of the light back for you, so you stop burning down to keep it on for everyone',
+  '武曲':'softens the edge, so not everything has to be won or earned',
+  '天同':'adds a little push, so the thing you actually want stops drifting past',
+  '廉贞':'cools the intensity, so you stop reaching for the complicated one',
+  '天府':'loosens the grip on safe, so you can move before the ground is perfectly solid',
+  '太阴':'lets you set some of it down, so you stop carrying it all quietly inside',
+  '贪狼':'settles the wanting, so enough can start to feel like enough',
+  '巨门':'softens the scrutiny, so you stop hunting for the hole first',
+  '天相':'lets you take your own side, so you stop smoothing it over at your own cost',
+  '天梁':'eases the sense of duty, so you stop carrying everyone else\'s load',
+  '七杀':'slows the charge, so you let people in instead of doing it all alone',
+  '破军':'settles the restlessness, so you stop tearing down the thing that is actually working'
+};
 function brightMod(b){ return /陷|不|落/.test(b||'')?' Here it pushes against the grain, so it does not land as cleanly as you want.':''; }
 function sihuaMod(types){ if(types.includes('化忌')) return ' This is the tender spot for you — it snags, and it pays to handle with care.'; if(types.includes('化禄')) return ' This is a bright spot — when you lean in, it tends to open up.'; if(types.includes('化权')) return ' You have real force here when you choose to use it.'; if(types.includes('化科')) return ' This is where you quietly get the credit.'; return ''; }
 function palaceFindings(prof){
   const pals=prof.palaces||[]; if(!pals.length) return [];
   const fav=(prof.favorable&&prof.favorable.length?prof.favorable:['water','earth','metal','wood','fire']);
-  const ji=new Set(prof.jishen||[]); const used=new Set(); const out=[]; const avar={};
+  const ji=new Set(prof.jishen||[]); const used=new Set(); const out=[];
   pals.forEach((p,i)=>{
     const A=PALACE_AREA[p.name]; if(!A) return;
     const star=(p.mainStars||[])[0]; if(!star||!STAR_NATURE[star.name]) return;   // empty / borrowed-chart palace → skip, don't fake a read (R1)
@@ -1533,8 +1550,7 @@ function palaceFindings(prof){
     const fixEl=fav[i%fav.length]||'water';
     let stone=pickMainStone(fixEl,ji,used)||pickFavStone(fav,ji,used); if(!stone) return;
     used.add(stone.en);
-    const aL=actListFor(null,fixEl); const ai=(avar[fixEl]=(avar[fixEl]||0)+1)-1;   // what this crystal does for you (the chart's correction), varied so same fix element doesn't repeat verbatim (User 2026-06-28)
-    out.push({label:A.label,judgment:judg,stone,action:aL[ai%aL.length],palace:p.name});
+    out.push({label:A.label,judgment:judg,stone,action:STAR_COUNTER[star.name]||actListFor(null,fixEl)[0],palace:p.name});   // action tied to the STAR (per-finding) → no element-clustering repetition (User 2026-06-28)
   });
   return out;
 }
@@ -2105,8 +2121,9 @@ function renderFindingsHtml(findings){   // Mode 2/3: one card per finding — t
   return '<div class="findings">'+findings.map(f=>
     `<div class="finding"><div class="f-domain">${esc(f.label)}</div>`
     +`<div class="f-judg">${esc(f.judgment)}</div>`
+    +(f.action?`<div class="f-act">The crystal for this ${esc(f.action)}</div>`:'')
     +`<div class="f-stone"><span class="f-bead" style="background-image:url(${sprite(f.stone.key)})"></span>`
-    +`<span class="f-stone-t"><b>${esc(stoneName(f.stone))}</b>${f.action?` — it ${esc(f.action)}`:' carries this one'}</span></div></div>`
+    +`<span class="f-stone-t"><b>${esc(stoneName(f.stone))}</b></span></div></div>`
   ).join('')+'</div>';
 }
 function paintReading(){
