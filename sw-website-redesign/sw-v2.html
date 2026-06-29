@@ -506,7 +506,7 @@
   footer .fl a{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);transition:color .35s}
   footer .fl a:hover{color:var(--ink)}
 
-  @media(prefers-reduced-motion:reduce){*{animation:none!important}.rv{transition:opacity .4s,transform .4s}}
+  @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{animation:none!important}.rv{transition:opacity .4s,transform .4s}}
 </style>
 </head>
 <body>
@@ -1106,6 +1106,7 @@ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded'
 
   // ---- entrance: a fluid meteor shower of light that blooms into the crystals ----
   (function entrance(){
+    if(matchMedia('(prefers-reduced-motion: reduce)').matches){ DATA.forEach(d=>{ const el=els[d.k]; if(el){ el.style.opacity='1'; el.style.animation='none'; } }); return; }   // a11y: skip the meteor shower, beads rest at their final spots
     const cv=document.getElementById('comets'), ctx=cv.getContext('2d');
     const DPR=Math.min(devicePixelRatio||1,2);
     const W=cv.width=innerWidth*DPR, H=cv.height=innerHeight*DPR;
@@ -1299,13 +1300,14 @@ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded'
 
   // directional sun-light: darken each planet's far-from-sun side, synced to its orbit via Web Animations time
   const TILTCOS=Math.cos(64*Math.PI/180);
-  let lcount=0;
+  let lcount=0, _lightOn=false;
   function solarVisible(){
     const r=host.getBoundingClientRect();
     return r.top < innerHeight && r.bottom > 0 && !document.hidden;
   }
   function light(){
-    if(solarVisible() && !(lcount++ % 2)){
+    if(!solarVisible()){ _lightOn=false; return; }   // perf: stop the timer when the solar system is off-screen / tab hidden
+    if(!(lcount++ % 2)){
       for(const p of PLANETS){
         const an=p.orbit.getAnimations && p.orbit.getAnimations()[0];
         if(!an || an.currentTime==null) continue;
@@ -1318,7 +1320,10 @@ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded'
     }
     setTimeout(()=>requestAnimationFrame(light),180);
   }
-  requestAnimationFrame(light);
+  function _lightStart(){ if(_lightOn)return; _lightOn=true; requestAnimationFrame(light); }
+  new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting) _lightStart(); }),{threshold:0}).observe(host);   // restart when the section scrolls back in
+  document.addEventListener('visibilitychange',()=>{ if(!document.hidden && solarVisible()) _lightStart(); });
+  _lightStart();
 })();
 
 /* ====================== scroll reveals ====================== */
