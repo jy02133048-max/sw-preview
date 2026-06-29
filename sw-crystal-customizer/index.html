@@ -1088,7 +1088,11 @@ function scoreStrand(seq){
 const HUE_BANDS=[{lo:0,hi:50,zh:'Rose Pink',c:25},{lo:50,hi:100,zh:'Amber Gold',c:75},{lo:100,hi:195,zh:'Teal',c:147},{lo:195,hi:262,zh:'Lake Blue',c:228},{lo:262,hi:312,zh:'Blue-purple',c:287},{lo:312,hi:360,zh:'Purple',c:336}];
 const bandPool=b=>MIXPOOL.filter(s=>{const C=Cof(s.key),H=Hof(s.key); return C>13 && H>=b.lo && H<b.hi;}).sort((a,b2)=>Lof(b2.key)-Lof(a.key));  // chromatic beads of one hue, light→dark
 const lightNeutrals=()=>MIXPOOL.filter(s=>isNeutral(s.key)&&Lof(s.key)>58).sort((a,b)=>Lof(b.key)-Lof(a.key));
-function spanPick(pool,k){ if(!pool.length)return[]; if(k<=1)return [pool[Math.floor(pool.length/2)].key]; if(pool.length<=k)return pool.map(s=>s.key); const o=[]; for(let i=0;i<k;i++)o.push(pool[Math.round(i*(pool.length-1)/(k-1))].key); return [...new Set(o)]; }
+function spanPick(pool,k){ if(!pool.length)return[]; if(pool.length<=k)return pool.map(s=>s.key);
+  if(k<=1) return [pool[Math.floor(Math.random()*pool.length)].key];   // was: always the MIDDLE stone (deterministic → same bead every spin). Now: any stone in the band can be the single accent.
+  const o=[], seg=pool.length/k;                                       // pool is light→dark; carve into k lightness segments, pick a RANDOM stone in each → keeps the gradient SPAN (coordination) but every stone in the band gets a turn (fixes 41 dead stones / spanPick was 100% deterministic, User 2026-06-29)
+  for(let i=0;i<k;i++){ const lo=Math.floor(i*seg), hi=Math.min(pool.length-1,Math.ceil((i+1)*seg)-1); o.push(pool[lo+Math.floor(Math.random()*(Math.max(lo,hi)-lo+1))].key); }
+  return [...new Set(o)]; }
 function availBands(){ return HUE_BANDS.map((b,i)=>({b,i,pool:bandPool(b)})).filter(x=>x.pool.length>=2); }
 // the full canonical colour-harmony book (Itten/colour-wheel) on the real hue wheel — each scheme carries its own 面积比(k=bead count: dominant more, accent fewer)
 function harmonyPalette(forceBandIdx){
@@ -1358,11 +1362,14 @@ function arrangeStrand(picks,n,patId,colorForward){
   if(!picks||!picks.length||n<1) return [];
   const R=rolesFromPicks(picks);
   if(!R.N.length) return fillToCount(recipeFromPicks(picks),n);
-  let cands=compatiblePatterns(R,n);
-  if(colorForward){ const cf=cands.filter(p=> !(p.fixed&&p.fixed.length>=3)); if(cf.length)cands=cf; }   // keep almost ALL 94 structures (scatter/station/radial/golden/block/ombré/taiji…); ground is recoloured to the scheme's hue so they stay coherent. exclude only rainbow-fixed symbols (Elements/脉轮/Four Elements = 3+ baked colours) that ignore the scheme
+  if(colorForward && !R.F){ const acc=picks.map(p=>p.key).filter(k=>!isNeutral(k)); const hero=acc.find(k=>isHero(k)); if(hero||acc.length){ R.F=hero||acc.slice().sort((a,b)=>Cof(b)-Cof(a))[0]; R._hasFocal=true; } }   // lucky: name a hero (an optical multicolor/gold pick if present, else the most-saturated) so FOCAL structures (Solitaire/Mala/Bookends) can light up — harmonyPalette never sets a focal, which was excluding every focal pattern (User 2026-06-29)
+  let cands = colorForward
+    ? PATTERNS.filter(p=> !(p.fixed&&p.fixed.length>=3) && patMinN(p)<=n)   // lucky reaches the WHOLE library: ground is recoloured to the scheme + a hero synthesised above, so DON'T gate on colour-count/focal (that was killing Golden Section/Triad/Color-Block/Bookends — 18 dead structures). Only exclude rainbow-fixed symbols (3+ baked colours) + patterns needing more beads than n.
+    : compatiblePatterns(R,n);
   let pool=cands;
-  if(!patId){ let f=pool.filter(p=>!p.quiet && p.lane!==state._lastLane && p.id!==state._lastPat);   // exclude empty/ultra-sparse patterns + rotate density + never repeat last → consecutive strands differ & none read blank
-    if(!f.length)f=pool.filter(p=>!p.quiet && p.id!==state._lastPat); if(!f.length)f=pool.filter(p=>!p.quiet); if(f.length)pool=f; }
+  if(!patId){ const ok=p=> colorForward || !p.quiet;   // lucky recolours the ground to the scheme so even minimal/quiet structures (Solitaire/Whisper/Mala) read as designed, not blank → let them in for real structure variety; the chart/scene path still excludes quiet
+    let f=pool.filter(p=>ok(p) && p.lane!==state._lastLane && p.id!==state._lastPat);   // rotate density lane + never repeat last → consecutive strands differ
+    if(!f.length)f=pool.filter(p=>ok(p) && p.id!==state._lastPat); if(!f.length)f=pool.filter(ok); if(f.length)pool=f; }
   const pat=(patId&&PATTERNS.find(p=>p.id===patId)) || pool[Math.floor(Math.random()*pool.length)] || PATTERNS.find(p=>p.id==='whisper');
   try{ state._lastLane=pat.lane; state._lastPat=pat.id; }catch(e){}
   // ombré = a value gradient built straight from all picks (light→dark→light), its own thing
@@ -2801,7 +2808,8 @@ function luckyStrand(){
   const avail=availBands();
   let baseIdx=null; if(avail.length){ state._hueRot=((state._hueRot==null?Math.floor(Math.random()*avail.length):state._hueRot)+1)%avail.length; baseIdx=avail[state._hueRot].i; }
   const hp=harmonyPalette(Math.random()<0.5?baseIdx:null);   // ONE random scheme per spin (no best-of → keep scheme DIVERSITY, don't converge to the single highest-scoring); half rotate the base hue so every colour family cycles too
-  if(hp){ state.recipe=arrangeStrand(hp.picks,N,null,true); state.picks=hp.picks; state.palette={id:'harm',name:hp.scheme,zh:hp.scheme}; }
+  if(hp){ if(Math.random()<0.4){ const H=MIXPOOL.filter(s=>isHero(s.key)); if(H.length){ const h=H[Math.floor(Math.random()*H.length)]; hp.picks=hp.picks.concat([{...STONES[h.key],ct:'lead',hits:[]}]); } }   // ~40%: feature ONE optical hero (multicolor/gold) — the premium "pop" + the ONLY way these stones reach lucky (they're not in any chromatic hue-band, so harmonyPalette can't draw them) (User 2026-06-29)
+    state.recipe=arrangeStrand(hp.picks,N,null,true); state.picks=hp.picks; state.palette={id:'harm',name:hp.scheme,zh:hp.scheme}; }
   else { const s=MIXPOOL[Math.floor(Math.random()*MIXPOOL.length)]; state.recipe=Array.from({length:N},()=>s.key); state.picks=[{...s,ct:'echo',hits:[]}]; state.palette=null; }
   state.basePattern=state.recipe.slice();
   state.mmList=mmFor(); state._leadBump=false;
