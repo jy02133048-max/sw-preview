@@ -805,6 +805,7 @@ const ASSET=location.hostname.endsWith('github.io')?'https://cdn.jsdelivr.net/gh
 const deAsset=u=>(ASSET&&u&&u.indexOf(ASSET)===0)?u.slice(ASSET.length):null;
 const APIBASE=location.hostname.endsWith('github.io')?'https://sw-strand-relay-production.up.railway.app':'';   // public build: AI relay on Railway (key server-side, origin-gated, rate-capped)   // CDN miss → retry same-origin
 const CHART_PROFILE_API=(APIBASE||'')+'/api/chart-profile';   // server-side true chart engine; client lite engine stays as fallback
+const WORD_API=(location.hostname.endsWith('github.io')?'https://sw-word-service-production.up.railway.app':'')+'/api/word';   // CC: leashed per-person copy on its OWN service (no execSync taint → reliable); laozhang+haiku server-side, key never in the page
 let CHART_API_BACKOFF_UNTIL=0, READ_SEQ=0;
 const ANALYSIS_MIN_MS=9000;   // 8-10s window — long enough to feel like a real deep read, not an instant guess (User 2026-06-27)
 let PLACE_TIMER=0;
@@ -962,6 +963,7 @@ function normalizeEngineProfile(data,fallback){
     domainRead: raw.domain_reads || raw.domainRead || null,
     palaces: Array.isArray(raw.palaces) ? raw.palaces : [],
     findings: Array.isArray(raw.findings) ? raw.findings : [],
+    selected_findings: Array.isArray(raw.selected_findings) ? raw.selected_findings : (Array.isArray(data&&data.selected_findings) ? data.selected_findings : []),   // codex's 8-15 distinct bead-findings (the breadth) → fed to /api/word for leashed per-person copy (CC 2026-06-29)
   };
 }
 async function profileFromEngine(payload,fallback){
@@ -1565,8 +1567,25 @@ function palaceFindings(prof,rng){
   return out;
 }
 function pickFavStone(fav,ji,used,rng){ for(const e of fav){ const s=pickMainStone(e,ji,used,rng); if(s)return s; } return null; }
+function selLabel(sf){ const c=sf.category||'', d=sf.domain||'';   // category/domain → zero-术语 life-area label for the panel (CC 2026-06-29)
+  if(/liunian|annual/.test(c)) return 'The year ahead';
+  if(/dayun|decade|current_luck/.test(c)) return 'This chapter';
+  return ({core:'Who you are',love:'Love & partnership',career:'Work & direction',wealth:'Money & flow',health:'Body & mind',timing:'Your timing'})[d] || 'Your chart'; }
+async function fetchWordLines(prof){ prof._wordLines=null; const sel=(prof&&prof.selected_findings)||[]; if(!sel.length) return;   // leashed per-person copy; failure → null → selectByAnalysis falls back to the local reads
+  try{ const ctl=new AbortController(), t=setTimeout(()=>ctl.abort(),16000);
+    const res=await fetch(WORD_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({findings:sel}),signal:ctl.signal}); clearTimeout(t);
+    if(!res.ok) return; const d=await res.json(); const map={}; (d.lines||[]).forEach(o=>{ if(o&&o.id!=null&&o.line) map[o.id]=o.line; });
+    if(Object.keys(map).length) prof._wordLines=map;
+  }catch(e){} }
 function selectByAnalysis(prof,intentIds,mode,rng){
   if(!prof) return [];
+  const sel=prof.selected_findings||[];                                            // PREFER codex's distinct selection + leashed AI copy = breadth + real per-person writing (not fixed scripts) (CC 2026-06-29)
+  if(sel.length>=6 && prof._wordLines){
+    const out=sel.map((sf,i)=>{ const key=(sf.stoneCandidates&&sf.stoneCandidates[0]&&sf.stoneCandidates[0].key)||sf.stoneKey; const stone=STONES[key];
+      const id=sf.findingId||sf.id||('f'+i); const line=prof._wordLines[id]||(sf.sentenceBrief&&sf.sentenceBrief.customerLine)||'';
+      return (stone&&line)?{label:selLabel(sf),judgment:line,stone,action:''}:null; }).filter(Boolean);   // judgment = the AI line (already ends on the stone) → no separate action line
+    if(out.length>=6) return out;
+  }
   const pf=palaceFindings(prof,rng);
   if(pf.length>=6) return pf;   // real engine gives the 12 palaces → 12 DIFFERENT life-area reads = the breadth (User 2026-06-28). lite (no palaces) falls through to the element-based reads below.
   const fav=(prof.favorable&&prof.favorable.length?prof.favorable:['water','earth','metal','wood','fire']);
@@ -2000,6 +2019,7 @@ async function maybeRead(){
   else state.profileStatus='scene_only';
   state.prof=prof;
   state.palette=null;
+  if(state.prof) await fetchWordLines(state.prof);   // leashed per-person copy for the engine's selected findings, before the reads are built (CC 2026-06-29)
   const _mode=state.intents.length?'both':'chart';
   state.findings = state.prof ? selectByAnalysis(state.prof,state.intents,_mode) : null;    // Mode 2/3 analysis-first
   if(state.findings && state.findings.length){
@@ -2431,8 +2451,9 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDetail();});
 
 /* slow turntable — JS-driven with an explicit pivot (rotate a 150 150), immune to viewBox changes */
 (function spin(){
-  let deg=0,last=0,acc=0;
-  function f(ts){ if(!last)last=ts; const dt=Math.min(ts-last,100); last=ts;
+  let deg=0,last=0,acc=0,running=false;
+  function f(ts){ if(document.hidden){ running=false; return; }   // A2: don't spin in a background tab
+    if(!last)last=ts; const dt=Math.min(ts-last,100); last=ts;
     const sv=svg(), g=sv&&sv.querySelector('.zbeads');
     if(g){
       if(state.tilt){ if(g.getAttribute('transform')) g.removeAttribute('transform'); deg=0; window._spinDeg=0; }
@@ -2442,7 +2463,9 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDetail();});
       }
     }
     requestAnimationFrame(f); }
-  requestAnimationFrame(f);
+  function start(){ if(running)return; running=true; last=0; requestAnimationFrame(f); }
+  document.addEventListener('visibilitychange',()=>{ if(!document.hidden) start(); });   // A2: resume when tab returns
+  start();
 })();
 
 /* bracelet bead: tap = remove, long-press = detail, drag = reorder (face-on view) */
@@ -2874,15 +2897,20 @@ let _tt; function toast(m,act,fn){ const t=$('toast');
   const N=innerWidth<560?24:38, P=[];
   function mk(init){ const c=COL[Math.floor(Math.random()*COL.length)]; return {x:Math.random()*W,y:init?Math.random()*H:H+50*DPR,r:(9+Math.random()*30)*DPR,c,a:0,ta:.05+Math.random()*.13,v:(.09+Math.random()*.26)*DPR,dr:(Math.random()-.5)*.16*DPR,ph:Math.random()*6.28}; }
   for(let i=0;i<N;i++) P.push(mk(true));
-  let t=0;
-  function frame(){ t+=.016; x.clearRect(0,0,W,H);
+  let t=0,running=false;
+  const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)');   // A1: honour reduced-motion
+  function frame(){ if(document.hidden||(reduce&&reduce.matches)){ running=false; x.clearRect(0,0,W,H); return; }   // A1 reduced-motion + A2 background-tab gate
+    t+=.016; x.clearRect(0,0,W,H);
     for(const p of P){ p.y-=p.v; p.x+=p.dr+Math.sin(t*.3+p.ph)*.12*DPR; p.a+=(p.ta-p.a)*.02;
       if(p.y<-70*DPR) Object.assign(p,mk(false));
       const g=x.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r);
       g.addColorStop(0,`rgba(${p.c[0]},${p.c[1]},${p.c[2]},${p.a.toFixed(3)})`); g.addColorStop(1,`rgba(${p.c[0]},${p.c[1]},${p.c[2]},0)`);
       x.fillStyle=g; x.beginPath(); x.arc(p.x,p.y,p.r,0,7); x.fill(); }
     requestAnimationFrame(frame); }
-  requestAnimationFrame(frame);
+  function start(){ if(running)return; running=true; requestAnimationFrame(frame); }
+  document.addEventListener('visibilitychange',()=>{ if(!document.hidden) start(); });   // A2: resume when tab returns
+  if(reduce&&reduce.addEventListener) reduce.addEventListener('change',()=>{ reduce.matches?x.clearRect(0,0,W,H):start(); });   // A1: react to live toggle
+  start();
 })();
 
 /* load catalog */
