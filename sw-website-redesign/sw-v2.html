@@ -70,8 +70,11 @@
   .stone.spoke .img{filter:drop-shadow(0 0 18px rgba(240,225,200,.5)) brightness(1.08)}
   @media(max-width:880px){
     #stage::before{left:50%;top:56%}#stage::after{left:52%;top:18%}
-    .stone{left:var(--mx,var(--x));top:var(--my,var(--y));width:calc(var(--ms,var(--s,72px)) * .82);height:calc(var(--ms,var(--s,72px)) * .82)}
+    .stone{left:var(--mx,var(--x));top:var(--my,var(--y));width:calc(var(--ms,var(--s,72px)) * .66);height:calc(var(--ms,var(--s,72px)) * .66)}
     .stone .halo{inset:-38%}
+    #stage{opacity:.42}                 /* hero v1: beads become a faint backdrop so the copy reads clean on phones */
+    .stone.moon{opacity:.8}
+    .hero-inner{text-shadow:0 2px 24px rgba(8,6,16,.6)}
   }
   .hero-inner{position:relative;z-index:3;max-width:1080px;margin:0 auto;width:100%;pointer-events:none}
   .hero-inner a,.hero-inner .btn{pointer-events:auto}
@@ -508,7 +511,10 @@
   footer .fl a:hover{color:var(--ink)}
 
   @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{animation:none!important}.rv{transition:opacity .4s,transform .4s}}
+  /* hero glow-up v1 */
+  .hero h1 .hw{display:inline-block;will-change:transform,opacity}
 </style>
+<script src="vendor/gsap.min.js"></script>
 </head>
 <body>
 <canvas id="space"></canvas>
@@ -534,7 +540,7 @@
     <div id="stage"></div>
     <div class="hero-inner">
       <div class="eyebrow rv">Custom crystal bracelets</div>
-      <h1 class="rv rv-d1">Listen to<br>the <em>stone.</em></h1>
+      <h1 class="hero-h1">Listen to<br>the <em>stone.</em></h1>
       <p class="lede rv rv-d2">You're not picking a product off a shelf. Name the moment you're in, set the wrist fit, and let each stone earn its place — one bracelet, built around you.</p>
       <div class="hero-actions rv rv-d3">
         <a href="../sw-crystal-customizer/index.html" class="btn btn-primary mag">Open the Studio <span class="arr">→</span></a>
@@ -1047,10 +1053,10 @@ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded'
   ];
   const STRAND={ list:DATA.filter(d=>!d.moon), viewW:innerWidth||1376, viewH:innerHeight||768 };
   STRAND.N=STRAND.list.length;
-  STRAND.cx=STRAND.viewW*.805; STRAND.cy=STRAND.viewH*.40;     // ring centre on screen (right, partly cropped)
-  STRAND.R=Math.min(STRAND.viewW,STRAND.viewH)*.232;           // ring radius (px)
-  STRAND.pitch=-30*Math.PI/180; STRAND.baseYaw=-50*Math.PI/180; STRAND.yaw=STRAND.baseYaw;
-  STRAND.D=3.5; STRAND.base=94;
+  STRAND.cx=STRAND.viewW*.805; STRAND.cy=STRAND.viewH*.40;     // reverted to original (User prefers the original dramatic angle)
+  STRAND.R=Math.min(STRAND.viewW,STRAND.viewH)*.232;           // original
+  STRAND.pitch=-30*Math.PI/180; STRAND.baseYaw=-50*Math.PI/180; STRAND.yaw=STRAND.baseYaw;   // original dramatic 3D angle
+  STRAND.D=3.5; STRAND.base=104;                               // original perspective; ONLY base kept bigger (94→104) so beads pack tight, no loose gaps
   function projectStrand(yaw){
     const {list,N,cx,cy,R,pitch,D,base,viewW,viewH}=STRAND;
     const cP=Math.cos(pitch),sP=Math.sin(pitch),cY=Math.cos(yaw),sY=Math.sin(yaw);
@@ -1202,6 +1208,42 @@ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded'
       if(alive||bursts.length||sparks.length) requestAnimationFrame(frame); else ctx.clearRect(0,0,W,H);
     }
     requestAnimationFrame(frame);
+  })();
+
+  /* ===== hero GSAP glow-up v1: headline word-stagger + slow 3D ring drift ===== */
+  (function heroGsap(){
+    if(!window.gsap) return;
+    const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    // (1) headline → word units (keep <br>; <em> stays one unit so its gradient survives), stagger up
+    const h1=document.querySelector('.hero h1.hero-h1');
+    if(h1){
+      const out=[];
+      [...h1.childNodes].forEach(n=>{
+        if(n.nodeType===3){ n.textContent.split(/(\s+)/).forEach(tok=>{ if(/^\s+$/.test(tok)) out.push(document.createTextNode(tok)); else if(tok){ const s=document.createElement('span'); s.className='hw'; s.textContent=tok; out.push(s); } }); }
+        else if(n.nodeType===1 && n.tagName==='BR'){ out.push(n.cloneNode()); }
+        else if(n.nodeType===1){ const s=document.createElement('span'); s.className='hw'; s.appendChild(n.cloneNode(true)); out.push(s); }
+      });
+      h1.replaceChildren(...out);
+      if(!reduce) gsap.from(h1.querySelectorAll('.hw'),{yPercent:66,opacity:0,filter:'blur(6px)',duration:.9,stagger:.11,ease:'power3.out',delay:.15});
+    }
+    // (2) the strand spins about ITS OWN axis — orientation (tilt+yaw) stays fixed in space,
+    //     beads travel around the ring (phase added to each bead's angle). NOT a world-yaw swing.
+    if(!reduce && typeof STRAND==='object'){
+      const S=STRAND, cP=Math.cos(S.pitch),sP=Math.sin(S.pitch),cY=Math.cos(S.baseYaw),sY=Math.sin(S.baseYaw);
+      let phase=0, running=false;
+      function applyRing(){
+        S.list.forEach((d,i)=>{ const a=i/S.N*Math.PI*2+phase, x0=Math.cos(a),y0=Math.sin(a);
+          const y1=y0*cP,z1=y0*sP, x2=x0*cY+z1*sY, z2=-x0*sY+z1*cY, k=S.D/(S.D-z2);
+          const px=(S.cx+x2*S.R*k)/S.viewW*100, py=(S.cy-y1*S.R*k)/S.viewH*100;
+          const el=els[d.k]; if(!el) return;
+          el.style.setProperty('--x',px.toFixed(2)+'%'); el.style.setProperty('--y',py.toFixed(2)+'%');
+          el.style.setProperty('--s',(S.base*k).toFixed(1)+'px'); el.style.zIndex=Math.round(6+(z2+1)*6); el.classList.toggle('back',z2<-0.04); });
+      }
+      function tick(){ if(document.hidden){ running=false; gsap.ticker.remove(tick); return; } phase+=0.0016; applyRing(); }
+      function start(){ if(running)return; running=true; gsap.ticker.add(tick); }
+      gsap.delayedCall(4.8,start);   // after the meteor entrance settles
+      document.addEventListener('visibilitychange',()=>{ if(!document.hidden) start(); });
+    }
   })();
 })();
 
