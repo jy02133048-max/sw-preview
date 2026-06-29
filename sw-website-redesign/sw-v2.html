@@ -331,7 +331,8 @@
   .proof-panel h3{position:relative;font-family:var(--serif);font-size:28px;color:var(--ink);font-weight:500;line-height:1.05}
   .proof-note{position:relative;margin-top:8px;font-size:13px;line-height:1.5;color:var(--body)}
   .proof-preview{position:relative;margin:18px 0;border:1px solid rgba(244,236,221,.1);border-radius:16px;padding:16px;background:rgba(255,253,248,.035)}
-  .proof-img{display:block;width:100%;height:210px;object-fit:cover;object-position:center;border-radius:12px;filter:saturate(1.03) contrast(1.03)}
+  .proof-img{display:block;width:100%;height:210px;object-fit:cover;object-position:center;border-radius:12px;filter:saturate(1.03) contrast(1.03);animation:proofIn .34s ease}
+  @keyframes proofIn{from{opacity:0}to{opacity:1}}
   .proof-preview .bead-ring{width:200px;margin:0 auto}
   .proof-preview .bead-ring .bead{--r:66px;--s:30px}
   .reason-list{position:relative;display:grid;gap:12px;margin:14px 0}
@@ -983,9 +984,7 @@ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded'
     for(let i=0;i<n;i++){ const depth=rnd(.2,1); stars.push({x:rnd(0,W),y:rnd(0,H),r:rnd(.3,1.5)*DPR*depth,depth,tw:rnd(0,6.28),ts:rnd(.6,1.8)}); }
     neb=[]; for(let i=0;i<5;i++){ const c=NEB_COL[i%NEB_COL.length]; neb.push({x:rnd(.1,.9)*W,y:rnd(.05,.8)*H,r:rnd(.34,.62)*Math.max(W,H),c,ph:rnd(0,6.28),sp:rnd(.00006,.00014),dx:rnd(-.00002,.00002),dy:rnd(-.000016,.000016)}); }
   }
-  let mx=0,my=0,tmx=0,tmy=0;
-  addEventListener('pointermove',e=>{ tmx=(e.clientX/innerWidth-.5); tmy=(e.clientY/innerHeight-.5); },{passive:true});
-  let scrollY=0; addEventListener('scroll',()=>{scrollY=window.scrollY;},{passive:true});
+  let mx=0,my=0,tmx=0,tmy=0,scrollY=0;   // B4: this canvas renders ONCE (no rAF loop) — the mouse/scroll parallax never repaints, so the per-pointermove + scroll listeners that fed it were pure waste; dropped them (offsets stay 0 = identical static render)
   function frame(){
     t++; mx+=(tmx-mx)*.05; my+=(tmy-my)*.05;
     x.clearRect(0,0,W,H);
