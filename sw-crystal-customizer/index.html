@@ -52,6 +52,15 @@
   .slots{position:absolute;top:46px;left:10px;z-index:4;display:none;flex-direction:column;gap:6px;align-items:flex-start;pointer-events:none}
   .slots .slot{pointer-events:auto;font-size:11px;letter-spacing:.04em;color:var(--gold);border:1px solid rgba(227,148,49,.3);border-radius:16px;padding:5px 12px;cursor:pointer;background:rgba(227,148,49,.07);font-family:'Inter',sans-serif;transition:.15s;min-width:60px;text-align:left;backdrop-filter:blur(3px)}
   .slots .slot.filled{color:var(--ink);background:rgba(227,148,49,.18);border-color:rgba(227,148,49,.55)}
+  /* design chooser — a few accurate looks (same reading, different structure) to pick from after a chart read */
+  .choices{display:flex;gap:7px;justify-content:center;flex-wrap:wrap;margin:9px auto 0;max-width:97%}
+  .choices-h{width:100%;text-align:center;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+  .choice{border:1.5px solid transparent;border-radius:13px;padding:3px 3px 2px;cursor:pointer;background:rgba(120,120,130,.05);transition:.15s}
+  .choice:hover{background:rgba(120,120,130,.1)}
+  .choice.on{border-color:var(--accent);background:rgba(var(--accent-rgb,168,93,68),.1)}
+  .choice svg{width:58px;height:58px;display:block;pointer-events:none}
+  .choice b{font-size:8.5px;font-weight:500;letter-spacing:.02em;color:var(--muted);display:block;text-align:center;margin-top:1px;max-width:60px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
+  .choice.on b{color:var(--ink)}
   .slots .slot:active{transform:scale(.96)} .slots .slot .x{margin-left:5px;opacity:.55}
   .preview-actions{position:absolute;top:8px;left:10px;right:10px;display:flex;justify-content:space-between;pointer-events:none;z-index:3}
   .preview-actions .pa-btn{pointer-events:auto}
@@ -642,6 +651,7 @@
       <button class="pa-btn" id="zoomBtn">🔍 Zoom in</button>
       <button class="pa-btn" id="wristBtn">Scene preview</button>
     </div>
+    <div class="choices" id="designChoices" style="display:none"></div>
     <div class="slots" id="slots" aria-label="Saved looks"></div>
     <div class="coach" id="coach" style="display:none"></div>
   </section>
@@ -1994,8 +2004,11 @@ async function maybeRead(){
   state.findings = state.prof ? selectByAnalysis(state.prof,state.intents,_mode) : null;    // Mode 2/3 analysis-first
   if(state.findings && state.findings.length){
     state.picks=state.findings.map((f,i)=>({...f.stone,ct:(i===0?'lead':['theme','echo','bridge','balance'][(i-1)%4]),e1:f.stone.el,hits:[],role:f.label,finding:f}));   // picks carry .finding for the story
-    state.recipe=arrangeFindingsStructured(state.findings, beadCount(), chartPattern(state.prof));   // content → chart-chosen structure → colour fills its roles; every bead a finding-stone (User 2026-06-28)
+    state.designOpts=buildDesignOptions(state.findings, beadCount()); state.designSel=0;   // a few ACCURATE designs (same reads, different structures) to choose from (User 2026-06-29)
+    state.recipe=(state.designOpts[0]&&state.designOpts[0].seq.slice())||arrangeFindingsStructured(state.findings, beadCount(), chartPattern(state.prof));
+    if(state.designOpts[0]&&state.designOpts[0].pat) state.pattern={...state.designOpts[0].pat};
   } else {
+    state.designOpts=[]; state.designSel=-1;
     state.picks=selectStones(state.intents,state.prof);
     state.recipe=ensureVisiblePicks(arrangeStrand(state.picks, beadCount()),state.picks);    // scene-only / no-copy fallback: colour-pattern strand
   }
@@ -2005,7 +2018,7 @@ async function maybeRead(){
   state.autofilled=true; state._repour=true;
   const first=!state.hasReading; state.hasReading=true;
   $('sceneNudge').classList.remove('on');
-  paintReading(); rebuild();
+  paintReading(); rebuild(); renderDesignChoices();
   if(first){ showTab('reading'); }
   else if(!document.querySelector('.tab[data-tab=reading]').classList.contains('on')){ $('readingBadge').classList.add('on'); }
 }
@@ -2504,7 +2517,7 @@ $('sizeMeta').onclick=()=>{ showTab('scene'); const f=$('fitPop'); f.style.displ
 $('openPicker').onclick=()=>{ const sh=$('pickSheet'); sh.style.bottom=(document.querySelector('.cta-bar').offsetHeight||0)+'px'; sh.classList.add('show'); };
 $('psClose').onclick=()=>$('pickSheet').classList.remove('show');
 $('clearAll').onclick=()=>{ if(!state.recipe.length)return; pushHistory(); state.displaced=[]; const bak=state.recipe.slice(), bakM=state.mmList.slice();
-  state.recipe=[]; state.mmList=[]; state.basePattern=null; state.autofilled=false; rebuild();
+  state.recipe=[]; state.mmList=[]; state.basePattern=null; state.autofilled=false; state.designOpts=[]; state.designSel=-1; rebuild(); renderDesignChoices();
   toast('Bracelet cleared','Undo',()=>{ state.recipe=bak; state.mmList=bakM; rebuild(); }); };
 $('zoomX').onclick=()=>$('zoomModal').classList.remove('show'); $('zoomModal').onclick=e=>{if(e.target===$('zoomModal'))$('zoomModal').classList.remove('show');};
 
@@ -2754,10 +2767,35 @@ function luckyStrand(){
   state.basePattern=state.recipe.slice();
   state.mmList=mmFor(); state._leadBump=false;
   while(state.recipe.length&&sumMm()>loopMm()+state.beadMm/2){ state.recipe.pop(); state.mmList.pop(); }
-  state.autofilled=true; state._repour=true; rebuild();   // decoupled rich lucky: the Reading panel (12 reads) stays as the last Read — don't refresh it (User 2026-06-28)
+  state.designOpts=[]; state.designSel=-1; state.autofilled=true; state._repour=true; rebuild(); renderDesignChoices();   // lucky is decoupled → hide the chart design chooser (User 2026-06-29); Reading panel (12 reads) stays as the last Read
   toast('Lucky · '+((state.palette&&state.palette.name)||'a designed palette'));
 }
 $('luckyBtn').onclick=luckyStrand; $('undoBtn').onclick=undo;
+/* design chooser: after a chart read, offer a few ACCURATE looks — same 12 reads + same 用神 stones, DIFFERENT structures — to pick from. Zero-术语 labels (structure names only). (User 2026-06-29) */
+function buildDesignOptions(findings,n){
+  if(!findings||!findings.length) return [];
+  const prefer=chartPattern(state.prof); const lead=Array.isArray(prefer)?prefer:[prefer];
+  const pool=[...new Set(lead.concat(['bookend','goldensection','station','ombre','crown','thirds','heartbeat','crescent']))];
+  const opts=[], seen=new Set();
+  for(const id of pool){ if(opts.length>=4) break;
+    const seq=arrangeFindingsStructured(findings,n,id); if(!seq.length) continue;
+    const rid=(state.pattern&&state.pattern.id)||id; if(seen.has(rid)) continue; seen.add(rid);   // incompatible ids fall back to the same structure → skip the dup so the 4 are visually distinct
+    opts.push({seq:seq.slice(), pat:state.pattern?{...state.pattern}:null}); }
+  return opts;
+}
+function renderDesignChoices(){ const host=$('designChoices'); if(!host) return;
+  const opts=state.designOpts||[];
+  if(opts.length<2){ host.style.display='none'; host.innerHTML=''; return; }
+  host.innerHTML='<div class="choices-h">Choose your design</div>';
+  opts.forEach((o,i)=>{ const d=document.createElement('div'); d.className='choice'+(i===state.designSel?' on':''); d.dataset.idx=i;
+    const sv=document.createElementNS(SVGNS,'svg'); sv.setAttribute('viewBox','0 0 300 300'); renderBracelet(sv,o.seq); d.appendChild(sv);
+    const b=document.createElement('b'); b.textContent=patternName(o.pat); d.appendChild(b); host.appendChild(d); });
+  host.style.display='flex'; }
+$('designChoices').addEventListener('click',e=>{ const c=e.target.closest('.choice'); if(!c) return; const i=+c.dataset.idx;
+  const o=(state.designOpts||[])[i]; if(!o) return;
+  pushHistory(); state.recipe=o.seq.slice(); state.mmList=state.recipe.map(()=>null); state.basePattern=state.recipe.slice();
+  if(o.pat) state.pattern={...o.pat}; state.palette=null; state.autofilled=true; state.designSel=i;
+  rebuild(); renderDesignChoices(); });
 /* save slots — keep a few looks side by side; tap empty to save, tap filled to load, × to clear (User 2026-06-27) */
 const SLOT_KEY='sw_slots', SLOT_N=3;
 function loadSlots(){ try{return JSON.parse(localStorage.getItem(SLOT_KEY))||{};}catch(e){return {};} }
