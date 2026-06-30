@@ -29,8 +29,7 @@
   canvas#space{position:fixed;inset:0;z-index:0;pointer-events:none}
   /* the sky is ONE tall vertical scene spanning the whole page — you literally scroll DOWN through it (deep cosmos → nebula → warm golden core → warm grounded dawn) */
   #skybg{position:absolute;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(180deg,
-    #0a0918 0%, #0a0a1a 20%, #0c0a1c 38%, #0d0b1a 52%,
-    #110c16 64%, #181011 76%, #281810 88%, #3c2816 100%)}   /* deep space most of the way; warm only near the ground — the colour drama comes from the luminous nebula on the canvas */
+    #0a0918 0%, #0b0a1e 24%, #0a0a1c 48%, #0c0b20 68%, #0a0917 86%, #090816 100%)}   /* deep cool cosmos all the way — no warm */
   .grain{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.035;mix-blend-mode:overlay;
     background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/></filter><rect width='160' height='160' filter='url(%23n)'/></svg>");background-size:160px}
   .wrap{position:relative;z-index:2}
@@ -984,47 +983,77 @@ function swApplyBeads(){
 }
 if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',swApplyBeads); else swApplyBeads();
 
-/* ====================== cosmic SCENE — #skybg = one tall dark-space backdrop you scroll through; the COLOUR drama
-   comes from luminous jewel-tone nebulae anchored at page depths that you literally descend THROUGH, then a warm
-   golden core (astrology zone), then a dawn ground-glow. Plus infinite parallax starfield for travel. ====================== */
+/* ====================== cosmic SCENE — a MILKY WAY you travel along, top→bottom:
+   a luminous galactic band (cool blue/violet arm → warm golden CORE → amber dust) anchored down the page,
+   with dark dust-lane rifts, dense band stars, and an infinite parallax starfield. ====================== */
 (function(){
   const cv=document.getElementById('space'), x=cv.getContext('2d');
-  let W,H,DPR,stars=[],running=false,phase=0;
+  let W,H,DPR,stars=[],bandStars=[],meteors=[],running=false,phase=0;
   const rnd=(a,b)=>a+Math.random()*(b-a);
   const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
-  // landmarks anchored to fractions of the FULL page height — luminous jewel tones; you pass through them as you scroll
-  const CLOUDS=[
-    {py:0.16,x:0.30,r:0.52,c:[150,108,214],a:0.22,par:0.82},  // amethyst
-    {py:0.24,x:0.72,r:0.46,c:[86,168,204], a:0.20,par:0.78},  // aqua
-    {py:0.33,x:0.44,r:0.60,c:[208,108,150],a:0.22,par:0.82},  // rose
-    {py:0.42,x:0.26,r:0.48,c:[120,150,226],a:0.20,par:0.86},  // blue
-    {py:0.50,x:0.74,r:0.50,c:[170,124,216],a:0.20,par:0.80},  // violet
-    {py:0.63,x:0.50,r:0.82,c:[238,184,102],a:0.34,par:0.94},  // ★ warm GOLDEN CORE (astrology zone) — the heart you descend toward
-    {py:0.90,x:0.50,r:0.92,c:[224,150,86], a:0.24,par:1.0 }   // warm dawn ground-glow
-  ];
+  const lerp=(a,b,t)=>a+(b-a)*t, mix=(c,d,t)=>[lerp(c[0],d[0],t)|0,lerp(c[1],d[1],t)|0,lerp(c[2],d[2],t)|0];
+  const CORE=0.6;                                          // galactic core at 60% down the page
+  const cxAt=py=>0.5+0.17*Math.sin(py*Math.PI*1.6-0.4);   // meandering band centreline (fraction of W)
+  const coreBoost=py=>Math.exp(-Math.pow((py-CORE)/0.15,2));
+  function bandCol(py){   // cool throughout — no warm/gold
+    if(py<0.4) return mix([104,150,224],[150,124,216],py/0.4);            // blue → violet
+    if(py<0.7) return mix([150,124,216],[118,176,208],(py-0.4)/0.3);      // violet → teal
+    return mix([118,176,208],[138,134,214],(py-0.7)/0.3);                // teal → blue-violet
+  }
+  const BAND=[]; for(let i=0;i<26;i++){ BAND.push({py:i/25,jx:rnd(-.05,.05),r:rnd(.34,.5)}); }
+  const DUST=[{py:0.52,x:-0.10,r:0.26},{py:0.68,x:0.12,r:0.30}];   // dark rifts flanking the core
   function size(){ DPR=Math.min(2,devicePixelRatio||1); W=cv.width=innerWidth*DPR; H=cv.height=innerHeight*DPR; cv.style.width=innerWidth+'px'; cv.style.height=innerHeight+'px'; build(); }
-  function build(){ stars=[]; const n=Math.round(innerWidth*innerHeight/2100);
-    for(let i=0;i<n;i++){ const depth=rnd(.15,1); stars.push({x:rnd(0,W),y:rnd(0,H),r:rnd(.3,1.7)*DPR*depth,depth,tw:rnd(0,6.28),ts:rnd(.6,1.8)}); } }
+  function build(){
+    stars=[]; const n=Math.round(innerWidth*innerHeight/2400);
+    for(let i=0;i<n;i++){ const depth=rnd(.15,1); stars.push({x:rnd(0,W),y:rnd(0,H),r:rnd(.3,1.6)*DPR*depth,depth,tw:rnd(0,6.28),ts:rnd(.6,1.8)}); }
+    bandStars=[]; const bn=Math.round(innerWidth*0.95);
+    for(let i=0;i<bn;i++){ const perp=(Math.random()+Math.random()+Math.random()-1.5)/1.5*0.10; bandStars.push({py:Math.random(),perp,r:rnd(.3,1.5)*DPR,tw:rnd(0,6.28),ts:rnd(.6,1.8)}); }
+  }
   function render(){
     const sc=window.scrollY||0, docH=document.documentElement.scrollHeight, maxR=Math.max(W,H);
-    x.clearRect(0,0,W,H); x.globalCompositeOperation='lighter';
-    phase+=0.015;
-    // nebula landmarks (page-anchored, scrolled past with parallax → you travel THROUGH them)
-    for(const cl of CLOUDS){
-      const vy=(cl.py*docH - sc*cl.par)*DPR, r=cl.r*maxR*(1+Math.sin(phase*0.3+cl.py*9)*0.05);
-      if(vy<-r||vy>H+r) continue;
-      const g=x.createRadialGradient(cl.x*W,vy,0,cl.x*W,vy,r);
-      g.addColorStop(0,`rgba(${cl.c[0]},${cl.c[1]},${cl.c[2]},${cl.a})`);
-      g.addColorStop(.42,`rgba(${cl.c[0]},${cl.c[1]},${cl.c[2]},${(cl.a*0.38).toFixed(3)})`);
-      g.addColorStop(1,'rgba(0,0,0,0)');
-      x.fillStyle=g; x.beginPath(); x.arc(cl.x*W,vy,r,0,6.2832); x.fill();
+    x.clearRect(0,0,W,H); phase+=0.015;
+    const par=1.0;
+    // 1) galactic band glow
+    x.globalCompositeOperation='lighter';
+    for(const b of BAND){ const vy=(b.py*docH-sc*par)*DPR, r=b.r*maxR; if(vy<-r||vy>H+r) continue;
+      const cxp=(cxAt(b.py)+b.jx)*W, c=bandCol(b.py), a=(0.14+coreBoost(b.py)*0.36)*(1+Math.sin(phase*0.3+b.py*8)*0.06);
+      const g=x.createRadialGradient(cxp,vy,0,cxp,vy,r);
+      g.addColorStop(0,`rgba(${c[0]},${c[1]},${c[2]},${a.toFixed(3)})`); g.addColorStop(.45,`rgba(${c[0]},${c[1]},${c[2]},${(a*0.34).toFixed(3)})`); g.addColorStop(1,'rgba(0,0,0,0)');
+      x.fillStyle=g; x.beginPath(); x.arc(cxp,vy,r,0,6.2832); x.fill();
     }
-    // infinite parallax starfield (travel)
+    // 2) galactic-centre glow — cool blue-white (no yellow)
+    { const vy=(CORE*docH-sc*par)*DPR; if(vy>-maxR&&vy<H+maxR){ const cxp=cxAt(CORE)*W, r=maxR*0.4;
+      const g=x.createRadialGradient(cxp,vy,0,cxp,vy,r);
+      g.addColorStop(0,'rgba(224,228,255,0.30)'); g.addColorStop(.3,'rgba(150,156,224,0.18)'); g.addColorStop(1,'rgba(150,156,224,0)');
+      x.fillStyle=g; x.beginPath(); x.arc(cxp,vy,r,0,6.2832); x.fill(); } }
+    // 3) dust-lane rifts — carve dark gaps through the band
+    x.globalCompositeOperation='destination-out';
+    for(const d of DUST){ const vy=(d.py*docH-sc*par)*DPR, r=d.r*maxR; if(vy<-r||vy>H+r) continue;
+      const cxp=(cxAt(d.py)+d.x)*W, g=x.createRadialGradient(cxp,vy,0,cxp,vy,r);
+      g.addColorStop(0,'rgba(0,0,0,0.55)'); g.addColorStop(.6,'rgba(0,0,0,0.22)'); g.addColorStop(1,'rgba(0,0,0,0)');
+      x.fillStyle=g; x.beginPath(); x.arc(cxp,vy,r,0,6.2832); x.fill();
+    }
+    // 4) dense band stars (anchored, travel past) + 5) ambient parallax starfield
+    x.globalCompositeOperation='lighter';
+    for(const s of bandStars){ s.tw+=0.02*s.ts; const vy=(s.py*docH-sc)*DPR; if(vy<0||vy>H) continue;
+      const cxp=((cxAt(s.py)+s.perp)%1+1)%1*W, tw=.5+Math.sin(s.tw)*.5, br=(.5+coreBoost(s.py)*.6);
+      x.fillStyle=`rgba(246,240,226,${((.3+tw*.6)*br).toFixed(3)})`; x.beginPath(); x.arc(cxp,vy,s.r*(.7+tw*.5),0,6.2832); x.fill();
+    }
     for(const s of stars){ s.tw+=0.02*s.ts;
-      const yy=(((s.y - sc*DPR*0.5*s.depth)%H)+H)%H, tw=.5+Math.sin(s.tw)*.5;
-      x.fillStyle=`rgba(245,238,224,${((.22+tw*.62)*s.depth).toFixed(3)})`;
+      const yy=(((s.y-sc*DPR*0.5*s.depth)%H)+H)%H, tw=.5+Math.sin(s.tw)*.5;
+      x.fillStyle=`rgba(245,238,224,${((.2+tw*.6)*s.depth).toFixed(3)})`;
       x.beginPath(); x.arc(s.x%W,yy,s.r*(.7+tw*.5),0,6.2832); x.fill();
     }
+    // 6) shooting stars — occasional bright streaks across the sky
+    if(meteors.length<2 && Math.random()<0.006){ meteors.push({x:rnd(.12,.95)*W, y:rnd(0,.55)*H, vx:rnd(-13,-7)*DPR, vy:rnd(4,8)*DPR, life:1}); }
+    for(const m of meteors){ m.x+=m.vx; m.y+=m.vy; m.life-=0.012;
+      const g=x.createLinearGradient(m.x,m.y,m.x-m.vx*5,m.y-m.vy*5);
+      g.addColorStop(0,`rgba(255,250,240,${(m.life*0.9).toFixed(3)})`); g.addColorStop(1,'rgba(255,250,240,0)');
+      x.strokeStyle=g; x.lineWidth=1.7*DPR; x.lineCap='round'; x.beginPath(); x.moveTo(m.x,m.y); x.lineTo(m.x-m.vx*5,m.y-m.vy*5); x.stroke();
+      const hg=x.createRadialGradient(m.x,m.y,0,m.x,m.y,4*DPR); hg.addColorStop(0,`rgba(255,252,246,${m.life.toFixed(3)})`); hg.addColorStop(1,'rgba(255,252,246,0)');
+      x.fillStyle=hg; x.beginPath(); x.arc(m.x,m.y,4*DPR,0,6.2832); x.fill();
+    }
+    meteors=meteors.filter(m=>m.life>0 && m.x>-120 && m.y<H+120);
     x.globalCompositeOperation='source-over';
   }
   function loop(){ if(document.hidden){ running=false; return; } render(); requestAnimationFrame(loop); }
