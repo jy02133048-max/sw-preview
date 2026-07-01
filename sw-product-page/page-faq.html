@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FAQ — Stone Whisper (preview)</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="sw-product.css">
+<style>
+  /* ── NAV — matched 1:1 to the homepage (sw-v2) ── */
+  nav#nav{position:fixed;top:0;left:0;right:0;z-index:40;display:flex;align-items:center;justify-content:space-between;
+    padding:22px clamp(20px,5vw,64px);transition:background .5s ease,backdrop-filter .5s ease,padding .5s ease}
+  nav#nav.lit{background:rgba(7,6,13,.34);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);padding-top:15px;padding-bottom:15px;border-bottom:1px solid rgba(244,236,221,.04)}
+  nav#nav .brand{font-family:var(--font-heading);font-size:21px;letter-spacing:.16em;color:var(--color-text-primary);text-transform:uppercase;font-weight:500}
+  nav#nav .brand b{color:var(--color-gold);font-weight:500}
+  nav#nav .navlinks{display:flex;gap:clamp(18px,2.6vw,40px);align-items:center}
+  nav#nav .navlinks a{font-family:var(--font-ui);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--color-text-muted);transition:color .35s}
+  nav#nav .navlinks a:hover{color:var(--color-text-primary)}
+  nav#nav .bead-switch{font-family:var(--font-ui);border:1px solid rgba(244,236,221,.16);background:rgba(244,236,221,.04);color:var(--color-text-body);
+    font-size:11px;letter-spacing:.14em;text-transform:uppercase;padding:9px 14px;border-radius:999px;cursor:pointer;transition:all .35s ease}
+  nav#nav .bead-switch:hover{border-color:rgba(227,188,119,.46);color:var(--color-gold);background:rgba(227,188,119,.08)}
+  nav#nav .navcta{font-family:var(--font-ui);font-size:12px;letter-spacing:.16em;text-transform:uppercase;border:1px solid rgba(227,188,119,.4);color:var(--color-gold);padding:9px 20px;border-radius:30px;transition:all .4s ease}
+  nav#nav .navcta:hover{background:var(--color-gold);color:#0a0810;border-color:var(--color-gold)}
+  @media(max-width:760px){ nav#nav .navlinks a:not(.navcta),nav#nav .bead-switch{display:none} }
+
+  /* sw-v2 starfield — fixed behind content, above the gradient backdrop */
+  #space{position:fixed;inset:0;z-index:-1;pointer-events:none}
+
+  /* ── FAQ PAGE-SPECIFIC (maps to sections/sw-faq/sw-faq.css on deploy) ── */
+  .faq-hero{max-width:760px;margin:0 auto;text-align:center;padding:clamp(130px,18vh,200px) clamp(20px,4vw,48px) clamp(20px,4vh,40px)}
+  .faq-hero .eyebrow{font-family:var(--font-ui);font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--color-gold);margin-bottom:18px}
+  .faq-hero h1{font-family:var(--font-heading);font-weight:500;font-size:clamp(36px,5vw,60px);line-height:1.05;color:var(--color-text-primary)}
+  .faq-hero h1 em{font-style:italic;color:var(--color-amethyst)}
+  .faq-hero .lede{font-size:16px;line-height:1.7;color:var(--color-text-body);max-width:52ch;margin:20px auto 0}
+
+  /* Override the shared .faq section so it sits on the cosmic backdrop (not the surface fill) */
+  .faq.faq--page{background:transparent;padding:clamp(40px,6vh,72px) 0 clamp(80px,10vh,120px)}
+  .faq--page .faq__list{max-width:var(--content-narrow)}
+  .faq--page .faq__a a{color:var(--color-gold);border-bottom:1px solid var(--color-gold-muted);transition:.3s}
+  .faq--page .faq__a a:hover{color:var(--color-gold-hover);border-color:var(--color-gold)}
+  .faq--page .faq__a.open{max-height:520px}
+
+  /* honest matching callout — reuses the cosmic match-card look */
+  .faq-cta{padding:0 clamp(20px,4vw,48px) clamp(90px,11vh,140px)}
+  .faq-cta-card{max-width:660px;margin:0 auto;text-align:center;border:1px solid var(--color-border);border-radius:6px;padding:clamp(36px,5vw,64px);
+    background:linear-gradient(180deg,rgba(183,160,228,.06),rgba(255,255,255,.012))}
+  .faq-cta-card h2{font-family:var(--font-heading);font-weight:500;font-size:clamp(24px,3.2vw,38px);line-height:1.1;color:var(--color-text-primary)}
+  .faq-cta-card h2 em{font-style:italic;color:var(--color-amethyst)}
+  .faq-cta-card p{font-size:15px;line-height:1.7;color:var(--color-text-body);max-width:48ch;margin:16px auto 0}
+  .faq-cta-card .cta-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:28px}
+  .faq-cta-card .note{font-size:11px;letter-spacing:.03em;color:var(--color-text-muted);margin-top:22px}
+
+  footer.ft{border-top:1px solid var(--color-border);margin-top:clamp(40px,6vh,80px);padding:48px clamp(20px,4vw,48px);text-align:center;color:var(--color-text-muted);font-size:13px}
+  footer.ft .b{font-family:var(--font-heading);font-size:18px;letter-spacing:.2em;text-transform:uppercase;color:var(--color-text-primary)}
+</style>
+</head>
+<body>
+<canvas id="space"></canvas>
+
+<!-- NAV — identical to the homepage (sw-v2) -->
+<nav id="nav">
+  <a href="../sw-website-redesign/sw-v2.html#top" class="brand">Stone <b>Whisper</b></a>
+  <div class="navlinks">
+    <a href="../sw-website-redesign/sw-v2.html">Home</a>
+    <a href="page-shop.html">Shop</a>
+    <a href="page-how-it-works.html">How it works</a>
+    <a href="page-what-is-bazi.html">The method</a>
+    <a href="page-stone-library.html">Stones</a>
+    <a href="page-about.html">About</a>
+    <a href="../sw-crystal-customizer/index.html" class="navcta">Open Studio</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<header class="faq-hero">
+  <p class="eyebrow rv">Questions</p>
+  <h1 class="rv">The honest answers,<br><em>before you ask.</em></h1>
+  <p class="lede rv rv-d1">Sizing, real stone, how the matching actually works, and whether any of this is for you. Calm and straight &mdash; if something here doesn&rsquo;t convince you, that&rsquo;s useful too.</p>
+</header>
+
+<!-- FAQ -->
+<section class="faq faq--page"><div class="wrap">
+  <div class="faq__list">
+
+    <!-- SIZING -->
+    <div class="faq__item rv"><button class="faq__q" onclick="toggleFaq(this)">How do I measure my wrist?</button><div class="faq__a">Wrap a strip of paper or a tape measure snugly around the widest part of your wrist, then measure the length in centimetres. That number is your wrist circumference &mdash; match it to S, M, or L below. If you&rsquo;re between sizes, size up; the elastic gives a little either way.</div></div>
+
+    <div class="faq__item rv"><button class="faq__q" onclick="toggleFaq(this)">Which size should I choose &mdash; S, M, or L?</button><div class="faq__a">S fits a wrist of about 15&nbsp;cm, M about 17&nbsp;cm, and L about 19&nbsp;cm. The strand sits comfortably with a touch of give. A bracelet should rest on the wrist, not grip it &mdash; if you like a looser, drapier feel, go one size up.</div></div>
+
+    <!-- REAL STONE -->
+    <div class="faq__item rv"><button class="faq__q" onclick="toggleFaq(this)">Are the stones real?</button><div class="faq__a">Yes. Every bead is 100% natural stone &mdash; no dye, no glass, no reconstituted powder. Because it&rsquo;s formed in the ground rather than a lab, colour and pattern vary bead to bead. That variation is the proof it&rsquo;s real, not a flaw. Amethyst, for example, is natural purple quartz (SiO&#8322;), 7 on the Mohs hardness scale, and the February birthstone.</div></div>
+
+    <div class="faq__item rv"><button class="faq__q" onclick="toggleFaq(this)">Why does my bracelet look slightly different from the photos?</button><div class="faq__a">Because natural stone is never identical twice. Banding, veils, and depth of colour shift from bead to bead and strand to strand. We photograph honestly and don&rsquo;t retouch the stone &mdash; what you receive is its own piece, not a copy of the listing image.</div></div>
+
+    <!-- HOW MATCHING WORKS -->
+    <div class="faq__item rv"><button class="faq__q" onclick="toggleFaq(this)">How does the matching work? Is it a horoscope?</button><div class="faq__a">It&rsquo;s structured analysis, not a horoscope. You give us your birth date, time, and place; the same engine behind the Studio reads your chart and weighs which qualities you run strong on and which you&rsquo;re short on. It then suggests the stones that bring your balance closer to centre. It&rsquo;s a method that runs the same way every time, not fortune-telling, and we make no promises about your future. <a href="page-how-it-works.html">See how it works &rarr;</a></div></div>
+
+    <div class="faq__item rv"><button class="faq__q" onclick="toggleFaq(this)">Do I have to do the chart reading to buy?</button><div class="faq__a">No. You can buy any finished bracelet on its own and skip the reading entirely. The matching is there if you want a stone chosen for your elements rather than just for the colour &mdash; it&rsquo;s an option, not a gate.</div></div>
+
+    <!-- CUSTOM VS FINISHED -->
+    <div class="faq__item rv"><button class="faq__q" onclick="toggleFaq(this)">What&rsquo;s the difference between the Studio and a finished bracelet?</button><div class="faq__a">A <b>finished bracelet</b> is a single ready-made design &mdash; you pick your size and it ships. The <b>Studio</b> is the custom path: you build a strand around your own chart, choosing stones matched to what your chart is missing and arranged for colour. Same real stones and same quality either way; the Studio just means you decide every stone in it. <a href="../sw-crystal-customizer/index.html">Open the Studio &rarr;</a></div></div>
+
+    <div class="faq__item rv"><button class="faq__q" onclick="toggleFaq(this)">Can I have a custom bracelet remade or adjusted later?</button><div class="faq__a">Reach out and we&rsquo;ll do our best. Restringing to a different size is usually straightforward; design changes depend on stone availability. For specifics on turnaround and any cost, contact us at [Company email] &mdash; we&rsquo;d rather quote you honestly than promise blind.</div></div>
+
+    <!-- SHIPPING & RETURNS -->
+    <div class="faq__item rv"><button class="faq__q" onclick="toggleFaq(this)">How long does shipping take, and what does it cost?</button><div class="faq__a">US shipping is free. Orders are delivered in 10&ndash;15 business days, shipped in a padded stone pouch. For full details and timing on custom pieces, see our <a href="page-shipping.html">Shipping page &rarr;</a></div></div>
+
+    <div class="faq__item rv"><button class="faq__q" onclick="toggleFaq(this)">What if it isn&rsquo;t right for me?</button><div class="faq__a">If a finished bracelet isn&rsquo;t right, you can return it &mdash; the full terms, window, and condition requirements are on our <a href="page-returns.html">Returns page &rarr;</a> Custom Studio pieces are made to your chart, so their return terms differ; check the Returns page before ordering a custom strand.</div></div>
+
+    <!-- CARE -->
+    <div class="faq__item rv"><button class="faq__q" onclick="toggleFaq(this)">How do I care for it?</button><div class="faq__a">Keep it out of long, strong sun (UV can lighten some stones, amethyst included), wipe it with a soft dry cloth, and take it off before showering, swimming, or sleeping. The elastic lasts longest when you roll it on and off rather than stretching it wide. Full guidance is on our <a href="page-care.html">Care page &rarr;</a></div></div>
+
+    <!-- IS IT FOR ME IF I DON'T BELIEVE -->
+    <div class="faq__item rv"><button class="faq__q" onclick="toggleFaq(this)">Is this for me if I don&rsquo;t believe in crystals?</button><div class="faq__a">Honestly &mdash; yes, it can be, and we won&rsquo;t tell you otherwise. Plenty of people wear ours simply because it&rsquo;s a well-made bracelet of real, beautiful stone with real weight on the wrist. The element matching just narrows eleven good stones down to the one that fits your chart. What it does after that is up to the stone and you. Take the part that fits you and leave the rest. We&rsquo;d rather you trust us than oversell you.</div></div>
+
+  </div>
+</div></section>
+
+<!-- HONEST MATCHING CTA -->
+<section class="faq-cta">
+  <div class="faq-cta-card rv">
+    <p class="section-label" style="color:var(--color-gold)">Still deciding?</p>
+    <h2>Let your chart pick the stone.<br><em>We&rsquo;ll stay out of it.</em></h2>
+    <p>Tell the Studio when you were born and it&rsquo;ll read your chart and match stones to what it&rsquo;s missing &mdash; the same engine that picks the stones on every product here. If a stone doesn&rsquo;t fit your chart, the Studio grays it out and tells you why.</p>
+    <div class="cta-row">
+      <a href="../sw-crystal-customizer/index.html" class="btn btn--gold">Open the Studio</a>
+      <a href="page-how-it-works.html" class="btn btn--outline">How it works</a>
+    </div>
+    <p class="note">Read from your chart &mdash; structured analysis, not a horoscope.</p>
+  </div>
+</section>
+
+<footer class="ft">
+  <div class="ft-cols">
+    <div class="ft-brand"><div class="b">Stone Whisper</div><p>Natural stone, matched to you.</p></div>
+    <div class="ft-col"><h4>Shop</h4><a href="page-shop.html">Shop</a><a href="../sw-crystal-customizer/index.html">Open Studio</a><a href="page-stone-library.html">Stones</a></div>
+    <div class="ft-col"><h4>Learn</h4><a href="page-how-it-works.html">How it works</a><a href="page-what-is-bazi.html">The method</a><a href="page-blog.html">Journal</a></div>
+    <div class="ft-col"><h4>Support</h4><a href="page-faq.html">FAQ</a><a href="page-care.html">Care</a><a href="page-shipping.html">Shipping</a><a href="page-returns.html">Returns</a><a href="page-contact.html">Contact</a></div>
+    <div class="ft-col"><h4>Company</h4><a href="page-about.html">About</a><a href="page-policies.html#privacy">Privacy</a><a href="page-policies.html#terms">Terms</a><a href="page-policies.html#refund">Refund</a></div>
+  </div>
+  <p class="ft-copy">&copy; Stone Whisper &middot; natural stone, matched to you</p>
+</footer>
+
+<script>
+  /* ── sw-v2 starfield (cool parallax stars + faint galaxy band + meteors) — verbatim from preview.html ── */
+  (function(){
+    const cv=document.getElementById('space'); if(!cv) return; const x=cv.getContext('2d');
+    let W,H,DPR,stars=[],meteors=[],run=false,ph=0;
+    const rnd=(a,b)=>a+Math.random()*(b-a);
+    const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+    function size(){DPR=Math.min(2,devicePixelRatio||1);W=cv.width=innerWidth*DPR;H=cv.height=innerHeight*DPR;cv.style.width=innerWidth+'px';cv.style.height=innerHeight+'px';build();}
+    function build(){stars=[];const n=Math.round(innerWidth*innerHeight/2600);for(let i=0;i<n;i++){const d=rnd(.15,1);stars.push({x:rnd(0,W),y:rnd(0,H),r:rnd(.3,1.6)*DPR*d,d,tw:rnd(0,6.28),ts:rnd(.6,1.8)});}}
+    function render(){
+      const sc=(window.scrollY||0)*DPR; x.clearRect(0,0,W,H); ph+=0.015; x.globalCompositeOperation='lighter';
+      x.save(); x.translate(W*0.64,H*0.30); x.rotate(-0.52);
+      const bg=x.createLinearGradient(0,-H*0.55,0,H*0.55);
+      bg.addColorStop(0,'rgba(120,140,214,0)'); bg.addColorStop(.5,'rgba(150,134,206,0.075)'); bg.addColorStop(1,'rgba(120,140,214,0)');
+      x.fillStyle=bg; x.fillRect(-W,-H*0.55,W*2,H*1.1); x.restore();
+      for(const s of stars){ s.tw+=0.02*s.ts; const yy=(((s.y-sc*0.4*s.d)%H)+H)%H, tw=.5+Math.sin(s.tw)*.5;
+        x.fillStyle=`rgba(245,238,224,${((.2+tw*.6)*s.d).toFixed(3)})`; x.beginPath(); x.arc(s.x%W,yy,s.r*(.7+tw*.5),0,6.2832); x.fill(); }
+      if(meteors.length<1 && Math.random()<0.004){ meteors.push({x:rnd(.2,.95)*W,y:rnd(0,.4)*H,vx:rnd(-12,-7)*DPR,vy:rnd(4,7)*DPR,life:1}); }
+      for(const m of meteors){ m.x+=m.vx; m.y+=m.vy; m.life-=.014;
+        const g=x.createLinearGradient(m.x,m.y,m.x-m.vx*5,m.y-m.vy*5); g.addColorStop(0,`rgba(255,250,240,${m.life.toFixed(3)})`); g.addColorStop(1,'rgba(255,250,240,0)');
+        x.strokeStyle=g; x.lineWidth=1.6*DPR; x.lineCap='round'; x.beginPath(); x.moveTo(m.x,m.y); x.lineTo(m.x-m.vx*5,m.y-m.vy*5); x.stroke(); }
+      meteors=meteors.filter(m=>m.life>0&&m.x>-100&&m.y<H+100);
+      x.globalCompositeOperation='source-over';
+    }
+    function loop(){ if(document.hidden){run=false;return;} render(); requestAnimationFrame(loop); }
+    function start(){ if(run)return; run=true; requestAnimationFrame(loop); }
+    size(); addEventListener('resize',()=>{size();render();},{passive:true}); render();
+    if(reduce) addEventListener('scroll',render,{passive:true}); else { start(); document.addEventListener('visibilitychange',()=>{if(!document.hidden)start();}); }
+  })();
+
+  const nav=document.getElementById('nav');
+  addEventListener('scroll',()=>nav.classList.toggle('lit',scrollY>40));
+  const obs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('vis');obs.unobserve(e.target);}}),{threshold:.1});
+  document.querySelectorAll('.rv').forEach(el=>obs.observe(el));
+  function toggleFaq(b){b.classList.toggle('open');b.nextElementSibling.classList.toggle('open');}
+</script>
+</body></html>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     SHOPLINE OS 3.0 MAPPING — how this preview ports 1:1 to a section
+     ════════════════════════════════════════════════════════════════════
+
+  SECTION NAME / FOLDER:
+    sections/sw-faq/sw-faq.html
+    (page-specific CSS in this file's <head> <style> moves to
+     sections/sw-faq/sw-faq.css — section-isolated, no cross-section reliance.)
+
+  ATTACHES TO TEMPLATE:
+    templates/page.faq.json
+    -> create a Page in admin titled "FAQ" using template "faq",
+       then add the sw-faq section to that template.
+    The cosmic chrome (canvas#space + starfield <script>, nav#nav, footer.ft) is
+    shared across all sw-v2 pages. On deploy it lives in the THEME LAYOUT / header
+    + footer sections (one source of truth), NOT re-declared per content section.
+    The default theme header is hidden via the `body:has(.nav__brand)` rule already
+    in sw-product.css. This preview inlines the chrome only so the file renders
+    standalone while the live store is frozen.
+
+  {{#schema}}
+  {
+    "name": "FAQ",
+    "tag": "section",
+    "class": "sw-faq",
+    "settings": [
+      { "type": "text",     "id": "eyebrow",    "label": "Eyebrow",    "default": "Questions" },
+      { "type": "richtext", "id": "hero_title", "label": "Hero title" },
+      { "type": "richtext", "id": "hero_lede",  "label": "Hero lede" },
+      { "type": "url",      "id": "studio_url", "label": "Studio URL" }
+    ],
+    "blocks": [
+      {
+        "type": "qa",
+        "name": "Q&A item",
+        "settings": [
+          { "type": "text",     "id": "question", "label": "Question" },
+          { "type": "richtext", "id": "answer",   "label": "Answer (links to other policy pages allowed)" }
+        ]
+      }
+    ],
+    "max_blocks": 16,
+    "presets": [ { "name": "FAQ", "category": "Stone Whisper" } ]
+  }
+  {{/schema}}
+
+  LIQUID NOTE (on deploy):
+    The Q&A list becomes a {% for block in section.blocks %} loop rendering
+    block.settings.question / block.settings.answer with block.shopline_attributes,
+    so it is editable in the theme editor. Each row keeps the .faq__item / .faq__q /
+    .faq__a markup and the toggleFaq() handler.
+
+  SHOPLINE NATIVE — must use native components on deploy (NOT custom markup):
+    - Cart / account / search in the shared header        -> native header section.
+    - This FAQ page has NO native commerce component itself: it is pure editorial
+      content + internal links. (No product loop, no cart, no contact-form submit here.)
+    - Cross-links point to sibling pages that DO own native parts:
+        * page-shipping.html / page-returns.html / page-care.html -> page.policy.json templates.
+        * "Open the Studio" / "How it works" -> the customizer + how-it-works pages.
+      Any contact form referenced from the custom-bracelet answer ([Company email])
+      must use Shopline's NATIVE contact-form / contact submission on deploy,
+      not a custom-posted form.
+
+  IMAGE REFS (on deploy, if any added later):
+    {{ `images/x.png` | asset_url() }} — this page currently uses no images,
+    only the cosmic backdrop + starfield chrome.
+
+  PLACEHOLDERS TO RESOLVE BEFORE PUBLISH:
+    - [Company email] (custom-bracelet adjustment answer) — confirm support address.
+    - Confirm sibling page filenames/handles: page-care.html (a Care page is
+      referenced but not yet present in this folder) — create it or update the link.
+  ════════════════════════════════════════════════════════════════════ -->

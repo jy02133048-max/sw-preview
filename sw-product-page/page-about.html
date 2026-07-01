@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>About — Stone Whisper (preview)</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="sw-product.css">
+<style>
+  /* ── NAV — matched 1:1 to the homepage (sw-v2) ── */
+  nav#nav{position:fixed;top:0;left:0;right:0;z-index:40;display:flex;align-items:center;justify-content:space-between;
+    padding:22px clamp(20px,5vw,64px);transition:background .5s ease,backdrop-filter .5s ease,padding .5s ease}
+  nav#nav.lit{background:rgba(7,6,13,.34);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);padding-top:15px;padding-bottom:15px;border-bottom:1px solid rgba(244,236,221,.04)}
+  nav#nav .brand{font-family:var(--font-heading);font-size:21px;letter-spacing:.16em;color:var(--color-text-primary);text-transform:uppercase;font-weight:500}
+  nav#nav .brand b{color:var(--color-gold);font-weight:500}
+  nav#nav .navlinks{display:flex;gap:clamp(18px,2.6vw,40px);align-items:center}
+  nav#nav .navlinks a{font-family:var(--font-ui);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--color-text-muted);transition:color .35s}
+  nav#nav .navlinks a:hover{color:var(--color-text-primary)}
+  nav#nav .bead-switch{font-family:var(--font-ui);border:1px solid rgba(244,236,221,.16);background:rgba(244,236,221,.04);color:var(--color-text-body);
+    font-size:11px;letter-spacing:.14em;text-transform:uppercase;padding:9px 14px;border-radius:999px;cursor:pointer;transition:all .35s ease}
+  nav#nav .bead-switch:hover{border-color:rgba(227,188,119,.46);color:var(--color-gold);background:rgba(227,188,119,.08)}
+  nav#nav .navcta{font-family:var(--font-ui);font-size:12px;letter-spacing:.16em;text-transform:uppercase;border:1px solid rgba(227,188,119,.4);color:var(--color-gold);padding:9px 20px;border-radius:30px;transition:all .4s ease}
+  nav#nav .navcta:hover{background:var(--color-gold);color:#0a0810;border-color:var(--color-gold)}
+  @media(max-width:760px){ nav#nav .navlinks a:not(.navcta),nav#nav .bead-switch{display:none} }
+
+  /* sw-v2 starfield — fixed behind content, above the gradient backdrop */
+  #space{position:fixed;inset:0;z-index:-1;pointer-events:none}
+
+  footer.ft{border-top:1px solid var(--color-border);margin-top:clamp(80px,10vh,140px);padding:48px clamp(20px,4vw,48px);text-align:center;color:var(--color-text-muted);font-size:13px}
+  footer.ft .b{font-family:var(--font-heading);font-size:18px;letter-spacing:.2em;text-transform:uppercase;color:var(--color-text-primary)}
+
+  /* ══════════ ABOUT-PAGE SECTION CSS (maps to sections/sw-about/sw-about.css on deploy) ══════════ */
+
+  /* — Opening manifesto — */
+  .ab-hero{max-width:var(--content-width);margin:0 auto;padding:clamp(140px,20vh,220px) clamp(20px,4vw,48px) clamp(48px,8vh,96px);text-align:center}
+  .ab-hero .section-label{color:var(--color-gold);opacity:.85}
+  .ab-hero__h{font-family:var(--font-heading);font-weight:500;font-size:clamp(2.6rem,6vw,4.6rem);line-height:1.04;color:var(--color-text-primary);letter-spacing:-.02em}
+  .ab-hero__h em{font-style:italic;color:var(--color-amethyst)}
+  .ab-hero__sub{font-size:clamp(1.05rem,1.6vw,1.25rem);line-height:1.7;color:var(--color-text-body);max-width:54ch;margin:clamp(20px,3vh,32px) auto 0}
+
+  /* — Editorial alternating rows — */
+  .ab-row{max-width:1080px;margin:0 auto;padding:clamp(56px,9vh,110px) clamp(20px,4vw,48px);
+    display:grid;grid-template-columns:1fr 1fr;gap:clamp(36px,6vw,80px);align-items:center}
+  .ab-row--flip .ab-row__media{order:2}
+  .ab-row__media{border-radius:6px;overflow:hidden;border:1px solid var(--color-border);background:var(--color-surface);position:relative}
+  .ab-row__media img{width:100%;aspect-ratio:4/5;object-fit:cover;filter:contrast(1.05) saturate(.94);display:block}
+  .ab-row__media--wide img{aspect-ratio:1/1}
+  .ab-row__media .tag{position:absolute;left:14px;bottom:14px;font-family:var(--font-ui);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--color-text-primary);background:rgba(7,6,13,.6);backdrop-filter:blur(6px);border:1px solid rgba(227,188,119,.22);border-radius:999px;padding:6px 13px}
+  .ab-row__body .section-label{color:var(--color-gold);opacity:.8}
+  .ab-row__h{font-family:var(--font-heading);font-weight:500;font-size:clamp(1.7rem,3vw,2.5rem);line-height:1.12;color:var(--color-text-primary);margin-bottom:var(--space-4)}
+  .ab-row__h em{font-style:italic;color:var(--color-amethyst)}
+  .ab-row__p{font-size:1.02rem;line-height:1.78;color:var(--color-text-body);margin-bottom:var(--space-4)}
+  .ab-row__p:last-child{margin-bottom:0}
+  .ab-row__p strong{color:var(--color-text-primary);font-weight:500}
+
+  /* — Pull-quote band — */
+  .ab-quote{padding:clamp(64px,11vh,130px) clamp(20px,4vw,48px);position:relative;z-index:1}
+  .ab-quote__inner{max-width:880px;margin:0 auto;text-align:center}
+  .ab-quote__mark{font-family:var(--font-heading);font-size:clamp(4rem,9vw,7rem);line-height:.5;color:var(--color-gold-muted);opacity:.5;display:block;margin-bottom:12px}
+  .ab-quote__t{font-family:var(--font-heading);font-style:italic;font-weight:400;font-size:clamp(1.7rem,3.6vw,3rem);line-height:1.22;color:var(--color-text-primary)}
+  .ab-quote__t b{font-style:normal;font-weight:500;color:var(--color-gold)}
+  .ab-quote__by{font-family:var(--font-ui);font-size:11.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--color-text-muted);margin-top:clamp(20px,3vh,30px)}
+
+  /* — Practitioner card — */
+  .ab-person{max-width:1080px;margin:0 auto;padding:clamp(56px,9vh,110px) clamp(20px,4vw,48px)}
+  .ab-person__grid{display:grid;grid-template-columns:300px 1fr;gap:clamp(32px,5vw,64px);align-items:center}
+  .ab-portrait{aspect-ratio:3/4;border-radius:6px;border:1px solid var(--color-border);overflow:hidden;
+    background:linear-gradient(160deg,rgba(183,160,228,.14),rgba(143,184,224,.06) 60%,rgba(7,6,13,.4));
+    display:flex;align-items:center;justify-content:center;position:relative}
+  .ab-portrait span{font-family:var(--font-ui);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--color-text-muted);text-align:center;padding:0 20px;line-height:1.7}
+  .ab-portrait::after{content:'';position:absolute;inset:0;background:radial-gradient(60% 40% at 50% 30%,rgba(227,188,119,.10),transparent 70%);pointer-events:none}
+  .ab-person__body .section-label{color:var(--color-gold);opacity:.8}
+  .ab-person__h{font-family:var(--font-heading);font-weight:500;font-size:clamp(1.7rem,3vw,2.5rem);line-height:1.12;color:var(--color-text-primary);margin-bottom:var(--space-4)}
+  .ab-person__p{font-size:1.02rem;line-height:1.78;color:var(--color-text-body);margin-bottom:var(--space-4)}
+  .ab-person__p:last-child{margin-bottom:0}
+  .ab-person__sig{font-family:var(--font-heading);font-style:italic;font-size:1.4rem;color:var(--color-gold);margin-top:var(--space-6)}
+  @media(max-width:760px){.ab-person__grid{grid-template-columns:1fr;gap:28px}.ab-portrait{max-width:300px;margin:0 auto}}
+
+  /* — Promise strip (three honest commitments) — */
+  .ab-promise{max-width:1080px;margin:0 auto;padding:clamp(40px,6vh,80px) clamp(20px,4vw,48px)}
+  .ab-promise__grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;border:1px solid var(--color-border);border-radius:6px;overflow:hidden}
+  .ab-promise__cell{background:var(--color-surface);padding:clamp(26px,3vw,40px)}
+  .ab-promise__n{font-family:var(--font-heading);font-size:1.6rem;color:var(--color-gold-muted);margin-bottom:var(--space-3)}
+  .ab-promise__t{font-family:var(--font-heading);font-size:1.25rem;color:var(--color-text-primary);margin-bottom:10px}
+  .ab-promise__d{font-size:.94rem;line-height:1.65;color:var(--color-text-muted)}
+  @media(max-width:760px){.ab-promise__grid{grid-template-columns:1fr}}
+
+  /* — Final CTA (Studio + Shop) — */
+  .ab-final{padding:clamp(64px,11vh,130px) clamp(20px,4vw,48px);text-align:center}
+  .ab-final__h{font-family:var(--font-heading);font-weight:500;font-size:clamp(2rem,4vw,3rem);line-height:1.08;color:var(--color-text-primary);max-width:640px;margin:0 auto var(--space-4)}
+  .ab-final__h em{font-style:italic;color:var(--color-amethyst)}
+  .ab-final__sub{font-size:1.08rem;color:var(--color-text-muted);max-width:520px;margin:0 auto var(--space-8)}
+  .ab-final__btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+  .ab-final__note{font-family:var(--font-ui);font-size:.78rem;color:var(--color-text-disabled);margin-top:var(--space-6)}
+
+  @media(max-width:760px){
+    .ab-row{grid-template-columns:1fr;gap:28px}
+    .ab-row--flip .ab-row__media{order:0}
+  }
+</style>
+</head>
+<body class="sw-page-body">
+<canvas id="space"></canvas>
+
+<!-- NAV — identical to the homepage (sw-v2) -->
+<nav id="nav">
+  <a href="../sw-website-redesign/sw-v2.html#top" class="brand">Stone <b>Whisper</b></a>
+  <div class="navlinks">
+    <a href="../sw-website-redesign/sw-v2.html">Home</a>
+    <a href="page-shop.html">Shop</a>
+    <a href="page-how-it-works.html">How it works</a>
+    <a href="page-what-is-bazi.html">The method</a>
+    <a href="page-stone-library.html">Stones</a>
+    <a href="page-about.html">About</a>
+    <a href="../sw-crystal-customizer/index.html" class="navcta">Open Studio</a>
+  </div>
+</nav>
+
+<!-- ═══ OPENING MANIFESTO ═══ -->
+<section class="ab-hero">
+  <p class="section-label rv">Our story</p>
+  <h1 class="ab-hero__h rv">Most crystal bracelets are picked by which one you like.<br><em>Yours shouldn&rsquo;t be.</em></h1>
+  <p class="ab-hero__sub rv rv-d1">Most crystal shops keep a bin of five presets and call whatever you grab &ldquo;meant to be.&rdquo; We do the opposite. Every Stone Whisper strand is matched to one person &mdash; read from your chart, built around your elements. Not a horoscope. A method.</p>
+</section>
+
+<!-- ═══ ROW 1 — THE PREMISE ═══ -->
+<section class="ab-row rv">
+  <div class="ab-row__media ab-row__media--wide">
+    <img src="assets/amethyst-hero.png" alt="Natural amethyst bracelet, deep violet beads">
+    <span class="tag">Natural amethyst · 12mm</span>
+  </div>
+  <div class="ab-row__body">
+    <p class="section-label">The premise</p>
+    <h2 class="ab-row__h">Five presets in a bin<br>was never the answer.</h2>
+    <p class="ab-row__p">Walk into most crystal stores and the question is &ldquo;which one do you like?&rdquo; It&rsquo;s a fine question for a keychain. It&rsquo;s the wrong question for something you&rsquo;ll wear on the days that matter.</p>
+    <p class="ab-row__p">We started Stone Whisper because we wanted the harder, better question: <strong>which stones actually fit the person wearing them?</strong> The same engine behind our Studio reads your chart before you&rsquo;ve seen a single bead &mdash; so the stones are decided by your elements, not by what happened to be in the bin.</p>
+  </div>
+</section>
+
+<!-- ═══ PULL-QUOTE 1 ═══ -->
+<section class="ab-quote rv">
+  <div class="ab-quote__inner">
+    <span class="ab-quote__mark">&ldquo;</span>
+    <p class="ab-quote__t">We&rsquo;d rather tell you a stone <b>isn&rsquo;t yours</b><br>than sell you one that wasn&rsquo;t.</p>
+    <p class="ab-quote__by">The Stone Whisper stance</p>
+  </div>
+</section>
+
+<!-- ═══ ROW 2 — A HUMAN READS EVERY MATCH ═══ -->
+<section class="ab-person rv">
+  <div class="ab-person__grid" style="grid-template-columns:1fr;max-width:720px">
+    <div class="ab-person__body">
+      <p class="section-label">Not left to the algorithm</p>
+      <h2 class="ab-person__h">Every chart is read<br>by a human first.</h2>
+      <p class="ab-person__p">The engine does the structural work &mdash; your element balance, where a chart runs hot or cold. But a reading isn&rsquo;t a printout. Someone on our side reviews the result, reads what the numbers are leaning toward, and decides which stones answer it.</p>
+      <p class="ab-person__p">The engine can rank the stones. It can&rsquo;t tell you when the honest answer is &ldquo;not this one.&rdquo; That&rsquo;s the part a person still has to say.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ ROW 3 — NATURAL STONE OVER DYED GLASS ═══ -->
+<section class="ab-row ab-row--flip rv">
+  <div class="ab-row__media">
+    <img src="assets/amethyst-macro.png" alt="Macro of a natural amethyst bead — banding and veils">
+    <span class="tag">Macro · no dye, no glass</span>
+  </div>
+  <div class="ab-row__body">
+    <p class="section-label">Why natural stone</p>
+    <h2 class="ab-row__h">Grown in the dark.<br><em>Never dyed to match.</em></h2>
+    <p class="ab-row__p">Dyed glass and reconstituted &ldquo;crystal&rdquo; are cheaper, brighter, and perfectly uniform &mdash; which is exactly the problem. They all look the same because they were never anything in particular.</p>
+    <p class="ab-row__p">We use <strong>100% natural stone</strong>. Our amethyst is quartz &mdash; silicon dioxide, Mohs&nbsp;7, February&rsquo;s birthstone &mdash; coloured by iron and natural irradiation, slowly, underground. No two beads share a shade. You can read the banding in the macro. That variation isn&rsquo;t a flaw to hide; it&rsquo;s the proof it&rsquo;s real.</p>
+  </div>
+</section>
+
+<!-- ═══ PULL-QUOTE 2 ═══ -->
+<section class="ab-quote rv">
+  <div class="ab-quote__inner">
+    <span class="ab-quote__mark">&ldquo;</span>
+    <p class="ab-quote__t">One strand. One chart. One wrist &mdash; <b>and then the mold gets thrown out.</b></p>
+    <p class="ab-quote__by">The Stone Whisper stance</p>
+  </div>
+</section>
+
+<!-- ═══ ROW 4 — MATCHED, NOT MASS-PRODUCED ═══ -->
+<section class="ab-row rv">
+  <div class="ab-row__media ab-row__media--wide">
+    <img src="assets/amethyst-wrist.png" alt="Amethyst bracelet worn on the wrist">
+    <span class="tag">Sized to your wrist</span>
+  </div>
+  <div class="ab-row__body">
+    <p class="section-label">The stance</p>
+    <h2 class="ab-row__h">Built for one wrist.<br>Yours.</h2>
+    <p class="ab-row__p">A matched strand isn&rsquo;t a different SKU off the same shelf. The stones are chosen against your chart, the strand is sized to your wrist, and each one is hand-assembled before it ships.</p>
+    <p class="ab-row__p">It means we make fewer bracelets than a print-on-demand shop ever could. That&rsquo;s not a limitation we&rsquo;re fixing. Delivery runs <strong>10&ndash;15 business days</strong>, free across the US, and the strand that arrives was built for the chart you gave us &mdash; not pulled from a bin.</p>
+  </div>
+</section>
+
+<!-- ═══ THREE HONEST PROMISES ═══ -->
+<section class="ab-promise rv">
+  <div class="ab-promise__grid">
+    <div class="ab-promise__cell">
+      <div class="ab-promise__n">01</div>
+      <p class="ab-promise__t">Read, not guessed</p>
+      <p class="ab-promise__d">Your strand starts from your chart and your elements &mdash; the same engine behind the Studio. It tells you what fits, not what&rsquo;s fated.</p>
+    </div>
+    <div class="ab-promise__cell">
+      <div class="ab-promise__n">02</div>
+      <p class="ab-promise__t">Real stone only</p>
+      <p class="ab-promise__d">100% natural crystal. No dye, no glass, no two beads alike. Colour varies bead to bead because iron and time in the ground made each one &mdash; not a dye batch.</p>
+    </div>
+    <div class="ab-promise__cell">
+      <div class="ab-promise__n">03</div>
+      <p class="ab-promise__t">Honest fit</p>
+      <p class="ab-promise__d">If a stone isn&rsquo;t yours, we&rsquo;ll say so &mdash; and point you to the one that is. We&rsquo;d rather lose the sale than miss the match.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FINAL CTA — STUDIO + SHOP ═══ -->
+<section class="ab-final rv">
+  <h2 class="ab-final__h">The stone that&rsquo;s yours already exists.<br><em>Let&rsquo;s read for it.</em></h2>
+  <p class="ab-final__sub">Open the Studio and read your chart in a few minutes &mdash; or keep guessing which one you like. Already know your stone? Browse the finished pieces.</p>
+  <div class="ab-final__btns">
+    <a href="../sw-crystal-customizer/index.html" class="btn btn--gold">Open the Studio</a>
+    <a href="../sw-website-redesign/sw-v2.html#library" class="btn btn--outline">Shop bracelets</a>
+  </div>
+  <p class="ab-final__note">Read from your chart · Free US shipping · Delivered in 10&ndash;15 business days.</p>
+</section>
+
+<footer class="ft">
+  <div class="ft-cols">
+    <div class="ft-brand"><div class="b">Stone Whisper</div><p>Natural stone, matched to you.</p></div>
+    <div class="ft-col"><h4>Shop</h4><a href="page-shop.html">Shop</a><a href="../sw-crystal-customizer/index.html">Open Studio</a><a href="page-stone-library.html">Stones</a></div>
+    <div class="ft-col"><h4>Learn</h4><a href="page-how-it-works.html">How it works</a><a href="page-what-is-bazi.html">The method</a><a href="page-blog.html">Journal</a></div>
+    <div class="ft-col"><h4>Support</h4><a href="page-faq.html">FAQ</a><a href="page-care.html">Care</a><a href="page-shipping.html">Shipping</a><a href="page-returns.html">Returns</a><a href="page-contact.html">Contact</a></div>
+    <div class="ft-col"><h4>Company</h4><a href="page-about.html">About</a><a href="page-policies.html#privacy">Privacy</a><a href="page-policies.html#terms">Terms</a><a href="page-policies.html#refund">Refund</a></div>
+  </div>
+  <p class="ft-copy">&copy; Stone Whisper &middot; natural stone, matched to you</p>
+</footer>
+
+<script>
+  /* ── sw-v2 starfield (cool parallax stars + faint galaxy band + meteors) — verbatim from preview.html ── */
+  (function(){
+    const cv=document.getElementById('space'); if(!cv) return; const x=cv.getContext('2d');
+    let W,H,DPR,stars=[],meteors=[],run=false,ph=0;
+    const rnd=(a,b)=>a+Math.random()*(b-a);
+    const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+    function size(){DPR=Math.min(2,devicePixelRatio||1);W=cv.width=innerWidth*DPR;H=cv.height=innerHeight*DPR;cv.style.width=innerWidth+'px';cv.style.height=innerHeight+'px';build();}
+    function build(){stars=[];const n=Math.round(innerWidth*innerHeight/2600);for(let i=0;i<n;i++){const d=rnd(.15,1);stars.push({x:rnd(0,W),y:rnd(0,H),r:rnd(.3,1.6)*DPR*d,d,tw:rnd(0,6.28),ts:rnd(.6,1.8)});}}
+    function render(){
+      const sc=(window.scrollY||0)*DPR; x.clearRect(0,0,W,H); ph+=0.015; x.globalCompositeOperation='lighter';
+      x.save(); x.translate(W*0.64,H*0.30); x.rotate(-0.52);
+      const bg=x.createLinearGradient(0,-H*0.55,0,H*0.55);
+      bg.addColorStop(0,'rgba(120,140,214,0)'); bg.addColorStop(.5,'rgba(150,134,206,0.075)'); bg.addColorStop(1,'rgba(120,140,214,0)');
+      x.fillStyle=bg; x.fillRect(-W,-H*0.55,W*2,H*1.1); x.restore();
+      for(const s of stars){ s.tw+=0.02*s.ts; const yy=(((s.y-sc*0.4*s.d)%H)+H)%H, tw=.5+Math.sin(s.tw)*.5;
+        x.fillStyle=`rgba(245,238,224,${((.2+tw*.6)*s.d).toFixed(3)})`; x.beginPath(); x.arc(s.x%W,yy,s.r*(.7+tw*.5),0,6.2832); x.fill(); }
+      if(meteors.length<1 && Math.random()<0.004){ meteors.push({x:rnd(.2,.95)*W,y:rnd(0,.4)*H,vx:rnd(-12,-7)*DPR,vy:rnd(4,7)*DPR,life:1}); }
+      for(const m of meteors){ m.x+=m.vx; m.y+=m.vy; m.life-=.014;
+        const g=x.createLinearGradient(m.x,m.y,m.x-m.vx*5,m.y-m.vy*5); g.addColorStop(0,`rgba(255,250,240,${m.life.toFixed(3)})`); g.addColorStop(1,'rgba(255,250,240,0)');
+        x.strokeStyle=g; x.lineWidth=1.6*DPR; x.lineCap='round'; x.beginPath(); x.moveTo(m.x,m.y); x.lineTo(m.x-m.vx*5,m.y-m.vy*5); x.stroke(); }
+      meteors=meteors.filter(m=>m.life>0&&m.x>-100&&m.y<H+100);
+      x.globalCompositeOperation='source-over';
+    }
+    function loop(){ if(document.hidden){run=false;return;} render(); requestAnimationFrame(loop); }
+    function start(){ if(run)return; run=true; requestAnimationFrame(loop); }
+    size(); addEventListener('resize',()=>{size();render();},{passive:true}); render();
+    if(reduce) addEventListener('scroll',render,{passive:true}); else { start(); document.addEventListener('visibilitychange',()=>{if(!document.hidden)start();}); }
+  })();
+
+  const nav=document.getElementById('nav');
+  addEventListener('scroll',()=>nav.classList.toggle('lit',scrollY>40));
+  const obs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('vis');obs.unobserve(e.target);}}),{threshold:.1});
+  document.querySelectorAll('.rv').forEach(el=>obs.observe(el));
+</script>
+
+<!--
+═══════════════════════════════════════════════════════════════════════════
+SHOPLINE MAPPING (OS 3.0) — deploy notes for this About page
+═══════════════════════════════════════════════════════════════════════════
+
+SECTION
+  name/folder : sections/sw-about/sw-about.html
+                (section-scoped CSS in sections/sw-about/sw-about.css — paste the
+                 <style> block from this file's <head> there; it is already isolated
+                 under .ab-* / nav#nav / #space so it won't leak across sections.)
+
+  {{#schema}}
+  {
+    "name": "SW About",
+    "tag": "section",
+    "class": "sw-about",
+    "settings": [
+      { "type": "text",    "id": "hero_kicker",  "label": "Hero kicker",  "default": "Our story" },
+      { "type": "richtext","id": "hero_heading", "label": "Hero heading", "default": "A bracelet should know where you're going." },
+      { "type": "textarea","id": "hero_sub",     "label": "Hero subcopy" },
+      { "type": "image_picker", "id": "founder_photo", "label": "Founder portrait" },
+      { "type": "text",    "id": "founder_name", "label": "Founder name" }
+    ],
+    "blocks": [
+      { "type": "story_row", "name": "Story row",
+        "settings": [
+          { "type": "image_picker", "id": "image", "label": "Row image" },
+          { "type": "text",     "id": "kicker",  "label": "Section label" },
+          { "type": "richtext", "id": "heading", "label": "Heading" },
+          { "type": "richtext", "id": "body",    "label": "Body" },
+          { "type": "checkbox", "id": "flip",    "label": "Image on right", "default": false }
+        ]
+      },
+      { "type": "pull_quote", "name": "Pull quote",
+        "settings": [
+          { "type": "richtext", "id": "quote", "label": "Quote" },
+          { "type": "text",     "id": "attribution", "label": "Attribution" }
+        ]
+      },
+      { "type": "promise", "name": "Promise cell",
+        "settings": [
+          { "type": "text",     "id": "num",   "label": "Number" },
+          { "type": "text",     "id": "title", "label": "Title" },
+          { "type": "textarea", "id": "desc",  "label": "Description" }
+        ]
+      }
+    ]
+  }
+  {{/schema}}
+
+TEMPLATE ATTACHMENT
+  Attach to a content page template: page.about.json
+  (create config/page.about.json referencing the "sw-about" section; in admin
+   set the About page's template to "about"). This is a content/marketing page,
+   NOT page.policy.json.
+
+IMAGE REFS ON DEPLOY
+  Replace the preview's assets/*.png with theme assets:
+    {{ `images/amethyst-hero.png`  | asset_url() }}
+    {{ `images/amethyst-macro.png` | asset_url() }}
+    {{ `images/amethyst-wrist.png` | asset_url() }}
+    {{ `images/founder.png`        | asset_url() }}   <!-- supply real founder portrait -->
+
+SHOPLINE NATIVE PARTS (use native components on deploy — do NOT custom-build)
+  - Global header/cart/account/search: rendered by the theme header-group, NOT this
+    section. The custom nav#nav here is a PREVIEW stand-in only; on deploy hide it and
+    let the native header show (sw-product.css already hides .header-group when a custom
+    nav is present — reverse that for the live About page, or drop nav#nav entirely).
+  - Footer: use the theme's native footer-group / footer section, not footer.ft (preview only).
+  - The "Shop bracelets" / "Open the Studio" CTAs are plain links to existing pages
+    (collection + customizer) — they carry no cart/checkout logic, so no native cart
+    component is needed on this page. Any actual add-to-cart still lives on the native
+    product page, not here.
+  This About page has NO native commerce surface of its own (no product loop, no cart,
+  no contact-form submission) — it is pure editorial content.
+═══════════════════════════════════════════════════════════════════════════
+-->
+</body></html>

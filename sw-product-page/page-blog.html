@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Journal — Stone Whisper</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="sw-product.css">
+<style>
+  /* ── NAV — matched 1:1 to the homepage (sw-v2) ── */
+  nav#nav{position:fixed;top:0;left:0;right:0;z-index:40;display:flex;align-items:center;justify-content:space-between;
+    padding:22px clamp(20px,5vw,64px);transition:background .5s ease,backdrop-filter .5s ease,padding .5s ease}
+  nav#nav.lit{background:rgba(7,6,13,.34);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);padding-top:15px;padding-bottom:15px;border-bottom:1px solid rgba(244,236,221,.04)}
+  nav#nav .brand{font-family:var(--font-heading);font-size:21px;letter-spacing:.16em;color:var(--color-text-primary);text-transform:uppercase;font-weight:500}
+  nav#nav .brand b{color:var(--color-gold);font-weight:500}
+  nav#nav .navlinks{display:flex;gap:clamp(18px,2.6vw,40px);align-items:center}
+  nav#nav .navlinks a{font-family:var(--font-ui);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--color-text-muted);transition:color .35s}
+  nav#nav .navlinks a:hover{color:var(--color-text-primary)}
+  nav#nav .bead-switch{font-family:var(--font-ui);border:1px solid rgba(244,236,221,.16);background:rgba(244,236,221,.04);color:var(--color-text-body);
+    font-size:11px;letter-spacing:.14em;text-transform:uppercase;padding:9px 14px;border-radius:999px;cursor:pointer;transition:all .35s ease}
+  nav#nav .bead-switch:hover{border-color:rgba(227,188,119,.46);color:var(--color-gold);background:rgba(227,188,119,.08)}
+  nav#nav .navcta{font-family:var(--font-ui);font-size:12px;letter-spacing:.16em;text-transform:uppercase;border:1px solid rgba(227,188,119,.4);color:var(--color-gold);padding:9px 20px;border-radius:30px;transition:all .4s ease}
+  nav#nav .navcta:hover{background:var(--color-gold);color:#0a0810;border-color:var(--color-gold)}
+  @media(max-width:760px){ nav#nav .navlinks a:not(.navcta),nav#nav .bead-switch{display:none} }
+  /* sw-v2 starfield — fixed behind content, above the gradient backdrop */
+  #space{position:fixed;inset:0;z-index:-1;pointer-events:none}
+  footer.ft{border-top:1px solid var(--color-border);margin-top:clamp(80px,10vh,140px);padding:48px clamp(20px,4vw,48px);text-align:center;color:var(--color-text-muted);font-size:13px}
+  footer.ft .b{font-family:var(--font-heading);font-size:18px;letter-spacing:.2em;text-transform:uppercase;color:var(--color-text-primary)}
+
+  /* ── BLOG / JOURNAL — page-specific (maps to the section's own stylesheet on deploy) ── */
+  .jrnl-hero{max-width:var(--content-width);margin:0 auto;padding:clamp(120px,16vh,180px) clamp(20px,4vw,48px) clamp(36px,5vh,60px);text-align:center}
+  .jrnl-hero h1{font-family:var(--font-heading);font-weight:500;font-size:clamp(38px,5vw,62px);line-height:1.04;color:var(--color-text-primary)}
+  .jrnl-hero h1 em{font-style:italic;color:var(--color-amethyst)}
+  .jrnl-hero p{font-size:15.5px;line-height:1.7;color:var(--color-text-body);max-width:52ch;margin:18px auto 0}
+
+  /* category filter chips */
+  .jrnl-cats{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;max-width:var(--content-width);margin:0 auto;padding:0 clamp(20px,4vw,48px) clamp(8px,2vh,24px)}
+  .jrnl-cat{font-family:var(--font-ui);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--color-text-muted);background:rgba(244,236,221,.03);border:1px solid var(--color-border);border-radius:999px;padding:9px 18px;cursor:pointer;transition:.3s}
+  .jrnl-cat:hover{border-color:rgba(227,188,119,.46);color:var(--color-gold)}
+  .jrnl-cat.on{border-color:var(--color-gold);color:var(--color-gold);background:rgba(227,188,119,.06)}
+
+  .jrnl-sample-note{text-align:center;font-family:var(--font-ui);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--color-gold-muted);margin:clamp(28px,5vh,52px) auto 18px;max-width:var(--content-width);padding:0 clamp(20px,4vw,48px)}
+
+  /* magazine card grid */
+  .jrnl-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(18px,2.4vw,30px);max-width:var(--content-width);margin:0 auto;padding:0 clamp(20px,4vw,48px) clamp(40px,6vh,80px)}
+  /* first card spans full width as a feature */
+  .jcard{display:flex;flex-direction:column;border:1px solid var(--color-border);border-radius:6px;overflow:hidden;background:linear-gradient(180deg,rgba(183,160,228,.045),rgba(255,255,255,.01));transition:border-color .4s ease,transform .4s ease}
+  .jcard:hover{border-color:var(--color-border-hover);transform:translateY(-3px)}
+  .jcard__media{aspect-ratio:16/10;overflow:hidden;position:relative;background:var(--color-surface)}
+  .jcard__media img{width:100%;height:100%;object-fit:cover;filter:contrast(1.04) saturate(.92);transition:transform .6s ease}
+  .jcard:hover .jcard__media img{transform:scale(1.04)}
+  /* CSS-only cosmic placeholder media (no broken images) */
+  .jcard__media--ph{display:block}
+  .jcard__media--ph.amethyst{background:radial-gradient(120% 120% at 30% 20%,rgba(183,160,228,.42),transparent 60%),radial-gradient(100% 100% at 80% 90%,rgba(120,72,134,.4),transparent 60%),linear-gradient(150deg,#1a1330,#0c0a18)}
+  .jcard__media--ph.aqua{background:radial-gradient(120% 120% at 25% 25%,rgba(143,184,224,.38),transparent 60%),radial-gradient(100% 100% at 85% 85%,rgba(58,92,150,.42),transparent 60%),linear-gradient(150deg,#0f1726,#0a0f18)}
+  .jcard__media--ph.gold{background:radial-gradient(120% 120% at 30% 20%,rgba(227,188,119,.34),transparent 60%),radial-gradient(100% 100% at 80% 90%,rgba(154,126,74,.34),transparent 60%),linear-gradient(150deg,#1a160e,#0c0a08)}
+  .jcard__media--ph.rose{background:radial-gradient(120% 120% at 30% 25%,rgba(216,152,168,.34),transparent 60%),radial-gradient(100% 100% at 80% 85%,rgba(120,72,90,.36),transparent 60%),linear-gradient(150deg,#1e131a,#0c0810)}
+  .jcard__body{padding:clamp(20px,2.4vw,28px);display:flex;flex-direction:column;flex:1}
+  .jcard__meta{display:flex;align-items:center;gap:12px;margin-bottom:13px}
+  .jcard__cat{font-family:var(--font-ui);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--color-gold)}
+  .jcard__dot{width:3px;height:3px;border-radius:50%;background:var(--color-text-disabled)}
+  .jcard__read{font-family:var(--font-ui);font-size:11px;letter-spacing:.04em;color:var(--color-text-muted)}
+  .jcard__title{font-family:var(--font-heading);font-weight:500;font-size:clamp(20px,2vw,24px);line-height:1.18;color:var(--color-text-primary);margin-bottom:10px}
+  .jcard:hover .jcard__title{color:var(--color-gold-hover)}
+  .jcard__excerpt{font-size:14px;line-height:1.65;color:var(--color-text-body);margin-bottom:18px}
+  .jcard__more{margin-top:auto;font-family:var(--font-ui);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-text-muted);transition:.3s}
+  .jcard:hover .jcard__more{color:var(--color-gold)}
+
+  /* feature card — full-width, horizontal on desktop */
+  .jcard--feature{grid-column:1 / -1}
+  @media(min-width:861px){
+    .jcard--feature{flex-direction:row}
+    .jcard--feature .jcard__media{width:54%;aspect-ratio:auto;min-height:340px}
+    .jcard--feature .jcard__body{width:46%;justify-content:center;padding:clamp(28px,3.5vw,48px)}
+    .jcard--feature .jcard__title{font-size:clamp(28px,3vw,38px)}
+    .jcard--feature .jcard__excerpt{font-size:15.5px}
+  }
+
+  @media(max-width:860px){ .jrnl-grid{grid-template-columns:1fr 1fr} }
+  @media(max-width:560px){ .jrnl-grid{grid-template-columns:1fr} }
+
+  /* newsletter strip */
+  .jrnl-news{max-width:var(--content-narrow);margin:0 auto;padding:0 clamp(20px,4vw,48px) clamp(40px,6vh,72px);text-align:center}
+  .jrnl-news-card{border:1px solid var(--color-border);border-radius:6px;padding:clamp(36px,5vw,56px);background:linear-gradient(180deg,rgba(143,184,224,.05),rgba(255,255,255,.012))}
+  .jrnl-news-card h2{font-family:var(--font-heading);font-weight:500;font-size:clamp(24px,3vw,34px);color:var(--color-text-primary)}
+  .jrnl-news-card p{font-size:14.5px;line-height:1.7;color:var(--color-text-body);max-width:46ch;margin:14px auto 0}
+  .jrnl-news-form{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:26px 0 0}
+  .jrnl-news-form input{font-family:var(--font-ui);font-size:14px;color:var(--color-text-primary);background:var(--color-surface);border:1px solid var(--color-border);border-radius:3px;padding:13px 16px;color-scheme:dark;min-width:240px}
+  .jrnl-news-form button{font-family:var(--font-ui);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#0a0810;background:linear-gradient(120deg,var(--color-gold),#f0d3a0);border:0;border-radius:3px;padding:13px 26px;cursor:pointer;font-weight:500;transition:.3s}
+  .jrnl-news-form button:hover{transform:translateY(-2px)}
+  .jrnl-news-note{font-size:11px;letter-spacing:.03em;color:var(--color-text-muted);margin-top:18px}
+</style>
+</head>
+<body>
+<canvas id="space"></canvas>
+
+<!-- NAV — identical to the homepage (sw-v2) -->
+<nav id="nav">
+  <a href="../sw-website-redesign/sw-v2.html#top" class="brand">Stone <b>Whisper</b></a>
+  <div class="navlinks">
+    <a href="../sw-website-redesign/sw-v2.html">Home</a>
+    <a href="page-shop.html">Shop</a>
+    <a href="page-how-it-works.html">How it works</a>
+    <a href="page-what-is-bazi.html">The method</a>
+    <a href="page-stone-library.html">Stones</a>
+    <a href="page-about.html">About</a>
+    <a href="../sw-crystal-customizer/index.html" class="navcta">Open Studio</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<header class="jrnl-hero">
+  <p class="section-label" style="color:var(--color-gold)">The Journal</p>
+  <h1>The crystal blog that<br><em>argues with itself.</em></h1>
+  <p>How stones actually form. How the elements actually read. How to live with a strand once it&rsquo;s on your wrist. No fate promised.</p>
+</header>
+
+<!-- CATEGORY FILTER (preview = visual only; on deploy, links to native blog tag/collection pages) -->
+<div class="jrnl-cats">
+  <button class="jrnl-cat on" type="button">All</button>
+  <button class="jrnl-cat" type="button">Crystal care</button>
+  <button class="jrnl-cat" type="button">Elements</button>
+  <button class="jrnl-cat" type="button">Rituals</button>
+  <button class="jrnl-cat" type="button">Stories</button>
+</div>
+
+<!-- SAMPLE ARTICLES — placeholder content; replace with real articles via the native blog loop on deploy -->
+<p class="jrnl-sample-note">Sample articles — placeholders to replace before launch</p>
+
+<section class="jrnl-grid">
+
+  <!-- FEATURE -->
+  <article class="jcard jcard--feature rv">
+    <a class="jcard__media" href="#">
+      <img src="assets/amethyst-macro.png" alt="Amethyst bead, close up">
+    </a>
+    <div class="jcard__body">
+      <div class="jcard__meta">
+        <span class="jcard__cat">Elements</span>
+        <span class="jcard__dot"></span>
+        <span class="jcard__read">8 min read</span>
+      </div>
+      <h3 class="jcard__title">What &ldquo;matched to your elements&rdquo; actually means</h3>
+      <p class="jcard__excerpt">We don&rsquo;t pick your stone from a star sign. We read it from your chart &mdash; the same engine behind the Studio. Here&rsquo;s the plain-English version of how a birth date becomes a balance of a few natural forces, and why that points to one colour over another. A method, not a horoscope.</p>
+      <span class="jcard__more">See how it&rsquo;s read &rarr;</span>
+    </div>
+  </article>
+
+  <!-- CARD 2 -->
+  <article class="jcard rv">
+    <a class="jcard__media jcard__media--ph aqua" href="#" aria-label="Article image"></a>
+    <div class="jcard__body">
+      <div class="jcard__meta"><span class="jcard__cat">Crystal care</span><span class="jcard__dot"></span><span class="jcard__read">5 min read</span></div>
+      <h3 class="jcard__title">How to keep amethyst&rsquo;s purple deep</h3>
+      <p class="jcard__excerpt">Amethyst is quartz &mdash; SiO&#8322;, Mohs 7, durable enough for daily wear &mdash; but strong UV can lighten it over years. Simple, honest care: where to keep it, what to wipe it with, and what to skip.</p>
+      <span class="jcard__more">Keep the colour &rarr;</span>
+    </div>
+  </article>
+
+  <!-- CARD 3 -->
+  <article class="jcard rv">
+    <a class="jcard__media jcard__media--ph amethyst" href="#" aria-label="Article image"></a>
+    <div class="jcard__body">
+      <div class="jcard__meta"><span class="jcard__cat">Elements</span><span class="jcard__dot"></span><span class="jcard__read">6 min read</span></div>
+      <h3 class="jcard__title">Fire, Water, and the stone in between</h3>
+      <p class="jcard__excerpt">If your chart already runs hot, more Fire won&rsquo;t help &mdash; it tips things over. A walk through how the elements support and cool one another, and why the &ldquo;right&rdquo; crystal is sometimes the opposite of the one you wanted.</p>
+      <span class="jcard__more">Read the article &rarr;</span>
+    </div>
+  </article>
+
+  <!-- CARD 4 -->
+  <article class="jcard rv">
+    <a class="jcard__media" href="#">
+      <img src="assets/amethyst-wrist.png" alt="Bracelet worn on the wrist">
+    </a>
+    <div class="jcard__body">
+      <div class="jcard__meta"><span class="jcard__cat">Rituals</span><span class="jcard__dot"></span><span class="jcard__read">4 min read</span></div>
+      <h3 class="jcard__title">A thirty-second ritual for the nights you can&rsquo;t switch off.</h3>
+      <p class="jcard__excerpt">A stone on the wrist isn&rsquo;t magic &mdash; it&rsquo;s a private anchor you can feel. A short, un-woo practice: something to hold, and one thing to do with it, when your mind won&rsquo;t put the day down.</p>
+      <span class="jcard__more">Read the article &rarr;</span>
+    </div>
+  </article>
+
+  <!-- CARD 5 -->
+  <article class="jcard rv">
+    <a class="jcard__media jcard__media--ph gold" href="#" aria-label="Article image"></a>
+    <div class="jcard__body">
+      <div class="jcard__meta"><span class="jcard__cat">Stories</span><span class="jcard__dot"></span><span class="jcard__read">7 min read</span></div>
+      <h3 class="jcard__title">The purple ancient cultures kept reaching for</h3>
+      <p class="jcard__excerpt">Amethyst was traded, set into crowns, and worn against excess long before it was a birthstone &mdash; a short history of one colour.</p>
+      <span class="jcard__more">Read the article &rarr;</span>
+    </div>
+  </article>
+
+  <!-- CARD 6 -->
+  <article class="jcard rv">
+    <a class="jcard__media jcard__media--ph rose" href="#" aria-label="Article image"></a>
+    <div class="jcard__body">
+      <div class="jcard__meta"><span class="jcard__cat">Crystal care</span><span class="jcard__dot"></span><span class="jcard__read">3 min read</span></div>
+      <h3 class="jcard__title">How to read &ldquo;100% natural&rdquo; on a bracelet</h3>
+      <p class="jcard__excerpt">Dye, glass, reconstituted stone &mdash; the words that hide on a lot of crystal listings, and how to tell real stone from filler. Ours is natural: no dye, no glass. Here&rsquo;s how to check anyone&rsquo;s.</p>
+      <span class="jcard__more">Read the article &rarr;</span>
+    </div>
+  </article>
+
+  <!-- CARD 7 -->
+  <article class="jcard rv">
+    <a class="jcard__media" href="#">
+      <img src="assets/amethyst-lifestyle.png" alt="Bracelet styled in daily life">
+    </a>
+    <div class="jcard__body">
+      <div class="jcard__meta"><span class="jcard__cat">Rituals</span><span class="jcard__dot"></span><span class="jcard__read">5 min read</span></div>
+      <h3 class="jcard__title">Building a strand around a chart, not a trend</h3>
+      <p class="jcard__excerpt">What changes when you let the elements choose the colours. A look inside the Studio&rsquo;s logic &mdash; balance first, then beauty &mdash; and how to start your own.</p>
+      <span class="jcard__more">Read the article &rarr;</span>
+    </div>
+  </article>
+
+  <!-- CARD 8 -->
+  <article class="jcard rv">
+    <a class="jcard__media jcard__media--ph amethyst" href="#" aria-label="Article image"></a>
+    <div class="jcard__body">
+      <div class="jcard__meta"><span class="jcard__cat">Stories</span><span class="jcard__dot"></span><span class="jcard__read">6 min read</span></div>
+      <h3 class="jcard__title">Why we&rsquo;d rather tell you we&rsquo;re not your stone</h3>
+      <p class="jcard__excerpt">Most shops sell you any crystal and call it fate. We built a matcher that sometimes says no &mdash; and points you elsewhere. The thinking behind an honest recommendation, and what it costs us to make it.</p>
+      <span class="jcard__more">The honest version &rarr;</span>
+    </div>
+  </article>
+
+</section>
+
+<!-- NEWSLETTER (preview = visual; on deploy use a native newsletter/customer form, not custom POST) -->
+<section class="jrnl-news">
+  <div class="jrnl-news-card rv">
+    <p class="section-label" style="color:var(--color-gold)">Stay close</p>
+    <h2>One letter a month. The stone stories that don&rsquo;t make the shop.</h2>
+    <p>New journal pieces, the occasional stone story, no noise. Unsubscribe whenever it stops being useful.</p>
+    <form class="jrnl-news-form" onsubmit="return false">
+      <input type="email" placeholder="you@email.com" aria-label="Your email">
+      <button type="submit">Subscribe</button>
+    </form>
+    <p class="jrnl-news-note">We read from your chart only when you ask &mdash; never from a mailing list. This letter is just stories.</p>
+  </div>
+</section>
+
+<footer class="ft">
+  <div class="ft-cols">
+    <div class="ft-brand"><div class="b">Stone Whisper</div><p>Natural stone, matched to you.</p></div>
+    <div class="ft-col"><h4>Shop</h4><a href="page-shop.html">Shop</a><a href="../sw-crystal-customizer/index.html">Open Studio</a><a href="page-stone-library.html">Stones</a></div>
+    <div class="ft-col"><h4>Learn</h4><a href="page-how-it-works.html">How it works</a><a href="page-what-is-bazi.html">The method</a><a href="page-blog.html">Journal</a></div>
+    <div class="ft-col"><h4>Support</h4><a href="page-faq.html">FAQ</a><a href="page-care.html">Care</a><a href="page-shipping.html">Shipping</a><a href="page-returns.html">Returns</a><a href="page-contact.html">Contact</a></div>
+    <div class="ft-col"><h4>Company</h4><a href="page-about.html">About</a><a href="page-policies.html#privacy">Privacy</a><a href="page-policies.html#terms">Terms</a><a href="page-policies.html#refund">Refund</a></div>
+  </div>
+  <p class="ft-copy">&copy; Stone Whisper &middot; natural stone, matched to you</p>
+</footer>
+
+<script>
+  /* ── sw-v2 starfield (cool parallax stars + faint galaxy band + meteors) ── */
+  (function(){
+    const cv=document.getElementById('space'); if(!cv) return; const x=cv.getContext('2d');
+    let W,H,DPR,stars=[],meteors=[],run=false,ph=0;
+    const rnd=(a,b)=>a+Math.random()*(b-a);
+    const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+    function size(){DPR=Math.min(2,devicePixelRatio||1);W=cv.width=innerWidth*DPR;H=cv.height=innerHeight*DPR;cv.style.width=innerWidth+'px';cv.style.height=innerHeight+'px';build();}
+    function build(){stars=[];const n=Math.round(innerWidth*innerHeight/2600);for(let i=0;i<n;i++){const d=rnd(.15,1);stars.push({x:rnd(0,W),y:rnd(0,H),r:rnd(.3,1.6)*DPR*d,d,tw:rnd(0,6.28),ts:rnd(.6,1.8)});}}
+    function render(){
+      const sc=(window.scrollY||0)*DPR; x.clearRect(0,0,W,H); ph+=0.015; x.globalCompositeOperation='lighter';
+      x.save(); x.translate(W*0.64,H*0.30); x.rotate(-0.52);
+      const bg=x.createLinearGradient(0,-H*0.55,0,H*0.55);
+      bg.addColorStop(0,'rgba(120,140,214,0)'); bg.addColorStop(.5,'rgba(150,134,206,0.075)'); bg.addColorStop(1,'rgba(120,140,214,0)');
+      x.fillStyle=bg; x.fillRect(-W,-H*0.55,W*2,H*1.1); x.restore();
+      for(const s of stars){ s.tw+=0.02*s.ts; const yy=(((s.y-sc*0.4*s.d)%H)+H)%H, tw=.5+Math.sin(s.tw)*.5;
+        x.fillStyle=`rgba(245,238,224,${((.2+tw*.6)*s.d).toFixed(3)})`; x.beginPath(); x.arc(s.x%W,yy,s.r*(.7+tw*.5),0,6.2832); x.fill(); }
+      if(meteors.length<1 && Math.random()<0.004){ meteors.push({x:rnd(.2,.95)*W,y:rnd(0,.4)*H,vx:rnd(-12,-7)*DPR,vy:rnd(4,7)*DPR,life:1}); }
+      for(const m of meteors){ m.x+=m.vx; m.y+=m.vy; m.life-=.014;
+        const g=x.createLinearGradient(m.x,m.y,m.x-m.vx*5,m.y-m.vy*5); g.addColorStop(0,`rgba(255,250,240,${m.life.toFixed(3)})`); g.addColorStop(1,'rgba(255,250,240,0)');
+        x.strokeStyle=g; x.lineWidth=1.6*DPR; x.lineCap='round'; x.beginPath(); x.moveTo(m.x,m.y); x.lineTo(m.x-m.vx*5,m.y-m.vy*5); x.stroke(); }
+      meteors=meteors.filter(m=>m.life>0&&m.x>-100&&m.y<H+100);
+      x.globalCompositeOperation='source-over';
+    }
+    function loop(){ if(document.hidden){run=false;return;} render(); requestAnimationFrame(loop); }
+    function start(){ if(run)return; run=true; requestAnimationFrame(loop); }
+    size(); addEventListener('resize',()=>{size();render();},{passive:true}); render();
+    if(reduce) addEventListener('scroll',render,{passive:true}); else { start(); document.addEventListener('visibilitychange',()=>{if(!document.hidden)start();}); }
+  })();
+
+  const nav=document.getElementById('nav');
+  addEventListener('scroll',()=>nav.classList.toggle('lit',scrollY>40));
+  const obs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('vis');obs.unobserve(e.target);}}),{threshold:.1});
+  document.querySelectorAll('.rv').forEach(el=>obs.observe(el));
+
+  /* category chips — preview-only active toggle (on deploy these are links to native blog tag pages) */
+  document.querySelectorAll('.jrnl-cat').forEach(c=>c.addEventListener('click',function(){
+    document.querySelectorAll('.jrnl-cat').forEach(i=>i.classList.remove('on')); this.classList.add('on');
+  }));
+</script>
+</body></html>
+
+<!--
+═══════════════════════════════════════════════════════════════════════════════
+  SHOPLINE OS 3.0 MAPPING — Journal / Blog landing
+═══════════════════════════════════════════════════════════════════════════════
+
+  SECTION FILE (custom hero + chrome only):
+    sections/sw-journal/sw-journal.html
+
+  {{#schema}}
+  {
+    "name": "SW Journal Hero",
+    "tag": "section",
+    "class": "sw-journal",
+    "settings": [
+      { "type": "text",     "id": "label",   "label": "Eyebrow label", "default": "The Journal" },
+      { "type": "richtext", "id": "heading", "label": "Heading",       "default": "Notes from the quiet end of crystals." },
+      { "type": "textarea", "id": "intro",   "label": "Intro copy" },
+      { "type": "checkbox", "id": "show_newsletter", "label": "Show newsletter strip", "default": true }
+    ]
+  }
+  {{#endschema}}
+
+  TEMPLATE ATTACHMENT:
+    This page = the BLOG template, not a page.*.json.
+    - blog.json            → the blog landing (article loop). Attach this section ABOVE the
+                             native blog/article list; let the native loop render the cards.
+    - article.json         → individual post (native article template).
+    The hero, category nav, sample-article note, and newsletter strip live in sw-journal;
+    the actual article grid is rendered by Shopline's NATIVE blog article loop.
+
+  SHOPLINE NATIVE — must use native components/objects on deploy (do NOT keep this custom markup):
+    • Article loop:   the 8 .jcard items are PLACEHOLDER sample content. On deploy, replace with
+                      the native blog article loop, e.g.  {% for article in blog.articles %} … {% endfor %}
+                      pulling article.title, article.excerpt, article.image, article.tags (category),
+                      article.url, and a read-time metafield. Style each rendered card with the
+                      .jcard classes from this section's stylesheet.
+    • Categories:     the .jrnl-cat chips map to native blog TAG links ({{ article.tags }} / tag pages),
+                      not the preview-only JS toggle.
+    • Pagination:     use native {% paginate blog.articles by 12 %} … {% endpaginate %}.
+    • Newsletter:     use the native newsletter / customer subscribe form component
+                      (Shopline customer form), NOT the custom <form> in this preview.
+    • Search / cart / account in nav: native components on deploy.
+
+  IMAGES on deploy use asset_url for any section-owned art, e.g.:
+    {{ `images/journal-feature.png` | asset_url() }}
+    Article thumbnails come from article.image (native), not asset_url.
+    (Preview uses real local /assets/*.png for photographed cards and CSS-gradient placeholders
+     for the rest — no broken <img>.)
+
+  STYLE ISOLATION: all page-specific CSS is in the <style> in <head>; on deploy it becomes
+    sections/sw-journal/sw-journal.css (the section's own stylesheet). Shared tokens/classes
+    (.wrap, .section-label, .rv, .btn--gold, colour vars) come from sw-product.css.
+═══════════════════════════════════════════════════════════════════════════════
+-->

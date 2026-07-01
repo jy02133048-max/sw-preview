@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Contact — Stone Whisper</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="sw-product.css">
+<style>
+  /* ── NAV — matched 1:1 to the homepage (sw-v2) ── */
+  nav#nav{position:fixed;top:0;left:0;right:0;z-index:40;display:flex;align-items:center;justify-content:space-between;
+    padding:22px clamp(20px,5vw,64px);transition:background .5s ease,backdrop-filter .5s ease,padding .5s ease}
+  nav#nav.lit{background:rgba(7,6,13,.34);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);padding-top:15px;padding-bottom:15px;border-bottom:1px solid rgba(244,236,221,.04)}
+  nav#nav .brand{font-family:var(--font-heading);font-size:21px;letter-spacing:.16em;color:var(--color-text-primary);text-transform:uppercase;font-weight:500}
+  nav#nav .brand b{color:var(--color-gold);font-weight:500}
+  nav#nav .navlinks{display:flex;gap:clamp(18px,2.6vw,40px);align-items:center}
+  nav#nav .navlinks a{font-family:var(--font-ui);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--color-text-muted);transition:color .35s}
+  nav#nav .navlinks a:hover{color:var(--color-text-primary)}
+  nav#nav .bead-switch{font-family:var(--font-ui);border:1px solid rgba(244,236,221,.16);background:rgba(244,236,221,.04);color:var(--color-text-body);
+    font-size:11px;letter-spacing:.14em;text-transform:uppercase;padding:9px 14px;border-radius:999px;cursor:pointer;transition:all .35s ease}
+  nav#nav .bead-switch:hover{border-color:rgba(227,188,119,.46);color:var(--color-gold);background:rgba(227,188,119,.08)}
+  nav#nav .navcta{font-family:var(--font-ui);font-size:12px;letter-spacing:.16em;text-transform:uppercase;border:1px solid rgba(227,188,119,.4);color:var(--color-gold);padding:9px 20px;border-radius:30px;transition:all .4s ease}
+  nav#nav .navcta:hover{background:var(--color-gold);color:#0a0810;border-color:var(--color-gold)}
+  @media(max-width:760px){ nav#nav .navlinks a:not(.navcta),nav#nav .bead-switch{display:none} }
+
+  /* sw-v2 starfield — fixed behind content, above the gradient backdrop */
+  #space{position:fixed;inset:0;z-index:-1;pointer-events:none}
+  footer.ft{border-top:1px solid var(--color-border);margin-top:clamp(80px,10vh,140px);padding:48px clamp(20px,4vw,48px);text-align:center;color:var(--color-text-muted);font-size:13px}
+  footer.ft .b{font-family:var(--font-heading);font-size:18px;letter-spacing:.2em;text-transform:uppercase;color:var(--color-text-primary)}
+
+  /* ── CONTACT PAGE — page-specific CSS (maps to the section's own stylesheet on deploy) ── */
+  .ct-hero{max-width:var(--content-narrow);margin:0 auto;text-align:center;
+    padding:clamp(120px,18vh,180px) clamp(20px,4vw,48px) clamp(28px,5vh,52px)}
+  .ct-hero h1{font-family:var(--font-heading);font-weight:500;font-size:clamp(38px,5vw,62px);line-height:1.04;color:var(--color-text-primary)}
+  .ct-hero h1 em{font-style:italic;color:var(--color-amethyst)}
+  .ct-hero p{font-size:15.5px;line-height:1.75;color:var(--color-text-body);max-width:50ch;margin:18px auto 0}
+
+  /* layout: form + side panel, centered */
+  .ct-grid{max-width:980px;margin:0 auto;padding:0 clamp(20px,4vw,48px);
+    display:grid;grid-template-columns:1.15fr .85fr;gap:clamp(28px,4vw,56px);align-items:start}
+  .ct-card{border:1px solid var(--color-border);border-radius:6px;padding:clamp(28px,4vw,44px);
+    background:linear-gradient(180deg,rgba(183,160,228,.05),rgba(255,255,255,.01))}
+  .ct-card .ct-cap{font-family:var(--font-ui);font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--color-gold);margin-bottom:18px}
+
+  /* form fields */
+  .ct-field{display:block;margin-bottom:18px}
+  .ct-field label{display:block;font-family:var(--font-ui);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--color-text-muted);margin-bottom:8px}
+  .ct-field input,.ct-field textarea{width:100%;font-family:var(--font-ui);font-size:14.5px;color:var(--color-text-primary);
+    background:var(--color-surface);border:1px solid var(--color-border);border-radius:3px;padding:13px 15px;color-scheme:dark;
+    transition:border-color .3s,box-shadow .3s;box-sizing:border-box}
+  .ct-field input:focus,.ct-field textarea:focus{outline:none;border-color:var(--color-gold);box-shadow:0 0 0 3px var(--color-gold-glow)}
+  .ct-field textarea{resize:vertical;min-height:130px;line-height:1.6}
+  .ct-field input::placeholder,.ct-field textarea::placeholder{color:var(--color-text-disabled)}
+  .ct-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .ct-submit{display:block;width:100%;margin-top:8px;font-family:var(--font-ui);font-weight:500;font-size:13px;letter-spacing:.16em;text-transform:uppercase;
+    color:#0a0810;background:linear-gradient(120deg,var(--color-gold),#f0d3a0);border:0;border-radius:3px;padding:17px;cursor:pointer;
+    transition:.3s;box-shadow:0 10px 40px var(--color-gold-glow)}
+  .ct-submit:hover{box-shadow:0 16px 54px rgba(227,188,119,.32);transform:translateY(-2px)}
+  .ct-formnote{font-size:11px;letter-spacing:.02em;color:var(--color-text-muted);margin-top:16px;text-align:center}
+  .ct-ok{display:none;font-family:var(--font-ui);font-size:13.5px;color:#9fd4b0;border:1px solid rgba(127,196,154,.34);
+    background:rgba(127,196,154,.06);border-radius:4px;padding:13px 16px;margin-bottom:18px}
+  .ct-ok.show{display:block}
+
+  /* side: direct contact + help list */
+  .ct-side{display:flex;flex-direction:column;gap:22px}
+  .ct-block{border:1px solid var(--color-border);border-radius:6px;padding:clamp(22px,3vw,30px);background:rgba(255,255,255,.012)}
+  .ct-block .lbl{font-family:var(--font-ui);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--color-text-muted);margin-bottom:12px}
+  .ct-email{font-family:var(--font-heading);font-size:clamp(20px,2.4vw,26px);color:var(--color-text-primary);word-break:break-word}
+  .ct-email:hover{color:var(--color-gold)}
+  .ct-resp{font-size:14px;line-height:1.65;color:var(--color-text-body);margin-top:10px}
+  .ct-resp b{color:var(--color-text-primary);font-weight:500}
+  .ct-help{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:13px}
+  .ct-help li{display:flex;align-items:flex-start;gap:11px;font-family:var(--font-ui);font-size:14px;line-height:1.5;color:var(--color-text-body)}
+  .ct-help .hi{width:16px;height:16px;flex:0 0 auto;margin-top:2px;stroke:var(--color-gold);fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;opacity:.92}
+
+  /* studio nudge */
+  .ct-studio{max-width:var(--content-narrow);margin:clamp(40px,6vh,68px) auto 0;text-align:center;padding:0 clamp(20px,4vw,48px)}
+  .ct-studio p{font-family:var(--font-heading);font-style:italic;font-size:clamp(18px,2vw,22px);color:var(--color-text-body);margin-bottom:18px}
+  .ct-studio a.btn{text-decoration:none}
+
+  @media(max-width:760px){ .ct-grid{grid-template-columns:1fr;gap:24px} .ct-row{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<canvas id="space"></canvas>
+
+<!-- NAV — identical to the homepage (sw-v2) -->
+<nav id="nav">
+  <a href="../sw-website-redesign/sw-v2.html#top" class="brand">Stone <b>Whisper</b></a>
+  <div class="navlinks">
+    <a href="../sw-website-redesign/sw-v2.html">Home</a>
+    <a href="page-shop.html">Shop</a>
+    <a href="page-how-it-works.html">How it works</a>
+    <a href="page-what-is-bazi.html">The method</a>
+    <a href="page-stone-library.html">Stones</a>
+    <a href="page-about.html">About</a>
+    <a href="../sw-crystal-customizer/index.html" class="navcta">Open Studio</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="ct-hero">
+  <p class="section-label" style="color:var(--color-gold)">Contact</p>
+  <h1>Somewhere behind this form,<br><em>one person. That&rsquo;s the whole support team.</em></h1>
+  <p>A real human reads every message — about an order, a custom strand, or a stone you&rsquo;re not sure about. No bots, no hold music.</p>
+</section>
+
+<!-- FORM + SIDE -->
+<section class="ct-grid rv">
+  <!-- LEFT: the message form -->
+  <div class="ct-card">
+    <p class="ct-cap">Send a message</p>
+    <!-- PREVIEW NOTE: on deploy this whole block is replaced by Shopline's native
+         {{#contact_form}} ... {{/contact_form}} so submission, validation and the
+         success state are handled by the platform. Field names below match the
+         native ones (contact[name] / contact[email] / contact[comment]) so the
+         port is 1:1. The "order number" is appended into the message body. -->
+    <div class="ct-ok" id="ctOk">Thanks — your message is on its way. We&rsquo;ll reply by email. <em>(Preview only — not actually sent.)</em></div>
+    <form id="ctForm" novalidate>
+      <div class="ct-row">
+        <div class="ct-field">
+          <label for="ctName">Your name</label>
+          <input type="text" id="ctName" name="contact[name]" autocomplete="name" placeholder="Jane Doe" required>
+        </div>
+        <div class="ct-field">
+          <label for="ctEmail">Email</label>
+          <input type="email" id="ctEmail" name="contact[email]" autocomplete="email" placeholder="you@email.com" required>
+        </div>
+      </div>
+      <div class="ct-field">
+        <label for="ctOrder">Order number <span style="text-transform:none;letter-spacing:0">(optional)</span></label>
+        <input type="text" id="ctOrder" name="order_number" autocomplete="off" placeholder="e.g. SW-10234">
+      </div>
+      <div class="ct-field">
+        <label for="ctMsg">Message</label>
+        <textarea id="ctMsg" name="contact[comment]" placeholder="Tell us what's going on — even if you're not sure how to word it." required></textarea>
+      </div>
+      <button type="submit" class="ct-submit">Send message</button>
+      <p class="ct-formnote">We use your details only to reply to you. See our privacy note for more.</p>
+    </form>
+  </div>
+
+  <!-- RIGHT: direct contact + what we help with -->
+  <div class="ct-side">
+    <div class="ct-block">
+      <p class="lbl">Email us directly</p>
+      <a class="ct-email" href="mailto:support@stonewhisper.co">support@stonewhisper.co</a>
+      <!-- TODO: confirm support inbox address before publishing -->
+      <p class="ct-resp"><b>Response time:</b> usually within 12 hours. We&rsquo;re a small studio, so a real person — not a queue — gets back to you.</p>
+    </div>
+
+    <div class="ct-block">
+      <p class="lbl">What we can help with</p>
+      <ul class="ct-help">
+        <li><svg class="hi" viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/></svg><span>Order status, shipping and delivery questions</span></li>
+        <li><svg class="hi" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v5M14 11v5"/></svg><span>Returns, exchanges and sizing swaps</span></li>
+        <li><svg class="hi" viewBox="0 0 24 24"><path d="M12 2C7 7 7 13 12 22 17 13 17 7 12 2z"/><path d="M12 2v20"/></svg><span>Custom strands — colour, pattern and stone choices</span></li>
+        <li><svg class="hi" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg><span>Which stone actually fits you — before you buy, or if you&rsquo;re second-guessing</span></li>
+        <li><svg class="hi" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg><span>Stone authenticity, care and everything else</span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- STUDIO NUDGE -->
+<section class="ct-studio rv">
+  <div class="divider"></div>
+  <p>Not sure which stone is yours? Answer a few questions and let the match do the work.</p>
+  <a href="../sw-crystal-customizer/index.html" class="btn btn--gold">Open the Studio</a>
+</section>
+
+<footer class="ft">
+  <div class="ft-cols">
+    <div class="ft-brand"><div class="b">Stone Whisper</div><p>Natural stone, matched to you.</p></div>
+    <div class="ft-col"><h4>Shop</h4><a href="page-shop.html">Shop</a><a href="../sw-crystal-customizer/index.html">Open Studio</a><a href="page-stone-library.html">Stones</a></div>
+    <div class="ft-col"><h4>Learn</h4><a href="page-how-it-works.html">How it works</a><a href="page-what-is-bazi.html">The method</a><a href="page-blog.html">Journal</a></div>
+    <div class="ft-col"><h4>Support</h4><a href="page-faq.html">FAQ</a><a href="page-care.html">Care</a><a href="page-shipping.html">Shipping</a><a href="page-returns.html">Returns</a><a href="page-contact.html">Contact</a></div>
+    <div class="ft-col"><h4>Company</h4><a href="page-about.html">About</a><a href="page-policies.html#privacy">Privacy</a><a href="page-policies.html#terms">Terms</a><a href="page-policies.html#refund">Refund</a></div>
+  </div>
+  <p class="ft-copy">&copy; Stone Whisper &middot; natural stone, matched to you</p>
+</footer>
+
+<script>
+  /* ── sw-v2 starfield (cool parallax stars + faint galaxy band + meteors) ── */
+  (function(){
+    const cv=document.getElementById('space'); if(!cv) return; const x=cv.getContext('2d');
+    let W,H,DPR,stars=[],meteors=[],run=false,ph=0;
+    const rnd=(a,b)=>a+Math.random()*(b-a);
+    const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+    function size(){DPR=Math.min(2,devicePixelRatio||1);W=cv.width=innerWidth*DPR;H=cv.height=innerHeight*DPR;cv.style.width=innerWidth+'px';cv.style.height=innerHeight+'px';build();}
+    function build(){stars=[];const n=Math.round(innerWidth*innerHeight/2600);for(let i=0;i<n;i++){const d=rnd(.15,1);stars.push({x:rnd(0,W),y:rnd(0,H),r:rnd(.3,1.6)*DPR*d,d,tw:rnd(0,6.28),ts:rnd(.6,1.8)});}}
+    function render(){
+      const sc=(window.scrollY||0)*DPR; x.clearRect(0,0,W,H); ph+=0.015; x.globalCompositeOperation='lighter';
+      x.save(); x.translate(W*0.64,H*0.30); x.rotate(-0.52);
+      const bg=x.createLinearGradient(0,-H*0.55,0,H*0.55);
+      bg.addColorStop(0,'rgba(120,140,214,0)'); bg.addColorStop(.5,'rgba(150,134,206,0.075)'); bg.addColorStop(1,'rgba(120,140,214,0)');
+      x.fillStyle=bg; x.fillRect(-W,-H*0.55,W*2,H*1.1); x.restore();
+      for(const s of stars){ s.tw+=0.02*s.ts; const yy=(((s.y-sc*0.4*s.d)%H)+H)%H, tw=.5+Math.sin(s.tw)*.5;
+        x.fillStyle=`rgba(245,238,224,${((.2+tw*.6)*s.d).toFixed(3)})`; x.beginPath(); x.arc(s.x%W,yy,s.r*(.7+tw*.5),0,6.2832); x.fill(); }
+      if(meteors.length<1 && Math.random()<0.004){ meteors.push({x:rnd(.2,.95)*W,y:rnd(0,.4)*H,vx:rnd(-12,-7)*DPR,vy:rnd(4,7)*DPR,life:1}); }
+      for(const m of meteors){ m.x+=m.vx; m.y+=m.vy; m.life-=.014;
+        const g=x.createLinearGradient(m.x,m.y,m.x-m.vx*5,m.y-m.vy*5); g.addColorStop(0,`rgba(255,250,240,${m.life.toFixed(3)})`); g.addColorStop(1,'rgba(255,250,240,0)');
+        x.strokeStyle=g; x.lineWidth=1.6*DPR; x.lineCap='round'; x.beginPath(); x.moveTo(m.x,m.y); x.lineTo(m.x-m.vx*5,m.y-m.vy*5); x.stroke(); }
+      meteors=meteors.filter(m=>m.life>0&&m.x>-100&&m.y<H+100);
+      x.globalCompositeOperation='source-over';
+    }
+    function loop(){ if(document.hidden){run=false;return;} render(); requestAnimationFrame(loop); }
+    function start(){ if(run)return; run=true; requestAnimationFrame(loop); }
+    size(); addEventListener('resize',()=>{size();render();},{passive:true}); render();
+    if(reduce) addEventListener('scroll',render,{passive:true}); else { start(); document.addEventListener('visibilitychange',()=>{if(!document.hidden)start();}); }
+  })();
+
+  const nav=document.getElementById('nav');
+  addEventListener('scroll',()=>nav.classList.toggle('lit',scrollY>40));
+  const obs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('vis');obs.unobserve(e.target);}}),{threshold:.1});
+  document.querySelectorAll('.rv').forEach(el=>obs.observe(el));
+
+  /* PREVIEW-ONLY form handler. On deploy the native {{#contact_form}} posts to Shopline;
+     this fake-submit just shows the success state so the page is demoable now. */
+  (function(){
+    const f=document.getElementById('ctForm'), ok=document.getElementById('ctOk'); if(!f) return;
+    f.addEventListener('submit',e=>{
+      e.preventDefault();
+      if(!f.checkValidity()){ f.reportValidity(); return; }
+      ok.classList.add('show'); f.reset();
+      ok.scrollIntoView({behavior:'smooth',block:'center'});
+    });
+  })();
+</script>
+</body>
+
+<!-- ============================================================================
+     SHOPLINE OS 3.0 MAPPING — contact page
+     ----------------------------------------------------------------------------
+     SECTION NAME / FOLDER:
+       sections/sw-contact/sw-contact.html   (+ sections/sw-contact/sw-contact.css
+       holding the <style> block above; + optional sw-contact.js for the preview-only
+       success-state shim, which is dropped in favour of the native success render)
+
+     SCHEMA (top of the section file):
+       {{#schema}}
+       {
+         "name": "SW Contact",
+         "tag": "section",
+         "class": "sw-contact",
+         "settings": [
+           { "type": "text",     "id": "heading",       "label": "Heading",        "default": "Tell us, and a person will answer." },
+           { "type": "richtext",  "id": "intro",         "label": "Intro paragraph" },
+           { "type": "text",     "id": "support_email", "label": "Support email",  "default": "support@stonewhisper.co" },
+           { "type": "text",     "id": "response_time", "label": "Response time",  "default": "usually within 12 hours" }
+         ],
+         "presets": [ { "name": "SW Contact" } ]
+       }
+       {{/schema}}
+
+     TEMPLATE ATTACHMENT:
+       templates/page.contact.json  -> { "sections": { "main": { "type": "sw-contact" } }, "order": ["main"] }
+       (Assign this template to the store's Contact page in admin.)
+
+     SHOPLINE NATIVE PARTS — must use platform components on deploy, NOT this custom markup:
+       1. CONTACT FORM SUBMISSION  — replace the <form id="ctForm"> with Shopline's native
+          contact form: wrap fields in {{#contact_form}} ... {{/contact_form}} so POST,
+          server-side validation, spam/anti-bot, and the posted_successfully / form.errors
+          states are handled by the platform (see Fashion-theme sections/contact-form).
+          Native field names: contact[name], contact[email], contact[phone], contact[comment].
+          The custom "Order number" field maps to a prefilled line in contact[comment]
+          (Shopline has no native order_number contact field), or add a hidden
+          contact[comment] prefix. Success/error use {{#component "tips-card/tips-card" ...}}.
+       2. NAV / HEADER + FOOTER — on the live theme these are the global header/footer
+          sections (cart, account, search live there), not re-coded per page. The nav +
+          footer markup here is the preview stand-in only.
+
+     IMAGE REFS (none needed on this page; if added later use):
+       {{ `images/x.png` | asset_url() }}
+
+     PLACEHOLDERS TO RESOLVE BEFORE PUBLISH:
+       - support email: support@stonewhisper.co  [TODO: confirm this inbox exists]
+       - response time: "usually within 12 hours"
+============================================================================ -->
+</html>

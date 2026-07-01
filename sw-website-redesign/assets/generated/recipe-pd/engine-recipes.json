@@ -1,0 +1,83 @@
+[
+  {
+    "slug": "cool-anchor",
+    "file": "cool-anchor-tray-engine.png",
+    "title": "Cool anchor + warm lift",
+    "palette": "Complementary · Tide × Amber",
+    "pattern": "Weave",
+    "logic": "white_neutral buffers blue/yellow contrast; alternating weave keeps warm lift and cool anchor from touching hard",
+    "seq": [
+      "jx-058",
+      "jx-009",
+      "jx-076",
+      "jx-009",
+      "jx-056",
+      "jx-010",
+      "jx-077",
+      "jx-009",
+      "jx-063",
+      "jx-009",
+      "jx-073",
+      "jx-010",
+      "jx-058",
+      "jx-009",
+      "jx-076",
+      "jx-009",
+      "jx-056"
+    ]
+  },
+  {
+    "slug": "dark-point",
+    "file": "dark-point-tray-engine.png",
+    "title": "Dark point + clear spacing",
+    "palette": "Neutral · Ink & Gold",
+    "pattern": "Bookends",
+    "logic": "two true black-rutilated anchors bookend a mostly clear strand; gold stays small and central",
+    "seq": [
+      "jx-037",
+      "jx-058",
+      "jx-055",
+      "jx-009",
+      "jx-009",
+      "jx-010",
+      "jx-009",
+      "jx-009",
+      "jx-065",
+      "jx-010",
+      "jx-009",
+      "jx-009",
+      "jx-010",
+      "jx-009",
+      "jx-063",
+      "jx-058",
+      "jx-037"
+    ]
+  },
+  {
+    "slug": "soft-rose",
+    "file": "soft-rose-tray-engine.png",
+    "title": "Soft rose + quartz white",
+    "palette": "Tonal · Blush",
+    "pattern": "Station",
+    "logic": "clear quartz is the field; five rose beads are evenly spaced so pink reads soft, not sugary",
+    "seq": [
+      "jx-034",
+      "jx-011",
+      "jx-011",
+      "jx-010",
+      "jx-036",
+      "jx-011",
+      "jx-011",
+      "jx-010",
+      "jx-035",
+      "jx-011",
+      "jx-011",
+      "jx-010",
+      "jx-034",
+      "jx-011",
+      "jx-011",
+      "jx-010",
+      "jx-036"
+    ]
+  }
+]

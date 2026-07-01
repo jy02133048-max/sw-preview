@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Returns &amp; Exchanges — Stone Whisper (preview)</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="sw-product.css">
+<style>
+  /* ── NAV — matched 1:1 to the homepage (sw-v2) ── */
+  nav#nav{position:fixed;top:0;left:0;right:0;z-index:40;display:flex;align-items:center;justify-content:space-between;
+    padding:22px clamp(20px,5vw,64px);transition:background .5s ease,backdrop-filter .5s ease,padding .5s ease}
+  nav#nav.lit{background:rgba(7,6,13,.34);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);padding-top:15px;padding-bottom:15px;border-bottom:1px solid rgba(244,236,221,.04)}
+  nav#nav .brand{font-family:var(--font-heading);font-size:21px;letter-spacing:.16em;color:var(--color-text-primary);text-transform:uppercase;font-weight:500}
+  nav#nav .brand b{color:var(--color-gold);font-weight:500}
+  nav#nav .navlinks{display:flex;gap:clamp(18px,2.6vw,40px);align-items:center}
+  nav#nav .navlinks a{font-family:var(--font-ui);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--color-text-muted);transition:color .35s}
+  nav#nav .navlinks a:hover{color:var(--color-text-primary)}
+  nav#nav .bead-switch{font-family:var(--font-ui);border:1px solid rgba(244,236,221,.16);background:rgba(244,236,221,.04);color:var(--color-text-body);
+    font-size:11px;letter-spacing:.14em;text-transform:uppercase;padding:9px 14px;border-radius:999px;cursor:pointer;transition:all .35s ease}
+  nav#nav .bead-switch:hover{border-color:rgba(227,188,119,.46);color:var(--color-gold);background:rgba(227,188,119,.08)}
+  nav#nav .navcta{font-family:var(--font-ui);font-size:12px;letter-spacing:.16em;text-transform:uppercase;border:1px solid rgba(227,188,119,.4);color:var(--color-gold);padding:9px 20px;border-radius:30px;transition:all .4s ease}
+  nav#nav .navcta:hover{background:var(--color-gold);color:#0a0810;border-color:var(--color-gold)}
+  @media(max-width:760px){ nav#nav .navlinks a:not(.navcta),nav#nav .bead-switch{display:none} }
+  /* sw-v2 starfield — fixed behind content, above the gradient backdrop */
+  #space{position:fixed;inset:0;z-index:-1;pointer-events:none}
+  footer.ft{border-top:1px solid var(--color-border);margin-top:clamp(80px,10vh,140px);padding:48px clamp(20px,4vw,48px);text-align:center;color:var(--color-text-muted);font-size:13px}
+  footer.ft .b{font-family:var(--font-heading);font-size:18px;letter-spacing:.2em;text-transform:uppercase;color:var(--color-text-primary)}
+
+  /* ── PAGE-SPECIFIC: Returns & Exchanges (maps to this section's own stylesheet on deploy) ── */
+  .rt-hero{max-width:var(--content-narrow);margin:0 auto;padding:clamp(120px,16vh,180px) clamp(20px,4vw,48px) clamp(28px,5vh,56px);text-align:center}
+  .rt-hero h1{font-family:var(--font-heading);font-weight:500;font-size:clamp(34px,5vw,58px);line-height:1.04;color:var(--color-text-primary)}
+  .rt-hero .lede{font-family:var(--font-heading);font-style:italic;font-size:clamp(17px,1.8vw,22px);color:var(--color-text-body);margin:18px auto 0;max-width:46ch}
+  /* draft banner */
+  .rt-draft{max-width:var(--content-narrow);margin:18px auto 0;padding:0 clamp(20px,4vw,48px)}
+  .rt-draft .pill{display:flex;align-items:flex-start;gap:11px;font-family:var(--font-ui);font-size:12.5px;line-height:1.6;color:var(--color-text-body);
+    border:1px solid var(--color-gold-muted);border-radius:4px;background:rgba(227,188,119,.05);padding:13px 18px}
+  .rt-draft .pill b{color:var(--color-gold);font-weight:600}
+  .rt-draft .pill svg{width:18px;height:18px;flex:0 0 auto;stroke:var(--color-gold);fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;margin-top:1px}
+
+  /* quick-facts band */
+  .rt-facts{max-width:var(--content-width);margin:clamp(40px,6vh,72px) auto 0;padding:0 clamp(20px,4vw,48px)}
+  .rt-facts-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;border:1px solid var(--color-border);border-radius:6px;overflow:hidden}
+  .rt-fact{background:var(--color-surface);padding:clamp(22px,3vw,34px);text-align:center}
+  .rt-fact .num{font-family:var(--font-heading);font-size:clamp(2rem,3.4vw,2.7rem);color:var(--color-gold);line-height:1;margin-bottom:8px}
+  .rt-fact .lbl{font-family:var(--font-ui);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-text-muted)}
+  .rt-fact .sub{font-size:13px;color:var(--color-text-body);margin-top:7px;line-height:1.5}
+  @media(max-width:640px){.rt-facts-grid{grid-template-columns:1fr}}
+
+  /* main body */
+  .rt-body{max-width:var(--content-narrow);margin:0 auto;padding:clamp(56px,8vh,96px) clamp(20px,4vw,48px) 0}
+  .rt-block{padding:clamp(34px,5vh,52px) 0;border-top:1px solid var(--color-border)}
+  .rt-block:first-child{border-top:none}
+  .rt-eyebrow{font-family:var(--font-ui);font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--color-gold);margin-bottom:14px}
+  .rt-block h2{font-family:var(--font-heading);font-weight:500;font-size:clamp(24px,3vw,34px);color:var(--color-text-primary);line-height:1.12}
+  .rt-block p{font-size:15px;line-height:1.78;color:var(--color-text-body);margin-top:16px;max-width:60ch}
+  .rt-block p a{color:var(--color-gold);border-bottom:1px solid var(--color-gold-muted)}
+  .rt-list{list-style:none;margin:18px 0 0;display:flex;flex-direction:column;gap:13px}
+  .rt-list li{display:flex;align-items:flex-start;gap:12px;font-size:15px;line-height:1.65;color:var(--color-text-body)}
+  .rt-list li svg{width:18px;height:18px;flex:0 0 auto;stroke:var(--color-gold);fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;margin-top:2px;opacity:.92}
+  .rt-list.no li svg{stroke:var(--color-rose)}
+
+  /* numbered steps */
+  .rt-steps{counter-reset:rt;margin-top:22px;display:flex;flex-direction:column;gap:2px;border:1px solid var(--color-border);border-radius:6px;overflow:hidden}
+  .rt-step{display:grid;grid-template-columns:64px 1fr;gap:clamp(14px,2vw,26px);align-items:start;background:var(--color-surface);padding:clamp(20px,2.6vw,30px) clamp(18px,2.4vw,28px)}
+  .rt-step .n{counter-increment:rt;font-family:var(--font-heading);font-size:clamp(1.8rem,2.6vw,2.4rem);color:var(--color-gold-muted);text-align:center;line-height:1}
+  .rt-step .n::before{content:counter(rt,decimal-leading-zero)}
+  .rt-step h3{font-family:var(--font-heading);font-weight:500;font-size:clamp(18px,1.9vw,22px);color:var(--color-text-primary);margin-bottom:6px}
+  .rt-step p{font-size:14.5px;line-height:1.7;color:var(--color-text-body);margin:0;max-width:54ch}
+  .rt-step p a{color:var(--color-gold);border-bottom:1px solid var(--color-gold-muted)}
+
+  /* refund timing table — reuses .spec look */
+  .rt-table{width:100%;border-collapse:collapse;font-family:var(--font-ui);margin-top:20px}
+  .rt-table tr{border-top:1px solid var(--color-border)}
+  .rt-table tr:last-child{border-bottom:1px solid var(--color-border)}
+  .rt-table th{text-align:left;font-weight:400;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-text-muted);padding:14px 18px 14px 2px;white-space:nowrap;width:42%;vertical-align:middle}
+  .rt-table td{font-size:14.5px;color:var(--color-text-primary);padding:14px 2px;vertical-align:middle}
+  @media(max-width:560px){.rt-step{grid-template-columns:46px 1fr}.rt-table th{width:46%;font-size:11px;padding-right:12px}.rt-table td{font-size:13.5px}}
+
+  /* TODO placeholder inline marker */
+  .rt-todo{display:inline-block;font-family:var(--font-ui);font-size:11px;letter-spacing:.06em;color:var(--color-gold);border:1px dashed var(--color-gold-muted);border-radius:3px;padding:1px 8px;background:rgba(227,188,119,.05)}
+
+  /* contact / help band */
+  .rt-help{max-width:var(--content-narrow);margin:clamp(56px,8vh,96px) auto 0;padding:0 clamp(20px,4vw,48px)}
+  .rt-help-card{text-align:center;border:1px solid var(--color-border);border-radius:6px;padding:clamp(36px,5vw,60px);
+    background:linear-gradient(180deg,rgba(183,160,228,.06),rgba(255,255,255,.012))}
+  .rt-help-card h2{font-family:var(--font-heading);font-weight:500;font-size:clamp(24px,3.2vw,38px);color:var(--color-text-primary);line-height:1.1}
+  .rt-help-card p{font-size:15px;line-height:1.7;color:var(--color-text-body);max-width:46ch;margin:16px auto 0}
+  .rt-help-card .btn{margin-top:26px}
+  .rt-help-card .mail{display:block;margin-top:16px;font-family:var(--font-ui);font-size:13px;letter-spacing:.04em;color:var(--color-text-muted)}
+  .rt-help-card .mail a{color:var(--color-gold);border-bottom:1px solid var(--color-gold-muted)}
+</style>
+</head>
+<body>
+<canvas id="space"></canvas>
+
+<!-- NAV — identical to the homepage (sw-v2) -->
+<nav id="nav">
+  <a href="../sw-website-redesign/sw-v2.html#top" class="brand">Stone <b>Whisper</b></a>
+  <div class="navlinks">
+    <a href="../sw-website-redesign/sw-v2.html">Home</a>
+    <a href="page-shop.html">Shop</a>
+    <a href="page-how-it-works.html">How it works</a>
+    <a href="page-what-is-bazi.html">The method</a>
+    <a href="page-stone-library.html">Stones</a>
+    <a href="page-about.html">About</a>
+    <a href="../sw-crystal-customizer/index.html" class="navcta">Open Studio</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<header class="rt-hero">
+  <p class="section-label" style="color:var(--color-gold)">Returns &amp; Exchanges</p>
+  <h1>If it isn&rsquo;t right,<br>send it back.</h1>
+  <p class="lede">You should be able to live with it a few weeks before you&rsquo;re sure. You have 30&nbsp;days to decide &mdash; unworn pieces come back for a full refund or an exchange, no story required.</p>
+</header>
+
+<!-- DRAFT NOTICE -->
+<div class="rt-draft rv">
+  <p class="pill">
+    <svg viewBox="0 0 24 24"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+    <span><b>Draft &mdash; review before publishing.</b> This is standard US-ecommerce boilerplate, not legal advice. Confirm timelines, the custom-strand policy, and the return address with the team before this goes live.</span>
+  </p>
+</div>
+
+<!-- QUICK FACTS -->
+<section class="rt-facts">
+  <div class="rt-facts-grid rv">
+    <div class="rt-fact"><div class="num">30</div><div class="lbl">Day window</div><p class="sub">From the day your order is delivered.</p></div>
+    <div class="rt-fact"><div class="num">$0</div><div class="lbl">To start a return</div><p class="sub">Free US shipping out; return label terms below.</p></div>
+    <div class="rt-fact"><div class="num">5&ndash;10</div><div class="lbl">Days to refund</div><p class="sub">Business days after we receive &amp; check the piece.</p></div>
+  </div>
+</section>
+
+<!-- BODY -->
+<div class="rt-body">
+
+  <section class="rt-block rv">
+    <p class="rt-eyebrow">The basics</p>
+    <h2>Our 30-day return window</h2>
+    <p>You can return most items within <b>30 days</b> of delivery for a full refund of the item price. To be accepted, the piece needs to come back to us <b>unworn</b> and in its original condition &mdash; in the padded stone pouch it arrived in, with the care card.</p>
+    <ul class="rt-list">
+      <li><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg><span>Unworn, undamaged, original condition</span></li>
+      <li><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg><span>Returned in the original pouch with the care card</span></li>
+      <li><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg><span>Requested within 30 days of delivery</span></li>
+    </ul>
+    <p>Natural stone varies bead to bead &mdash; colour and banding differ from piece to piece because it&rsquo;s grown, not dyed. That natural variation isn&rsquo;t a defect and isn&rsquo;t grounds for a return on its own, but if something arrives damaged or wrong, we&rsquo;ll make it right (see below).</p>
+  </section>
+
+  <section class="rt-block rv">
+    <p class="rt-eyebrow">Step by step</p>
+    <h2>How to start a return</h2>
+    <div class="rt-steps">
+      <div class="rt-step"><div class="n"></div><div><h3>Email us</h3><p>Write to <a href="mailto:[Company email]">[Company email]</a> within 30 days of delivery. Include your order number and which piece you&rsquo;re returning.</p></div></div>
+      <div class="rt-step"><div class="n"></div><div><h3>Get your instructions</h3><p>We&rsquo;ll reply with return instructions and the address to ship to. Please wait for this before sending anything &mdash; it helps us match your package to your order.</p></div></div>
+      <div class="rt-step"><div class="n"></div><div><h3>Pack it safely</h3><p>Place the bracelet back in its stone pouch and a padded mailer. Stone is hard but beads can chip &mdash; pack it so it can&rsquo;t move around.</p></div></div>
+      <div class="rt-step"><div class="n"></div><div><h3>Ship it back</h3><p>Send it to the address we provide. <span class="rt-todo">TODO: confirm who pays return shipping</span> &mdash; whether SW provides a prepaid label or the customer covers return postage.</p></div></div>
+    </div>
+  </section>
+
+  <section class="rt-block rv">
+    <p class="rt-eyebrow">Different size or stone</p>
+    <h2>Exchanges</h2>
+    <p>Need a different wrist size, or want to switch to a different stone altogether? We&rsquo;re happy to exchange an unworn piece within the same 30-day window.</p>
+    <ul class="rt-list">
+      <li><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9 9 0 0 1 6.4 2.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9 9 0 0 1-6.4-2.7L3 16"/><path d="M3 21v-5h5"/></svg><span><b>Size swap</b> &mdash; same stone, we just restring to your size (S 15cm · M 17cm · L 19cm).</span></li>
+      <li><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9 9 0 0 1 6.4 2.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9 9 0 0 1-6.4-2.7L3 16"/><path d="M3 21v-5h5"/></svg><span><b>Stone swap</b> &mdash; switch to a different bracelet. If there&rsquo;s a price difference we&rsquo;ll charge or refund the gap.</span></li>
+      <li><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9 9 0 0 1 6.4 2.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9 9 0 0 1-6.4-2.7L3 16"/><path d="M3 21v-5h5"/></svg><span>Not sure which stone fits you? The <a href="../sw-crystal-customizer/index.html">Studio</a> reads your chart and suggests a match &mdash; the same engine behind every SW recommendation.</span></li>
+    </ul>
+    <p>Start an exchange the same way as a return: email us, and tell us the size or stone you&rsquo;d like instead. We&rsquo;ll hold it for you where we can.</p>
+  </section>
+
+  <section class="rt-block rv">
+    <p class="rt-eyebrow">When you get your money back</p>
+    <h2>Refund timing</h2>
+    <p>Once your return reaches us, we check the piece and process your refund to the original payment method. You&rsquo;ll get an email when it&rsquo;s done.</p>
+    <table class="rt-table"><tbody>
+      <tr><th>Return in transit to us</th><td>Depends on the carrier you ship with</td></tr>
+      <tr><th>We inspect &amp; approve</th><td>Within 2 business days of arrival</td></tr>
+      <tr><th>Refund issued</th><td>5&ndash;10 business days after approval</td></tr>
+      <tr><th>Appears on statement</th><td>Timing depends on your bank or card issuer</td></tr>
+      <tr><th>Refunded to</th><td>Original payment method</td></tr>
+    </tbody></table>
+    <p>Original shipping was free, so there&rsquo;s nothing to refund there. If a return doesn&rsquo;t meet the conditions above, we&rsquo;ll contact you before sending it back.</p>
+  </section>
+
+  <section class="rt-block rv">
+    <p class="rt-eyebrow">Good to know</p>
+    <h2>What isn&rsquo;t returnable</h2>
+    <p>A few things can&rsquo;t come back, mostly because they&rsquo;re made or sized specifically for you:</p>
+    <ul class="rt-list no">
+      <li><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6"/><path d="M9 9l6 6"/></svg><span><b>Custom Studio strands</b> &mdash; bracelets built to your chart in the Studio are made to order. <span class="rt-todo">TODO: confirm custom-return policy</span> (likely exchange-or-store-credit only, not a cash refund &mdash; pending team sign-off).</span></li>
+      <li><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6"/><path d="M9 9l6 6"/></svg><span><b>Worn or damaged pieces</b> &mdash; anything that&rsquo;s been worn beyond trying it on, or damaged after delivery.</span></li>
+      <li><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6"/><path d="M9 9l6 6"/></svg><span><b>Final-sale items</b>, if any are marked as such at checkout. <span class="rt-todo">TODO: confirm whether SW runs final-sale items</span>.</span></li>
+      <li><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6"/><path d="M9 9l6 6"/></svg><span><b>Returns past 30 days</b> &mdash; we can&rsquo;t refund these, but email us and we&rsquo;ll see what&rsquo;s possible.</span></li>
+    </ul>
+  </section>
+
+  <section class="rt-block rv">
+    <p class="rt-eyebrow">If something&rsquo;s wrong</p>
+    <h2>Damaged or wrong item</h2>
+    <p>If your piece arrives damaged, or it isn&rsquo;t what you ordered, that&rsquo;s on us. Email <a href="mailto:[Company email]">[Company email]</a> within <b>7 days</b> of delivery with a photo and your order number, and we&rsquo;ll arrange a replacement or refund at no cost to you &mdash; the 30-day condition rules above don&rsquo;t apply to our mistakes.</p>
+  </section>
+
+</div>
+
+<!-- HELP / CONTACT -->
+<section class="rt-help">
+  <div class="rt-help-card rv">
+    <p class="section-label" style="color:var(--color-gold)">Still have a question?</p>
+    <h2>A person answers, not a bot.</h2>
+    <p>Not sure if your piece qualifies, or which size to swap to? Tell us what&rsquo;s wrong and we&rsquo;ll fix it &mdash; a real person, same day where we can.</p>
+    <a href="page-contact.html" class="btn btn--gold">Contact us</a>
+    <span class="mail">or email <a href="mailto:[Company email]">[Company email]</a></span>
+  </div>
+</section>
+
+<footer class="ft">
+  <div class="ft-cols">
+    <div class="ft-brand"><div class="b">Stone Whisper</div><p>Natural stone, matched to you.</p></div>
+    <div class="ft-col"><h4>Shop</h4><a href="page-shop.html">Shop</a><a href="../sw-crystal-customizer/index.html">Open Studio</a><a href="page-stone-library.html">Stones</a></div>
+    <div class="ft-col"><h4>Learn</h4><a href="page-how-it-works.html">How it works</a><a href="page-what-is-bazi.html">The method</a><a href="page-blog.html">Journal</a></div>
+    <div class="ft-col"><h4>Support</h4><a href="page-faq.html">FAQ</a><a href="page-care.html">Care</a><a href="page-shipping.html">Shipping</a><a href="page-returns.html">Returns</a><a href="page-contact.html">Contact</a></div>
+    <div class="ft-col"><h4>Company</h4><a href="page-about.html">About</a><a href="page-policies.html#privacy">Privacy</a><a href="page-policies.html#terms">Terms</a><a href="page-policies.html#refund">Refund</a></div>
+  </div>
+  <p class="ft-copy">&copy; Stone Whisper &middot; natural stone, matched to you</p>
+</footer>
+
+<script>
+  /* ── sw-v2 starfield (cool parallax stars + faint galaxy band + meteors) ── */
+  (function(){
+    const cv=document.getElementById('space'); if(!cv) return; const x=cv.getContext('2d');
+    let W,H,DPR,stars=[],meteors=[],run=false,ph=0;
+    const rnd=(a,b)=>a+Math.random()*(b-a);
+    const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+    function size(){DPR=Math.min(2,devicePixelRatio||1);W=cv.width=innerWidth*DPR;H=cv.height=innerHeight*DPR;cv.style.width=innerWidth+'px';cv.style.height=innerHeight+'px';build();}
+    function build(){stars=[];const n=Math.round(innerWidth*innerHeight/2600);for(let i=0;i<n;i++){const d=rnd(.15,1);stars.push({x:rnd(0,W),y:rnd(0,H),r:rnd(.3,1.6)*DPR*d,d,tw:rnd(0,6.28),ts:rnd(.6,1.8)});}}
+    function render(){
+      const sc=(window.scrollY||0)*DPR; x.clearRect(0,0,W,H); ph+=0.015; x.globalCompositeOperation='lighter';
+      x.save(); x.translate(W*0.64,H*0.30); x.rotate(-0.52);
+      const bg=x.createLinearGradient(0,-H*0.55,0,H*0.55);
+      bg.addColorStop(0,'rgba(120,140,214,0)'); bg.addColorStop(.5,'rgba(150,134,206,0.075)'); bg.addColorStop(1,'rgba(120,140,214,0)');
+      x.fillStyle=bg; x.fillRect(-W,-H*0.55,W*2,H*1.1); x.restore();
+      for(const s of stars){ s.tw+=0.02*s.ts; const yy=(((s.y-sc*0.4*s.d)%H)+H)%H, tw=.5+Math.sin(s.tw)*.5;
+        x.fillStyle=`rgba(245,238,224,${((.2+tw*.6)*s.d).toFixed(3)})`; x.beginPath(); x.arc(s.x%W,yy,s.r*(.7+tw*.5),0,6.2832); x.fill(); }
+      if(meteors.length<1 && Math.random()<0.004){ meteors.push({x:rnd(.2,.95)*W,y:rnd(0,.4)*H,vx:rnd(-12,-7)*DPR,vy:rnd(4,7)*DPR,life:1}); }
+      for(const m of meteors){ m.x+=m.vx; m.y+=m.vy; m.life-=.014;
+        const g=x.createLinearGradient(m.x,m.y,m.x-m.vx*5,m.y-m.vy*5); g.addColorStop(0,`rgba(255,250,240,${m.life.toFixed(3)})`); g.addColorStop(1,'rgba(255,250,240,0)');
+        x.strokeStyle=g; x.lineWidth=1.6*DPR; x.lineCap='round'; x.beginPath(); x.moveTo(m.x,m.y); x.lineTo(m.x-m.vx*5,m.y-m.vy*5); x.stroke(); }
+      meteors=meteors.filter(m=>m.life>0&&m.x>-100&&m.y<H+100);
+      x.globalCompositeOperation='source-over';
+    }
+    function loop(){ if(document.hidden){run=false;return;} render(); requestAnimationFrame(loop); }
+    function start(){ if(run)return; run=true; requestAnimationFrame(loop); }
+    size(); addEventListener('resize',()=>{size();render();},{passive:true}); render();
+    if(reduce) addEventListener('scroll',render,{passive:true}); else { start(); document.addEventListener('visibilitychange',()=>{if(!document.hidden)start();}); }
+  })();
+
+  const nav=document.getElementById('nav');
+  addEventListener('scroll',()=>nav.classList.toggle('lit',scrollY>40));
+  const obs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('vis');obs.unobserve(e.target);}}),{threshold:.1});
+  document.querySelectorAll('.rv').forEach(el=>obs.observe(el));
+</script>
+
+<!--
+═══════════════════════════════════════════════════════════════════════════════
+  SHOPLINE MAPPING (OS 3.0) — Returns & Exchanges
+═══════════════════════════════════════════════════════════════════════════════
+
+  SECTION
+    name:   sw-returns
+    folder: sections/sw-returns/sw-returns.html
+    The page-specific CSS in this file's <head> <style> maps to the section's own
+    stylesheet (sections/sw-returns/sw-returns.css) for CSS isolation. The shared
+    cosmic tokens stay in the linked sw-product.css (theme-level asset).
+
+  {{#schema}}
+  {
+    "name": "SW Returns & Exchanges",
+    "tag":  "section",
+    "class": "sw-returns",
+    "settings": [
+      { "type": "text",     "id": "return_window_days", "label": "Return window (days)", "default": "30" },
+      { "type": "text",     "id": "refund_days",         "label": "Refund processing (business days)", "default": "5–10" },
+      { "type": "text",     "id": "support_email",       "label": "Support email", "default": "[Company email]" },
+      { "type": "richtext", "id": "draft_notice",        "label": "Draft / legal notice" }
+    ]
+  }
+  {{/schema}}
+
+  TEMPLATE ATTACHMENT
+    page.returns.json  (a Page in admin: "Returns & Exchanges", template = returns)
+    Could alternatively attach to page.policy.json if SW consolidates policy pages;
+    this content reads as a customer-facing policy page and fits either.
+
+  IMAGE REFS (none needed here — type-led page). If a hero/lifestyle image is added,
+    use:  {{ `images/returns-hero.png` | asset_url() }}
+    In this preview, no <img> is used (cosmic CSS backdrop only) — nothing broken.
+
+  SHOPLINE NATIVE — must use native components on deploy, NOT custom markup:
+    • NAV (header) + cart / account / search  → native theme header group
+      (the custom nav#nav here is a preview stand-in for visual parity only).
+    • FOOTER + newsletter / policy links       → native theme footer group.
+    • "Contact us" CTA → links to the native contact-form page (page.contact /
+      sections/contact-form); do NOT hand-roll the form here.
+    • Order / return initiation → on a real store, "start a return" should route to
+      Shopline's native order-status / customer-account return flow where available,
+      rather than email-only. This draft is email-based until that flow is confirmed.
+    • Any product links (size/stone exchange) → native product / collection URLs.
+
+  CONTENT / PLACEHOLDERS the team must fill before publish:
+    • [Company email]                     → real support inbox
+    • [Company legal name / address]       → return address (do NOT invent)
+    • TODO: confirm who pays return shipping (prepaid label vs. customer-paid)
+    • TODO: confirm custom-return policy (Studio strands — exchange/credit vs refund)
+    • TODO: confirm whether SW runs final-sale items
+    • Draft — review before publishing; not legal advice.
+
+  HARD FACTS USED (allowed): Free US shipping; delivery 10–15 business days;
+    100% natural stone (no dye/glass). All other numbers (30-day window, 5–10 day
+    refund, 7-day damage report, 2-day inspection) are standard boilerplate defaults
+    surfaced as editable schema settings — confirm before publish.
+═══════════════════════════════════════════════════════════════════════════════
+-->
+</body></html>

@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Stone Library — Stone Whisper</title>
+<meta name="description" content="A browsable library of natural crystals, grouped by element. Every stone has a character you can read — find the one matched to your chart.">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="sw-product.css">
+<style>
+  /* ── NAV — matched 1:1 to the homepage (sw-v2) ── */
+  nav#nav{position:fixed;top:0;left:0;right:0;z-index:40;display:flex;align-items:center;justify-content:space-between;
+    padding:22px clamp(20px,5vw,64px);transition:background .5s ease,backdrop-filter .5s ease,padding .5s ease}
+  nav#nav.lit{background:rgba(7,6,13,.34);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);padding-top:15px;padding-bottom:15px;border-bottom:1px solid rgba(244,236,221,.04)}
+  nav#nav .brand{font-family:var(--font-heading);font-size:21px;letter-spacing:.16em;color:var(--color-text-primary);text-transform:uppercase;font-weight:500}
+  nav#nav .brand b{color:var(--color-gold);font-weight:500}
+  nav#nav .navlinks{display:flex;gap:clamp(18px,2.6vw,40px);align-items:center}
+  nav#nav .navlinks a{font-family:var(--font-ui);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--color-text-muted);transition:color .35s}
+  nav#nav .navlinks a:hover{color:var(--color-text-primary)}
+  nav#nav .navlinks a.on{color:var(--color-text-primary)}
+  nav#nav .bead-switch{font-family:var(--font-ui);border:1px solid rgba(244,236,221,.16);background:rgba(244,236,221,.04);color:var(--color-text-body);
+    font-size:11px;letter-spacing:.14em;text-transform:uppercase;padding:9px 14px;border-radius:999px;cursor:pointer;transition:all .35s ease}
+  nav#nav .bead-switch:hover{border-color:rgba(227,188,119,.46);color:var(--color-gold);background:rgba(227,188,119,.08)}
+  nav#nav .navcta{font-family:var(--font-ui);font-size:12px;letter-spacing:.16em;text-transform:uppercase;border:1px solid rgba(227,188,119,.4);color:var(--color-gold);padding:9px 20px;border-radius:30px;transition:all .4s ease}
+  nav#nav .navcta:hover{background:var(--color-gold);color:#0a0810;border-color:var(--color-gold)}
+  @media(max-width:760px){ nav#nav .navlinks a:not(.navcta),nav#nav .bead-switch{display:none} }
+
+  /* sw-v2 starfield — fixed behind content, above the gradient backdrop */
+  #space{position:fixed;inset:0;z-index:-1;pointer-events:none}
+
+  footer.ft{border-top:1px solid var(--color-border);margin-top:clamp(80px,10vh,140px);padding:48px clamp(20px,4vw,48px);text-align:center;color:var(--color-text-muted);font-size:13px}
+  footer.ft .b{font-family:var(--font-heading);font-size:18px;letter-spacing:.2em;text-transform:uppercase;color:var(--color-text-primary)}
+
+  /* ── LIBRARY HERO ── */
+  .lib-hero{padding:clamp(140px,18vh,200px) clamp(20px,4vw,48px) clamp(40px,6vh,72px);max-width:760px;margin:0 auto;text-align:center}
+  .lib-hero .section-label{color:var(--color-gold);opacity:.85}
+  .lib-hero h1{font-family:var(--font-heading);font-weight:500;font-size:clamp(40px,6vw,72px);line-height:1.04;color:var(--color-text-primary);letter-spacing:-0.02em}
+  .lib-hero h1 em{font-style:italic;color:var(--color-amethyst)}
+  .lib-hero .lede{font-family:var(--font-heading);font-style:italic;font-size:clamp(18px,2vw,24px);color:var(--color-text-body);margin-top:20px}
+  .lib-hero .intro{font-size:15.5px;line-height:1.8;color:var(--color-text-body);max-width:56ch;margin:22px auto 0}
+
+  /* element quick-jump pills */
+  .lib-jump{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:34px 0 0}
+  .lib-jump a{font-family:var(--font-ui);font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--color-text-body);
+    border:1px solid var(--color-border);border-radius:999px;padding:9px 18px;transition:.3s;display:inline-flex;align-items:center;gap:8px}
+  .lib-jump a:hover{border-color:var(--color-gold);color:var(--color-text-primary)}
+  .lib-jump a .dot{width:8px;height:8px;border-radius:50%}
+  .dot--wood{background:#4A8A50}.dot--fire{background:#B8583A}.dot--earth{background:#A08030}.dot--metal{background:#8A8078}.dot--water{background:#4A80B8}
+
+  /* ── ELEMENT GROUPS ── */
+  .lib{padding:clamp(40px,6vh,80px) 0 0}
+  .lib__el{max-width:1080px;margin:0 auto clamp(56px,8vh,96px);padding:0 clamp(20px,4vw,48px);scroll-margin-top:110px}
+  .lib__el-head{display:flex;align-items:flex-end;gap:18px;border-bottom:1px solid var(--color-border);padding-bottom:18px;margin-bottom:30px;flex-wrap:wrap}
+  .lib__el-badge{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+  .lib__el-badge svg{width:20px;height:20px;stroke-width:1.5;fill:none;stroke-linecap:round;stroke-linejoin:round}
+  .badge--wood{background:rgba(74,138,80,.13)}.badge--wood svg{stroke:#4A8A50}
+  .badge--fire{background:rgba(184,88,58,.13)}.badge--fire svg{stroke:#B8583A}
+  .badge--earth{background:rgba(160,128,48,.13)}.badge--earth svg{stroke:#A08030}
+  .badge--metal{background:rgba(138,128,120,.15)}.badge--metal svg{stroke:#8A8078}
+  .badge--water{background:rgba(74,128,184,.13)}.badge--water svg{stroke:#4A80B8}
+  .lib__el-titles{display:flex;flex-direction:column;gap:2px}
+  .lib__el-name{font-family:var(--font-heading);font-size:clamp(24px,3vw,34px);font-weight:500;color:var(--color-text-primary);line-height:1}
+  .lib__el-tag{font-family:var(--font-ui);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--color-text-muted)}
+  .lib__el-note{font-size:13.5px;color:var(--color-text-muted);line-height:1.6;margin-left:auto;max-width:38ch;font-style:italic}
+
+  .lib__grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .stone-card{display:block;border:1px solid var(--color-border);border-radius:5px;padding:22px 22px 20px;background:linear-gradient(180deg,rgba(255,255,255,.014),transparent);
+    transition:border-color .35s ease,transform .35s ease,background .35s ease;position:relative;overflow:hidden}
+  .stone-card:hover{border-color:var(--color-border-hover);transform:translateY(-3px);background:linear-gradient(180deg,rgba(255,255,255,.03),transparent)}
+  .stone-card__top{display:flex;align-items:center;gap:13px;margin-bottom:13px}
+  .stone-card__swatch{width:30px;height:30px;border-radius:50%;flex:0 0 auto;box-shadow:inset 0 0 10px rgba(0,0,0,.45),0 0 0 1px rgba(255,255,255,.06)}
+  .stone-card__name{font-family:var(--font-heading);font-size:20px;font-weight:500;color:var(--color-text-primary);line-height:1.05}
+  .stone-card__el{font-family:var(--font-ui);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--color-text-muted);margin-top:3px}
+  .stone-card__line{font-size:13.5px;line-height:1.6;color:var(--color-text-body)}
+  .stone-card__more{display:inline-flex;align-items:center;gap:6px;margin-top:14px;font-family:var(--font-ui);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--color-gold);opacity:.78;transition:opacity .3s,gap .3s}
+  .stone-card:hover .stone-card__more{opacity:1;gap:10px}
+  @media(max-width:860px){.lib__grid{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:520px){.lib__grid{grid-template-columns:1fr}.lib__el-note{margin-left:0}}
+
+  /* ── HOW WE READ (method, not horoscope) ── */
+  .lib-method{padding:clamp(60px,8vh,100px) clamp(20px,4vw,48px)}
+  .lib-method__inner{max-width:880px;margin:0 auto;border:1px solid var(--color-border);border-radius:6px;padding:clamp(32px,5vw,56px);
+    background:linear-gradient(180deg,rgba(183,160,228,.05),rgba(255,255,255,.01));text-align:center}
+  .lib-method__inner .section-label{color:var(--color-gold)}
+  .lib-method h2{font-family:var(--font-heading);font-weight:500;font-size:clamp(24px,3vw,36px);line-height:1.1;color:var(--color-text-primary)}
+  .lib-method h2 em{font-style:italic;color:var(--color-amethyst)}
+  .lib-method p{font-size:15px;line-height:1.8;color:var(--color-text-body);max-width:54ch;margin:18px auto 0}
+  .lib-method .note{font-size:11.5px;letter-spacing:.03em;color:var(--color-text-muted);margin-top:20px}
+  .lib-method .btn{margin-top:28px}
+
+  /* ── FINAL CTA reuse ── */
+  .final{padding:var(--space-32) 0;text-align:center}
+  .final__h{font-size:clamp(2rem,4vw,3rem);color:var(--color-text-primary);max-width:640px;margin:0 auto var(--space-4)}
+  .final__h em{font-style:italic;color:var(--color-amethyst)}
+  .final__sub{font-size:1.1rem;color:var(--color-text-muted);max-width:480px;margin:0 auto var(--space-8)}
+  .final__note{font-family:var(--font-ui);font-size:0.78rem;color:var(--color-text-disabled);margin-top:var(--space-4)}
+</style>
+</head>
+<body>
+<canvas id="space"></canvas>
+
+<!-- NAV — identical to the homepage (sw-v2) -->
+<nav id="nav">
+  <a href="../sw-website-redesign/sw-v2.html#top" class="brand">Stone <b>Whisper</b></a>
+  <div class="navlinks">
+    <a href="../sw-website-redesign/sw-v2.html">Home</a>
+    <a href="page-shop.html">Shop</a>
+    <a href="page-how-it-works.html">How it works</a>
+    <a href="page-what-is-bazi.html">The method</a>
+    <a href="page-stone-library.html">Stones</a>
+    <a href="page-about.html">About</a>
+    <a href="../sw-crystal-customizer/index.html" class="navcta">Open Studio</a>
+  </div>
+</nav>
+
+<!-- HERO / INTRO -->
+<header class="lib-hero" id="top">
+  <p class="section-label">The Stone Library</p>
+  <h1>Every stone has a<br><em>character you can read.</em></h1>
+  <p class="lede">Not a horoscope. A method.</p>
+  <p class="intro">A crystal isn&rsquo;t magic, and it isn&rsquo;t random. Each stone carries a colour, a structure, and an element of its own &mdash; a temperament you can actually describe. This is the catalogue we read from: grouped by element, so you can see which family runs warm, which runs cool, and where you might fit. Tap any stone to read it in full.</p>
+  <nav class="lib-jump" aria-label="Jump to element">
+    <a href="#wood"><span class="dot dot--wood"></span>Wood</a>
+    <a href="#fire"><span class="dot dot--fire"></span>Fire</a>
+    <a href="#earth"><span class="dot dot--earth"></span>Earth</a>
+    <a href="#metal"><span class="dot dot--metal"></span>Metal</a>
+    <a href="#water"><span class="dot dot--water"></span>Water</a>
+  </nav>
+</header>
+
+<!-- LIBRARY: grouped by element -->
+<main class="lib">
+
+  <!-- WOOD -->
+  <section class="lib__el rv" id="wood">
+    <div class="lib__el-head">
+      <span class="lib__el-badge badge--wood"><svg viewBox="0 0 24 24"><path d="M12 22V8M12 8c0-3 2-5 5-5M12 12c0-2.5-2-4-5-4M12 15c0-2 2.5-3.5 5-3.5"/></svg></span>
+      <div class="lib__el-titles"><span class="lib__el-name">Wood</span><span class="lib__el-tag">Growth · Direction · Beginnings</span></div>
+      <p class="lib__el-note">Wood stones for the early, unfinished stage &mdash; when there&rsquo;s something you&rsquo;re trying to get moving.</p>
+    </div>
+    <div class="lib__grid">
+      <a class="stone-card" href="#"><div class="stone-card__top"><span class="stone-card__swatch" style="background:radial-gradient(circle at 35% 30%,#bfe6c2,#3f7a4a)"></span><div><div class="stone-card__name">Green Aventurine</div><div class="stone-card__el">Wood · quartz</div></div></div><p class="stone-card__line">The optimist&rsquo;s stone &mdash; quiet nerve for a fresh start.</p><span class="stone-card__more">Read the stone &rarr;</span></a>
+      <a class="stone-card" href="#"><div class="stone-card__top"><span class="stone-card__swatch" style="background:radial-gradient(circle at 35% 30%,#d4ead0,#5d7e4a)"></span><div><div class="stone-card__name">Jade (Nephrite)</div><div class="stone-card__el">Wood · silicate</div></div></div><p class="stone-card__line">Patience that outlasts trouble &mdash; the long-game stone.</p><span class="stone-card__more">Read the stone &rarr;</span></a>
+      <a class="stone-card" href="#"><div class="stone-card__top"><span class="stone-card__swatch" style="background:radial-gradient(circle at 35% 30%,#b9e3d4,#2f7d6a)"></span><div><div class="stone-card__name">Malachite</div><div class="stone-card__el">Wood · carbonate</div></div></div><p class="stone-card__line">A clean break from the old loop &mdash; for change you keep avoiding.</p><span class="stone-card__more">Read the stone &rarr;</span></a>
+      <a class="stone-card" href="#"><div class="stone-card__top"><span class="stone-card__swatch" style="background:radial-gradient(circle at 35% 30%,#cfead9,#4a8f6e)"></span><div><div class="stone-card__name">Prehnite</div><div class="stone-card__el">Wood · silicate</div></div></div><p class="stone-card__line">Soft green calm for the over-planner who can&rsquo;t switch off.</p><span class="stone-card__more">Read the stone &rarr;</span></a>
+    </div>
+  </section>
+
+  <!-- FIRE -->
+  <section class="lib__el rv" id="fire">
+    <div class="lib__el-head">
+      <span class="lib__el-badge badge--fire"><svg viewBox="0 0 24 24"><path d="M12 2C8 6 8 11 12 16 16 11 16 6 12 2zM12 16c-2 1-3 3-3 4a3 3 0 006 0c0-1-1-3-3-4z"/></svg></span>
+      <div class="lib__el-titles"><span class="lib__el-name">Fire</span><span class="lib__el-tag">Warmth · Presence · Expression</span></div>
+      <p class="lib__el-note">Fire stones for warmth and presence &mdash; when you want more of yourself to reach the room.</p>
+    </div>
+    <div class="lib__grid">
+      <a class="stone-card" href="#"><div class="stone-card__top"><span class="stone-card__swatch" style="background:radial-gradient(circle at 35% 30%,#d9c6f0,#6b4f9c)"></span><div><div class="stone-card__name">Amethyst</div><div class="stone-card__el">Fire · quartz</div></div></div><p class="stone-card__line">For the mind that keeps re-running a conversation that&rsquo;s already over.</p><span class="stone-card__more">Read the stone &rarr;</span></a>
+      <a class="stone-card" href="#"><div class="stone-card__top"><span class="stone-card__swatch" style="background:radial-gradient(circle at 35% 30%,#f2c7b0,#b8583a)"></span><div><div class="stone-card__name">Carnelian</div><div class="stone-card__el">Fire · chalcedony</div></div></div><p class="stone-card__line">Courage on a slow day &mdash; the stone for starting before you feel ready.</p><span class="stone-card__more">Read the stone &rarr;</span></a>
+      <a class="stone-card" href="#"><div class="stone-card__top"><span class="stone-card__swatch" style="background:radial-gradient(circle at 35% 30%,#f3d8b0,#c97f3a)"></span><div><div class="stone-card__name">Sunstone</div><div class="stone-card__el">Fire · feldspar</div></div></div><p class="stone-card__line">Warmth you can lend yourself when no one&rsquo;s clapping.</p><span class="stone-card__more">Read the stone &rarr;</span></a>
+      <a class="stone-card" href="#"><div class="stone-card__top"><span class="stone-card__swatch" style="background:radial-gradient(circle at 35% 30%,#f0b8b0,#9c3a4a)"></span><div><div class="stone-card__name">Garnet</div><div class="stone-card__el">Fire · silicate</div></div></div><p class="stone-card__line">Steady heat &mdash; for staying in the room when it gets hard.</p><span class="stone-card__more">Read the stone &rarr;</span></a>
+    </div>
+  </section>
+
+  <!-- EARTH -->
+  <section class="lib__el rv" id="earth">
+    <div class="lib__el-head">
+      <span class="lib__el-badge badge--earth"><svg viewBox="0 0 24 24"><path d="M3 17h18M5 17l3-8h8l3 8M9 9l1.5-4h3L15 9"/></svg></span>
+      <div class="lib__el-titles"><span class="lib__el-name">Earth</span><span class="lib__el-tag">Ground · Trust · Steadiness</span></div>
+      <p class="lib__el-note">Earth stones for ground and steadiness &mdash; the family to reach for when you want both feet down.</p>
+    </div>
+    <div class="lib__grid">
+      <a class="stone-card" href="#"><div class="stone-card__top"><span class="stone-card__swatch" style="background:radial-gradient(circle at 35% 30%,#f3e6c4,#a08030)"></span><div><div class="stone-card__name">Citrine</div><div class="stone-card__el">Earth · quartz</div></div></div><p class="stone-card__line">Plain daylight optimism &mdash; the stone for a heavy week.</p><span class="stone-card__more">Read the stone &rarr;</span></a>
+      <a class="stone-card" href="#"><div class="stone-card__top"><span class="stone-card__swatch" style="background:radial-gradient(circle at 35% 30%,#e8d2b0,#8a6a40)"></span><div><div class="stone-card__name">Tiger&rsquo;s Eye</div><div class="stone-card__el">Earth · quartz</div></div></div><p class="stone-card__line">Clear eyes in a foggy decision &mdash; for when you keep second-guessing.</p><span class="stone-card__more">Read the stone &rarr;</span></a>
+      <a class="stone-card" href="#"><div class="stone-card__top"><span class="stone-card__swatch" style="background:radial-gradient(circle at 35% 30%,#efe0cf,#b89a6a)"></span><div><div class="stone-card__name">Picture Jasper</div><div class="stone-card__el">Earth · chalcedony</div></div></div><p class="stone-card__line">A deep breath made solid &mdash; the stone that slows you down kindly.</p><span class="stone-card__more">Read the stone &rarr;</span></a>
+      <a class="stone-card" href="#"><div class="stone-card__top"><span class="stone-card__swatch" style="background:radial-gradient(circle at 35% 30%,#f0e8d2,#8a7a4e)"></span><div><div class="stone-card__name">Yellow Calcite</div><div class="stone-card__el">Earth · carbonate</div></div></div><p class="stone-card__line">Gentle confidence for the day your own voice is the harshest one in the room.</p><span class="stone-card__more">Read the stone &rarr;</span></a>
+    </div>
+  </section>
+
+  <!-- METAL -->
+  <section class="lib__el rv" id="metal">
+    <div class="lib__el-head">
+      <span class="lib__el-badge badge--metal"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 4v16M4 12h16"/></svg></span>
+      <div class="lib__el-titles"><span class="lib__el-name">Metal</span><span class="lib__el-tag">Clarity · Edges · Resolve</span></div>
+      <p class="lib__el-note">Stones for cutting through &mdash; for boundaries, focus, and a clear no.</p>
+    </div>
+    <div class="lib__grid">
+      <a class="stone-card" href="#"><div class="stone-card__top"><span class="stone-card__swatch" style="background:radial-gradient(circle at 35% 30%,#ffffff,#cfd2d6)"></span><div><div class="stone-card__name">Clear Quartz</div><div class="stone-card__el">Metal · quartz</div></div></div><p class="stone-card__line">A clean slate &mdash; the stone for thinking straight again.</p><span class="stone-card__more">Read the stone &rarr;</span></a>
+      <a class="stone-card" href="#"><div class="stone-card__top"><span class="stone-card__swatch" style="background:radial-gradient(circle at 35% 30%,#f5f3ee,#b8b2a6)"></span><div><div class="stone-card__name">Howlite</div><div class="stone-card__el">Metal · borate</div></div></div><p class="stone-card__line">A cooler head before you reply &mdash; for the quick-to-react.</p><span class="stone-card__more">Read the stone &rarr;</span></a>
+      <a class="stone-card" href="#"><div class="stone-card__top"><span class="stone-card__swatch" style="background:radial-gradient(circle at 35% 30%,#e8eaed,#7a8088)"></span><div><div class="stone-card__name">Hematite</div><div class="stone-card__el">Metal · oxide</div></div></div><p class="stone-card__line">A weighted blanket for the mind &mdash; for the hour after the adrenaline drops.</p><span class="stone-card__more">Read the stone &rarr;</span></a>
+      <a class="stone-card" href="#"><div class="stone-card__top"><span class="stone-card__swatch" style="background:radial-gradient(circle at 35% 30%,#f6f4ef,#c8bfae)"></span><div><div class="stone-card__name">Pyrite</div><div class="stone-card__el">Metal · sulfide</div></div></div><p class="stone-card__line">Backbone in a meeting &mdash; the stone for asking for what you&rsquo;re worth.</p><span class="stone-card__more">Read the stone &rarr;</span></a>
+    </div>
+  </section>
+
+  <!-- WATER -->
+  <section class="lib__el rv" id="water">
+    <div class="lib__el-head">
+      <span class="lib__el-badge badge--water"><svg viewBox="0 0 24 24"><path d="M12 3c4 5 6 8 6 11a6 6 0 01-12 0c0-3 2-6 6-11z"/></svg></span>
+      <div class="lib__el-titles"><span class="lib__el-name">Water</span><span class="lib__el-tag">Flow · Depth · Intuition</span></div>
+      <p class="lib__el-note">Water stones for flow and depth &mdash; for when the pace has been high and you want it to come down.</p>
+    </div>
+    <div class="lib__grid">
+      <a class="stone-card" href="#"><div class="stone-card__top"><span class="stone-card__swatch" style="background:radial-gradient(circle at 35% 30%,#cfe6f4,#4a80b8)"></span><div><div class="stone-card__name">Aquamarine</div><div class="stone-card__el">Water · beryl</div></div></div><p class="stone-card__line">Cool water on a hot temper &mdash; the stone for hard conversations.</p><span class="stone-card__more">Read the stone &rarr;</span></a>
+      <a class="stone-card" href="#"><div class="stone-card__top"><span class="stone-card__swatch" style="background:radial-gradient(circle at 35% 30%,#c4d2ee,#3a4f9c)"></span><div><div class="stone-card__name">Lapis Lazuli</div><div class="stone-card__el">Water · lazurite</div></div></div><p class="stone-card__line">Old, deep blue &mdash; for saying the true thing out loud.</p><span class="stone-card__more">Read the stone &rarr;</span></a>
+      <a class="stone-card" href="#"><div class="stone-card__top"><span class="stone-card__swatch" style="background:radial-gradient(circle at 35% 30%,#d4e8f0,#5a90b0)"></span><div><div class="stone-card__name">Sodalite</div><div class="stone-card__el">Water · silicate</div></div></div><p class="stone-card__line">Quiet logic under feeling &mdash; for thinking clearly when it&rsquo;s personal.</p><span class="stone-card__more">Read the stone &rarr;</span></a>
+      <a class="stone-card" href="#"><div class="stone-card__top"><span class="stone-card__swatch" style="background:radial-gradient(circle at 35% 30%,#eef2f6,#9aaec0)"></span><div><div class="stone-card__name">Moonstone</div><div class="stone-card__el">Water · feldspar</div></div></div><p class="stone-card__line">Soft light in a low season &mdash; the stone for patience with yourself.</p><span class="stone-card__more">Read the stone &rarr;</span></a>
+    </div>
+  </section>
+
+</main>
+
+<!-- HOW WE READ — method, not horoscope -->
+<section class="lib-method">
+  <div class="lib-method__inner rv">
+    <p class="section-label">How we read a stone</p>
+    <h2>We don&rsquo;t guess your stone.<br><em>We read it from your chart.</em></h2>
+    <p>Every stone has a temperament from its colour, structure and element. The right one for you isn&rsquo;t the one you like most &mdash; it&rsquo;s the one that fills what your chart runs thin on. We read your chart, see which elements run strong and which run thin, then match you to the stone that balances the gap. It&rsquo;s the same engine behind the Studio. No promises of destiny &mdash; just a careful, honest read.</p>
+    <a href="../sw-crystal-customizer/index.html" class="btn btn--gold">Read my chart in the Studio</a>
+    <p class="note">Matched to your elements &mdash; structured analysis, not a horoscope.</p>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="final"><div class="wrap"><div class="rv">
+  <h2 class="final__h">Find the one that<br><em>fits your chart.</em></h2>
+  <p class="final__sub">100% natural stone &mdash; no dye, no glass. Free US shipping.</p>
+  <a href="../sw-crystal-customizer/index.html" class="btn btn--gold">Open the Studio</a>
+  <p class="final__note">Hand-assembled · delivered in 10&ndash;15 business days.</p>
+</div></div></section>
+
+<footer class="ft">
+  <div class="ft-cols">
+    <div class="ft-brand"><div class="b">Stone Whisper</div><p>Natural stone, matched to you.</p></div>
+    <div class="ft-col"><h4>Shop</h4><a href="page-shop.html">Shop</a><a href="../sw-crystal-customizer/index.html">Open Studio</a><a href="page-stone-library.html">Stones</a></div>
+    <div class="ft-col"><h4>Learn</h4><a href="page-how-it-works.html">How it works</a><a href="page-what-is-bazi.html">The method</a><a href="page-blog.html">Journal</a></div>
+    <div class="ft-col"><h4>Support</h4><a href="page-faq.html">FAQ</a><a href="page-care.html">Care</a><a href="page-shipping.html">Shipping</a><a href="page-returns.html">Returns</a><a href="page-contact.html">Contact</a></div>
+    <div class="ft-col"><h4>Company</h4><a href="page-about.html">About</a><a href="page-policies.html#privacy">Privacy</a><a href="page-policies.html#terms">Terms</a><a href="page-policies.html#refund">Refund</a></div>
+  </div>
+  <p class="ft-copy">&copy; Stone Whisper &middot; natural stone, matched to you</p>
+</footer>
+
+<script>
+  /* ── sw-v2 starfield (cool parallax stars + faint galaxy band + meteors) ── */
+  (function(){
+    const cv=document.getElementById('space'); if(!cv) return; const x=cv.getContext('2d');
+    let W,H,DPR,stars=[],meteors=[],run=false,ph=0;
+    const rnd=(a,b)=>a+Math.random()*(b-a);
+    const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+    function size(){DPR=Math.min(2,devicePixelRatio||1);W=cv.width=innerWidth*DPR;H=cv.height=innerHeight*DPR;cv.style.width=innerWidth+'px';cv.style.height=innerHeight+'px';build();}
+    function build(){stars=[];const n=Math.round(innerWidth*innerHeight/2600);for(let i=0;i<n;i++){const d=rnd(.15,1);stars.push({x:rnd(0,W),y:rnd(0,H),r:rnd(.3,1.6)*DPR*d,d,tw:rnd(0,6.28),ts:rnd(.6,1.8)});}}
+    function render(){
+      const sc=(window.scrollY||0)*DPR; x.clearRect(0,0,W,H); ph+=0.015; x.globalCompositeOperation='lighter';
+      x.save(); x.translate(W*0.64,H*0.30); x.rotate(-0.52);
+      const bg=x.createLinearGradient(0,-H*0.55,0,H*0.55);
+      bg.addColorStop(0,'rgba(120,140,214,0)'); bg.addColorStop(.5,'rgba(150,134,206,0.075)'); bg.addColorStop(1,'rgba(120,140,214,0)');
+      x.fillStyle=bg; x.fillRect(-W,-H*0.55,W*2,H*1.1); x.restore();
+      for(const s of stars){ s.tw+=0.02*s.ts; const yy=(((s.y-sc*0.4*s.d)%H)+H)%H, tw=.5+Math.sin(s.tw)*.5;
+        x.fillStyle=`rgba(245,238,224,${((.2+tw*.6)*s.d).toFixed(3)})`; x.beginPath(); x.arc(s.x%W,yy,s.r*(.7+tw*.5),0,6.2832); x.fill(); }
+      if(meteors.length<1 && Math.random()<0.004){ meteors.push({x:rnd(.2,.95)*W,y:rnd(0,.4)*H,vx:rnd(-12,-7)*DPR,vy:rnd(4,7)*DPR,life:1}); }
+      for(const m of meteors){ m.x+=m.vx; m.y+=m.vy; m.life-=.014;
+        const g=x.createLinearGradient(m.x,m.y,m.x-m.vx*5,m.y-m.vy*5); g.addColorStop(0,`rgba(255,250,240,${m.life.toFixed(3)})`); g.addColorStop(1,'rgba(255,250,240,0)');
+        x.strokeStyle=g; x.lineWidth=1.6*DPR; x.lineCap='round'; x.beginPath(); x.moveTo(m.x,m.y); x.lineTo(m.x-m.vx*5,m.y-m.vy*5); x.stroke(); }
+      meteors=meteors.filter(m=>m.life>0&&m.x>-100&&m.y<H+100);
+      x.globalCompositeOperation='source-over';
+    }
+    function loop(){ if(document.hidden){run=false;return;} render(); requestAnimationFrame(loop); }
+    function start(){ if(run)return; run=true; requestAnimationFrame(loop); }
+    size(); addEventListener('resize',()=>{size();render();},{passive:true}); render();
+    if(reduce) addEventListener('scroll',render,{passive:true}); else { start(); document.addEventListener('visibilitychange',()=>{if(!document.hidden)start();}); }
+  })();
+
+  const nav=document.getElementById('nav');
+  addEventListener('scroll',()=>nav.classList.toggle('lit',scrollY>40));
+  const obs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('vis');obs.unobserve(e.target);}}),{threshold:.08});
+  document.querySelectorAll('.rv').forEach(el=>obs.observe(el));
+</script>
+
+<!--
+  ════════════════════════════════════════════════════════════════════════
+  SHOPLINE OS 3.0 MAPPING — Stone Library (encyclopedia hub / SEO page)
+  ════════════════════════════════════════════════════════════════════════
+
+  SECTION FILE (on deploy, split from this preview):
+    sections/sw-stone-library/sw-stone-library.html   (markup + Liquid loop)
+    sections/sw-stone-library/sw-stone-library.css     (the <style> block above → section's own stylesheet, isolated)
+
+  {{#schema}}
+  {
+    "name": "SW Stone Library",
+    "tag": "section",
+    "class": "sw-stone-library",
+    "settings": [
+      { "type": "text", "id": "heading", "label": "Heading", "default": "Every stone has a character you can read." },
+      { "type": "textarea", "id": "intro", "label": "Intro paragraph" },
+      { "type": "url", "id": "studio_url", "label": "Studio / chart-reader URL" }
+    ],
+    "blocks": [
+      {
+        "type": "stone",
+        "name": "Stone entry",
+        "settings": [
+          { "type": "text", "id": "name", "label": "Stone name" },
+          { "type": "select", "id": "element", "label": "Element", "options": [
+            {"value":"wood","label":"Wood"},{"value":"fire","label":"Fire"},
+            {"value":"earth","label":"Earth"},{"value":"metal","label":"Metal"},{"value":"water","label":"Water"} ] },
+          { "type": "text", "id": "mineral", "label": "Mineral family" },
+          { "type": "text", "id": "oneline", "label": "One-line character" },
+          { "type": "color", "id": "swatch_a", "label": "Swatch highlight" },
+          { "type": "color", "id": "swatch_b", "label": "Swatch base" },
+          { "type": "url", "id": "stone_url", "label": "Per-stone page URL" }
+        ]
+      }
+    ],
+    "max_block_count": 60
+  }
+  {{/schema}}
+
+  TEMPLATE ATTACHMENT:
+    Attach this section to  templates/page.stone-library.json  (a standalone "page" template,
+    e.g. a Page resource at /pages/stone-library). The section renders the merchant-managed
+    {% for block in section.blocks %} loop, bucketed into the element groups by block.settings.element.
+    The hero copy + Studio CTA come from section settings.
+
+  IMAGE REFS (on deploy):
+    The preview uses CSS-gradient colour swatches (no broken <img>). If per-stone thumbnails are
+    added later, reference them as:  {{ `images/stone-amethyst.png` | asset_url() }}
+    inside the block loop. Local amethyst-*.png assets in ./assets/ exist for the PDP, not needed here.
+
+  SHOPLINE NATIVE PARTS (must use native components on deploy, NOT this custom markup):
+    - Global header/nav + cart/account/search  → the theme's native header-group (this page's
+      cosmic nav is a preview stand-in; on the live theme the SW nav lives in the shared header section).
+    - Footer  → native footer section / footer-group.
+    - The "Read my chart" / "Open the Studio" CTAs link out to the customizer page; they are not
+      cart/checkout actions, so no native product/cart component is required on THIS page.
+    - Per-stone "Read the stone →" links currently point to "#"; on deploy each maps to its own
+      Page or Product URL (block.settings.stone_url). If a stone links to a buyable product, that
+      destination page uses the native main-product / add-to-cart component — not this index.
+
+  CONTENT NOTE: Element framing is "structured analysis, a method — not a horoscope."
+  No "100%/guaranteed/destiny" claims. Facts used are pre-approved (100% natural stone, free US
+  shipping, 10–15 business days). Mineral families per stone are standard gemmological groupings;
+  if any stone's element assignment or mineral family is revised, update the block, don't invent.
+-->
+</body></html>

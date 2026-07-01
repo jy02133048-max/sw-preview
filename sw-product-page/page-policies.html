@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Policies — Stone Whisper</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="sw-product.css">
+<style>
+  /* ── NAV — matched 1:1 to the homepage (sw-v2) ── */
+  nav#nav{position:fixed;top:0;left:0;right:0;z-index:40;display:flex;align-items:center;justify-content:space-between;
+    padding:22px clamp(20px,5vw,64px);transition:background .5s ease,backdrop-filter .5s ease,padding .5s ease}
+  nav#nav.lit{background:rgba(7,6,13,.34);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);padding-top:15px;padding-bottom:15px;border-bottom:1px solid rgba(244,236,221,.04)}
+  nav#nav .brand{font-family:var(--font-heading);font-size:21px;letter-spacing:.16em;color:var(--color-text-primary);text-transform:uppercase;font-weight:500}
+  nav#nav .brand b{color:var(--color-gold);font-weight:500}
+  nav#nav .navlinks{display:flex;gap:clamp(18px,2.6vw,40px);align-items:center}
+  nav#nav .navlinks a{font-family:var(--font-ui);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--color-text-muted);transition:color .35s}
+  nav#nav .navlinks a:hover{color:var(--color-text-primary)}
+  nav#nav .bead-switch{font-family:var(--font-ui);border:1px solid rgba(244,236,221,.16);background:rgba(244,236,221,.04);color:var(--color-text-body);
+    font-size:11px;letter-spacing:.14em;text-transform:uppercase;padding:9px 14px;border-radius:999px;cursor:pointer;transition:all .35s ease}
+  nav#nav .bead-switch:hover{border-color:rgba(227,188,119,.46);color:var(--color-gold);background:rgba(227,188,119,.08)}
+  nav#nav .navcta{font-family:var(--font-ui);font-size:12px;letter-spacing:.16em;text-transform:uppercase;border:1px solid rgba(227,188,119,.4);color:var(--color-gold);padding:9px 20px;border-radius:30px;transition:all .4s ease}
+  nav#nav .navcta:hover{background:var(--color-gold);color:#0a0810;border-color:var(--color-gold)}
+  @media(max-width:760px){ nav#nav .navlinks a:not(.navcta),nav#nav .bead-switch{display:none} }
+  /* sw-v2 starfield — fixed behind content, above the gradient backdrop */
+  #space{position:fixed;inset:0;z-index:-1;pointer-events:none}
+  footer.ft{border-top:1px solid var(--color-border);margin-top:clamp(80px,10vh,140px);padding:48px clamp(20px,4vw,48px);text-align:center;color:var(--color-text-muted);font-size:13px}
+  footer.ft .b{font-family:var(--font-heading);font-size:18px;letter-spacing:.2em;text-transform:uppercase;color:var(--color-text-primary)}
+
+  /* ── POLICIES PAGE (section-isolated) ── */
+  .pol-head{max-width:var(--content-narrow);margin:0 auto;padding:clamp(120px,16vh,180px) clamp(20px,4vw,48px) 0;text-align:center}
+  .pol-head .eyebrow{font-family:var(--font-ui);font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--color-gold);margin-bottom:18px}
+  .pol-head h1{font-family:var(--font-heading);font-weight:500;font-size:clamp(38px,5vw,60px);line-height:1.04;color:var(--color-text-primary)}
+  .pol-head .lede{font-family:var(--font-heading);font-style:italic;font-size:clamp(17px,1.7vw,21px);color:var(--color-text-body);margin:18px auto 0;max-width:54ch}
+
+  /* draft banner */
+  .pol-banner{max-width:var(--content-narrow);margin:34px auto 0;padding:0 clamp(20px,4vw,48px)}
+  .pol-banner__in{display:flex;gap:14px;align-items:flex-start;border:1px solid rgba(227,188,119,.32);background:linear-gradient(180deg,rgba(227,188,119,.07),rgba(227,188,119,.02));
+    border-radius:6px;padding:16px 20px}
+  .pol-banner__ic{width:20px;height:20px;flex:0 0 auto;stroke:var(--color-gold);fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;margin-top:2px}
+  .pol-banner__tx{font-family:var(--font-ui);font-size:13px;line-height:1.6;color:var(--color-text-body)}
+  .pol-banner__tx b{color:var(--color-gold);font-weight:600;letter-spacing:.02em}
+
+  /* in-page jump nav */
+  .pol-jump{max-width:var(--content-narrow);margin:28px auto 0;padding:0 clamp(20px,4vw,48px);display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+  .pol-jump a{font-family:var(--font-ui);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-text-body);
+    border:1px solid var(--color-border);border-radius:999px;padding:9px 18px;transition:.3s}
+  .pol-jump a:hover{border-color:var(--color-gold);color:var(--color-gold)}
+
+  /* long-form body */
+  .pol-body{max-width:var(--content-narrow);margin:clamp(56px,8vh,96px) auto 0;padding:0 clamp(20px,4vw,48px)}
+  .pol-doc{padding-top:clamp(40px,6vh,72px)}
+  .pol-doc:first-child{padding-top:0}
+  .pol-doc + .pol-doc{border-top:1px solid var(--color-border);margin-top:clamp(48px,7vh,80px)}
+  .pol-doc__label{font-family:var(--font-ui);font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--color-gold);margin-bottom:12px}
+  .pol-doc__h{font-family:var(--font-heading);font-weight:500;font-size:clamp(28px,3.6vw,40px);line-height:1.08;color:var(--color-text-primary);scroll-margin-top:96px}
+  .pol-doc__meta{font-family:var(--font-ui);font-size:12px;letter-spacing:.03em;color:var(--color-text-muted);margin-top:10px}
+  .pol-doc h3{font-family:var(--font-heading);font-weight:500;font-size:clamp(19px,2vw,24px);color:var(--color-text-primary);margin:34px 0 12px}
+  .pol-doc p{font-family:var(--font-body);font-size:15.5px;line-height:1.8;color:var(--color-text-body);margin:0 0 16px}
+  .pol-doc ul{margin:0 0 18px;padding:0;list-style:none}
+  .pol-doc ul li{position:relative;font-family:var(--font-body);font-size:15px;line-height:1.75;color:var(--color-text-body);padding:7px 0 7px 26px}
+  .pol-doc ul li::before{content:'';position:absolute;left:4px;top:16px;width:5px;height:5px;border-radius:50%;background:var(--color-gold-muted)}
+  .pol-doc a{color:var(--color-gold);border-bottom:1px solid var(--color-gold-muted);transition:.3s}
+  .pol-doc a:hover{color:var(--color-gold-hover);border-color:var(--color-gold)}
+  .pol-doc .ph{color:var(--color-gold);font-style:italic;border-bottom:1px dotted var(--color-gold-muted)}
+  .pol-doc .backtop{display:inline-flex;align-items:center;gap:7px;margin-top:8px;font-family:var(--font-ui);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-text-muted);border:none}
+  .pol-doc .backtop:hover{color:var(--color-gold)}
+  .pol-note{font-family:var(--font-ui);font-size:12.5px;line-height:1.7;color:var(--color-text-muted);background:var(--color-surface);border:1px solid var(--color-border);border-radius:5px;padding:16px 20px;margin:18px 0}
+</style>
+</head>
+<body>
+<canvas id="space"></canvas>
+
+<!-- NAV — identical to the homepage (sw-v2) -->
+<nav id="nav">
+  <a href="../sw-website-redesign/sw-v2.html#top" class="brand">Stone <b>Whisper</b></a>
+  <div class="navlinks">
+    <a href="../sw-website-redesign/sw-v2.html">Home</a>
+    <a href="page-shop.html">Shop</a>
+    <a href="page-how-it-works.html">How it works</a>
+    <a href="page-what-is-bazi.html">The method</a>
+    <a href="page-stone-library.html">Stones</a>
+    <a href="page-about.html">About</a>
+    <a href="../sw-crystal-customizer/index.html" class="navcta">Open Studio</a>
+  </div>
+</nav>
+
+<!-- HEADER -->
+<header class="pol-head" id="top">
+  <p class="eyebrow">Stone Whisper · Legal</p>
+  <h1>The fine print, written plainly.</h1>
+  <p class="lede">Everything you&rsquo;d normally have to hunt for — data, terms, returns — in one place, in plain language instead of fine print.</p>
+</header>
+
+<!-- DRAFT BANNER -->
+<div class="pol-banner">
+  <div class="pol-banner__in">
+    <svg class="pol-banner__ic" viewBox="0 0 24 24"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.7 3.86a2 2 0 0 0-3.4 0z"/></svg>
+    <p class="pol-banner__tx"><b>Draft — review with a professional before publishing; not legal advice.</b> This page is standard US-ecommerce boilerplate prepared for a fictional storefront preview. Have qualified legal counsel review and adapt every section to your jurisdiction, products, and actual data practices before it goes live.</p>
+  </div>
+</div>
+
+<!-- JUMP NAV -->
+<nav class="pol-jump" aria-label="Jump to policy">
+  <a href="#privacy">Privacy Policy</a>
+  <a href="#terms">Terms of Service</a>
+  <a href="#refund">Refund Policy</a>
+</nav>
+
+<!-- LONG-FORM BODY -->
+<main class="pol-body">
+
+  <!-- ════════ PRIVACY POLICY ════════ -->
+  <section class="pol-doc">
+    <p class="pol-doc__label">Section 1</p>
+    <h2 class="pol-doc__h" id="privacy">Privacy Policy</h2>
+    <p class="pol-doc__meta">Last updated <span class="ph">[TODO: confirm effective date]</span> · Operated by <span class="ph">[Company legal name]</span></p>
+
+    <p>This Privacy Policy describes how Stone Whisper, operated by <span class="ph">[Company legal name]</span> (&ldquo;we,&rdquo; &ldquo;us,&rdquo; &ldquo;our&rdquo;), collects, uses, and shares information about you when you visit or make a purchase from our store. By using the site, you agree to the collection and use of information in accordance with this policy.</p>
+
+    <h3>Information we collect</h3>
+    <p>We collect information that you provide directly and information that is gathered automatically as you browse:</p>
+    <ul>
+      <li><b>Information you give us</b> — your name, shipping and billing address, email address, phone number, wrist size, and any birth-date or birth-time details you choose to enter into our element-matching tool or provide with a custom order.</li>
+      <li><b>Order and payment information</b> — items purchased and order totals. Card and payment details are entered with and processed by our payment providers; we do not store full card numbers on our own servers.</li>
+      <li><b>Information collected automatically</b> — your device and browser type, IP address, pages viewed, referring URLs, and similar usage data, collected through cookies and similar technologies (see &ldquo;Cookies&rdquo; below).</li>
+    </ul>
+
+    <h3>How we use your information</h3>
+    <ul>
+      <li>To process, fulfil, and ship your orders, and to size and assemble custom bracelets.</li>
+      <li>To run the stone-matching tool — birth details you enter are used to read your chart and suggest stones; this is a structured analysis method, not a prediction or guarantee.</li>
+      <li>To communicate with you about orders, respond to enquiries, and — where you have opted in — send marketing emails you can unsubscribe from at any time.</li>
+      <li>To detect and prevent fraud, secure the site, and meet legal and tax obligations.</li>
+      <li>To understand how the store is used so we can improve it.</li>
+    </ul>
+
+    <h3>Cookies and tracking</h3>
+    <p>We use cookies and similar technologies to keep your cart working, remember preferences, measure traffic, and — where permitted — support advertising measurement. You can control cookies through your browser settings; disabling some cookies may affect how parts of the store work. Where required by law, we will request consent before setting non-essential cookies.</p>
+
+    <h3>Payment processing</h3>
+    <p>Payments are handled by third-party payment processors integrated with our store platform. When you pay, your payment information is transmitted directly to and processed by those providers under their own terms and privacy policies. We receive confirmation of payment and limited details needed to fulfil your order.</p>
+
+    <h3>How we share information</h3>
+    <p>We do not sell your personal information. We share it only with service providers who help us operate the store — for example our ecommerce platform, payment processors, and shipping carriers — and only as needed to perform those services, or where required by law or to protect our rights.</p>
+
+    <h3>Data retention</h3>
+    <p>We keep your information for as long as needed to provide the store, fulfil orders, and meet legal, accounting, and reporting requirements, after which it is deleted or anonymised.</p>
+
+    <h3>Your rights</h3>
+    <p>Depending on where you live, you may have the right to access, correct, delete, or port your personal information, to object to or restrict certain processing, and to opt out of marketing. To make a request, contact us at <span class="ph">[contact email]</span>. We may need to verify your identity before responding.</p>
+
+    <h3>Children&rsquo;s privacy</h3>
+    <p>The store is intended for adults. We do not knowingly collect personal information from children under 13 (or the minimum age in your jurisdiction). If you believe a child has provided us information, contact us and we will delete it.</p>
+
+    <h3>Changes &amp; contact</h3>
+    <p>We may update this policy from time to time; the &ldquo;last updated&rdquo; date above reflects the current version. Questions about this policy or your data can be sent to <span class="ph">[contact email]</span>, or by mail to <span class="ph">[Company legal name], [address]</span>.</p>
+    <button class="backtop" onclick="document.getElementById('top').scrollIntoView({behavior:'smooth'})" type="button">↑ Back to top</button>
+  </section>
+
+  <!-- ════════ TERMS OF SERVICE ════════ -->
+  <section class="pol-doc">
+    <p class="pol-doc__label">Section 2</p>
+    <h2 class="pol-doc__h" id="terms">Terms of Service</h2>
+    <p class="pol-doc__meta">Last updated <span class="ph">[TODO: confirm effective date]</span></p>
+
+    <p>These Terms of Service (&ldquo;Terms&rdquo;) govern your use of the Stone Whisper store and your purchases from it. By accessing the site or placing an order, you agree to these Terms. If you do not agree, please do not use the store.</p>
+
+    <h3>Eligibility</h3>
+    <p>You must be at least 18 years old, or the age of majority in your jurisdiction, to place an order. By ordering, you confirm that the information you provide is accurate and that you are authorised to use the payment method.</p>
+
+    <h3>Products and descriptions</h3>
+    <ul>
+      <li>Our bracelets use 100% natural stone — no dye and no glass. Because the stone is natural, colour, banding, and inclusions vary from bead to bead and from the photographs shown.</li>
+      <li>The stone-matching is offered as a structured analysis method to help you choose a stone. It is for personal interest only and is not medical, psychological, financial, or professional advice, and makes no guarantee of any outcome.</li>
+      <li>We try to display colours and details accurately, but your screen may render them differently.</li>
+    </ul>
+
+    <h3>Orders, pricing, and payment</h3>
+    <p>All prices are shown in <span class="ph">US dollars (USD)</span>. We may correct pricing errors, limit quantities, or refuse or cancel an order — including after an order is placed — and will refund any payment for an order we cancel. Title and risk of loss pass to you when the carrier hands the package to you.</p>
+
+    <h3>Shipping</h3>
+    <p>We offer free US shipping, with delivery typically in 10&ndash;15 business days after an order is assembled. Delivery estimates are not guaranteed and may be affected by carriers, customs, or events outside our control. Shipping outside the US, where offered, may be subject to duties and taxes that are your responsibility.</p>
+
+    <h3>Returns and refunds</h3>
+    <p>Returns and refunds are governed by our <a href="#refund">Refund Policy</a> below, which forms part of these Terms.</p>
+
+    <h3>Intellectual property</h3>
+    <p>All content on this store — text, photography, graphics, logos, the Stone Whisper name, and the design and output of our matching tools — is owned by <span class="ph">[Company legal name]</span> or its licensors and is protected by intellectual-property laws. You may not copy, reproduce, or use it for commercial purposes without our written permission.</p>
+
+    <h3>Acceptable use</h3>
+    <p>You agree not to use the store unlawfully, to interfere with its operation or security, to scrape or harvest data, or to infringe the rights of others.</p>
+
+    <h3>Disclaimers and limitation of liability</h3>
+    <p>The store and its content are provided &ldquo;as is&rdquo; without warranties of any kind, to the fullest extent permitted by law. To the extent permitted by law, <span class="ph">[Company legal name]</span> is not liable for indirect, incidental, or consequential damages arising from your use of the store, and our total liability for any claim relating to a product is limited to the amount you paid for that product.</p>
+
+    <h3>Governing law</h3>
+    <p>These Terms are governed by the laws of <span class="ph">[TODO: confirm governing state]</span>, United States, without regard to its conflict-of-laws rules. Any dispute will be resolved in the state or federal courts located in <span class="ph">[TODO: confirm venue]</span>, and you consent to that jurisdiction.</p>
+
+    <h3>Changes &amp; contact</h3>
+    <p>We may update these Terms from time to time; continued use of the store after changes means you accept the updated Terms. Questions can be sent to <span class="ph">[contact email]</span>.</p>
+    <button class="backtop" onclick="document.getElementById('top').scrollIntoView({behavior:'smooth'})" type="button">↑ Back to top</button>
+  </section>
+
+  <!-- ════════ REFUND POLICY ════════ -->
+  <section class="pol-doc">
+    <p class="pol-doc__label">Section 3</p>
+    <h2 class="pol-doc__h" id="refund">Refund Policy</h2>
+    <p class="pol-doc__meta">Last updated <span class="ph">[TODO: confirm effective date]</span></p>
+
+    <p>A bracelet has to feel right on your wrist. If yours doesn&rsquo;t, here&rsquo;s exactly when you can return it and how the refund works. For step-by-step return instructions, see our <span class="ph">[Returns page]</span>.</p>
+
+    <h3>Return window</h3>
+    <p>You may request a return within <span class="ph">30 days</span> of delivery, provided the bracelet is unworn, in its original condition, and returned with its pouch and care card. Once your return is received and inspected, an approved refund is issued to your original payment method; please allow time for your bank or card issuer to post it.</p>
+
+    <h3>How to start a return</h3>
+    <ul>
+      <li>Contact us at <span class="ph">[contact email]</span> with your order number to request a return.</li>
+      <li>We&rsquo;ll confirm whether the item qualifies and send return instructions; items sent back without prior approval may not be accepted.</li>
+      <li>Full return steps and any return-shipping details are on the <span class="ph">[Returns page]</span>.</li>
+    </ul>
+
+    <h3>Custom and made-to-order pieces</h3>
+    <p>Bracelets assembled or sized to your wrist, and strands built around your chart in the Studio, are made to order. Because they are personalised, they may not be eligible for return unless they arrive damaged or incorrect. <span class="ph">[TODO: confirm custom-order return rule]</span></p>
+
+    <h3>Damaged, defective, or wrong items</h3>
+    <p>If your order arrives damaged, defective, or incorrect, contact us within <span class="ph">7 days</span> of delivery with photos. We will arrange a replacement or full refund, including any return shipping, at no cost to you.</p>
+
+    <h3>Refund timing and method</h3>
+    <p>Approved refunds are returned to your original payment method. Original shipping charges, where any applied, may be non-refundable except for damaged, defective, or incorrect items. <span class="ph">[TODO: confirm restocking / shipping-refund rule]</span></p>
+
+    <div class="pol-note">This Refund Policy is part of, and should be read alongside, our <a href="#terms">Terms of Service</a>. Where this policy refers to the Returns page, link it to your live returns instructions before publishing.</div>
+    <button class="backtop" onclick="document.getElementById('top').scrollIntoView({behavior:'smooth'})" type="button">↑ Back to top</button>
+  </section>
+
+</main>
+
+<footer class="ft">
+  <div class="ft-cols">
+    <div class="ft-brand"><div class="b">Stone Whisper</div><p>Natural stone, matched to you.</p></div>
+    <div class="ft-col"><h4>Shop</h4><a href="page-shop.html">Shop</a><a href="../sw-crystal-customizer/index.html">Open Studio</a><a href="page-stone-library.html">Stones</a></div>
+    <div class="ft-col"><h4>Learn</h4><a href="page-how-it-works.html">How it works</a><a href="page-what-is-bazi.html">The method</a><a href="page-blog.html">Journal</a></div>
+    <div class="ft-col"><h4>Support</h4><a href="page-faq.html">FAQ</a><a href="page-care.html">Care</a><a href="page-shipping.html">Shipping</a><a href="page-returns.html">Returns</a><a href="page-contact.html">Contact</a></div>
+    <div class="ft-col"><h4>Company</h4><a href="page-about.html">About</a><a href="page-policies.html#privacy">Privacy</a><a href="page-policies.html#terms">Terms</a><a href="page-policies.html#refund">Refund</a></div>
+  </div>
+  <p class="ft-copy">&copy; Stone Whisper &middot; natural stone, matched to you</p>
+</footer>
+
+<script>
+  /* ── sw-v2 starfield (cool parallax stars + faint galaxy band + meteors) ── */
+  (function(){
+    const cv=document.getElementById('space'); if(!cv) return; const x=cv.getContext('2d');
+    let W,H,DPR,stars=[],meteors=[],run=false,ph=0;
+    const rnd=(a,b)=>a+Math.random()*(b-a);
+    const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+    function size(){DPR=Math.min(2,devicePixelRatio||1);W=cv.width=innerWidth*DPR;H=cv.height=innerHeight*DPR;cv.style.width=innerWidth+'px';cv.style.height=innerHeight+'px';build();}
+    function build(){stars=[];const n=Math.round(innerWidth*innerHeight/2600);for(let i=0;i<n;i++){const d=rnd(.15,1);stars.push({x:rnd(0,W),y:rnd(0,H),r:rnd(.3,1.6)*DPR*d,d,tw:rnd(0,6.28),ts:rnd(.6,1.8)});}}
+    function render(){
+      const sc=(window.scrollY||0)*DPR; x.clearRect(0,0,W,H); ph+=0.015; x.globalCompositeOperation='lighter';
+      x.save(); x.translate(W*0.64,H*0.30); x.rotate(-0.52);
+      const bg=x.createLinearGradient(0,-H*0.55,0,H*0.55);
+      bg.addColorStop(0,'rgba(120,140,214,0)'); bg.addColorStop(.5,'rgba(150,134,206,0.075)'); bg.addColorStop(1,'rgba(120,140,214,0)');
+      x.fillStyle=bg; x.fillRect(-W,-H*0.55,W*2,H*1.1); x.restore();
+      for(const s of stars){ s.tw+=0.02*s.ts; const yy=(((s.y-sc*0.4*s.d)%H)+H)%H, tw=.5+Math.sin(s.tw)*.5;
+        x.fillStyle=`rgba(245,238,224,${((.2+tw*.6)*s.d).toFixed(3)})`; x.beginPath(); x.arc(s.x%W,yy,s.r*(.7+tw*.5),0,6.2832); x.fill(); }
+      if(meteors.length<1 && Math.random()<0.004){ meteors.push({x:rnd(.2,.95)*W,y:rnd(0,.4)*H,vx:rnd(-12,-7)*DPR,vy:rnd(4,7)*DPR,life:1}); }
+      for(const m of meteors){ m.x+=m.vx; m.y+=m.vy; m.life-=.014;
+        const g=x.createLinearGradient(m.x,m.y,m.x-m.vx*5,m.y-m.vy*5); g.addColorStop(0,`rgba(255,250,240,${m.life.toFixed(3)})`); g.addColorStop(1,'rgba(255,250,240,0)');
+        x.strokeStyle=g; x.lineWidth=1.6*DPR; x.lineCap='round'; x.beginPath(); x.moveTo(m.x,m.y); x.lineTo(m.x-m.vx*5,m.y-m.vy*5); x.stroke(); }
+      meteors=meteors.filter(m=>m.life>0&&m.x>-100&&m.y<H+100);
+      x.globalCompositeOperation='source-over';
+    }
+    function loop(){ if(document.hidden){run=false;return;} render(); requestAnimationFrame(loop); }
+    function start(){ if(run)return; run=true; requestAnimationFrame(loop); }
+    size(); addEventListener('resize',()=>{size();render();},{passive:true}); render();
+    if(reduce) addEventListener('scroll',render,{passive:true}); else { start(); document.addEventListener('visibilitychange',()=>{if(!document.hidden)start();}); }
+  })();
+
+  const nav=document.getElementById('nav');
+  addEventListener('scroll',()=>nav.classList.toggle('lit',scrollY>40));
+</script>
+
+<!--
+═══════════════════════════════════════════════════════════════════════════════
+SHOPLINE MAPPING (OS 3.0) — deploy notes
+═══════════════════════════════════════════════════════════════════════════════
+
+SECTION
+  name   : sw-policies
+  folder : sections/sw-policies/sw-policies.html   (section markup)
+           sections/sw-policies/sw-policies.css     ← move the page-specific <style>
+                                                      block from this file's <head>
+                                                      here (section CSS isolation;
+                                                      do NOT rely on cross-section styles)
+  schema :
+    {{#schema}}
+    {
+      "name": "SW Policies",
+      "tag": "section",
+      "class": "sw-policies",
+      "settings": [
+        { "type": "text",     "id": "company_legal_name", "label": "Company legal name" },
+        { "type": "text",     "id": "company_address",    "label": "Mailing address" },
+        { "type": "text",     "id": "contact_email",      "label": "Contact email" },
+        { "type": "text",     "id": "effective_date",     "label": "Effective date" },
+        { "type": "text",     "id": "governing_state",    "label": "Governing state" },
+        { "type": "text",     "id": "return_window",      "label": "Return window (e.g. 30 days)" },
+        { "type": "url",      "id": "returns_page",       "label": "Returns page link" },
+        { "type": "richtext", "id": "privacy_body",       "label": "Privacy Policy body" },
+        { "type": "richtext", "id": "terms_body",         "label": "Terms of Service body" },
+        { "type": "richtext", "id": "refund_body",        "label": "Refund Policy body" }
+      ]
+    }
+    {{/schema}}
+
+TEMPLATE ATTACHMENT
+  Attach this section to the page.policy templates so each legal page can reuse it:
+    - templates/page.policy.json          (generic / combined policies page)
+    - templates/page.privacy-policy.json  (Privacy only — anchor #privacy)
+    - templates/page.terms.json           (Terms only   — anchor #terms)
+    - templates/page.refund.json          (Refund only  — anchor #refund)
+  For a single combined "Policies" page use templates/page.policies.json → page.policy.
+  Replace the hardcoded [Company legal name] / [address] / [contact email] / [TODO]
+  placeholders with the schema settings above ({{ section.settings.company_legal_name }} etc.).
+
+NATIVE vs CUSTOM (must use Shopline native components on deploy)
+  NATIVE (do NOT hand-roll):
+    - Header / global nav, cart, account, search — keep the theme's native header-group;
+      the cosmic nav#nav here is the preview stand-in. (sw-product.css already hides
+      .header-group via body:has(.nav__brand).)
+    - Footer — use the theme's native footer / footer-group; footer.ft here is preview chrome.
+    - Cookie-consent / GDPR banner — use Shopline's native consent component, not custom JS,
+      so the Privacy "Cookies" section is enforced by the platform.
+    - Any "contact us" action referenced in these policies → native contact-form section
+      (sections/main-page contact block / contact-form), not a custom form.
+  CUSTOM (this section owns):
+    - The long-form policy copy, draft banner, jump-nav anchors, and back-to-top.
+    - The cosmic backdrop (body::before in sw-product.css) + #space starfield canvas/script.
+
+ASSETS
+  This page uses no images. If a crest/seal is added later, reference it with
+  backtick asset_url:  {{ `images/sw-seal.png` | asset_url() }}
+
+COMPLIANCE
+  Keep the visible "Draft — review with a professional before publishing; not legal
+  advice" banner until counsel has reviewed and localised every section.
+═══════════════════════════════════════════════════════════════════════════════
+-->
+</body></html>

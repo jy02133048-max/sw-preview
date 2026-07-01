@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Amethyst Bracelet · 12mm — Stone Whisper (preview)</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="sw-product.css">
+<style>
+  /* ── NAV — matched 1:1 to the homepage (sw-v2) ── */
+  nav#nav{position:fixed;top:0;left:0;right:0;z-index:40;display:flex;align-items:center;justify-content:space-between;
+    padding:22px clamp(20px,5vw,64px);transition:background .5s ease,backdrop-filter .5s ease,padding .5s ease}
+  nav#nav.lit{background:rgba(7,6,13,.34);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);padding-top:15px;padding-bottom:15px;border-bottom:1px solid rgba(244,236,221,.04)}
+  nav#nav .brand{font-family:var(--font-heading);font-size:21px;letter-spacing:.16em;color:var(--color-text-primary);text-transform:uppercase;font-weight:500}
+  nav#nav .brand b{color:var(--color-gold);font-weight:500}
+  nav#nav .navlinks{display:flex;gap:clamp(18px,2.6vw,40px);align-items:center}
+  nav#nav .navlinks a{font-family:var(--font-ui);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--color-text-muted);transition:color .35s}
+  nav#nav .navlinks a:hover{color:var(--color-text-primary)}
+  nav#nav .bead-switch{font-family:var(--font-ui);border:1px solid rgba(244,236,221,.16);background:rgba(244,236,221,.04);color:var(--color-text-body);
+    font-size:11px;letter-spacing:.14em;text-transform:uppercase;padding:9px 14px;border-radius:999px;cursor:pointer;transition:all .35s ease}
+  nav#nav .bead-switch:hover{border-color:rgba(227,188,119,.46);color:var(--color-gold);background:rgba(227,188,119,.08)}
+  nav#nav .navcta{font-family:var(--font-ui);font-size:12px;letter-spacing:.16em;text-transform:uppercase;border:1px solid rgba(227,188,119,.4);color:var(--color-gold);padding:9px 20px;border-radius:30px;transition:all .4s ease}
+  nav#nav .navcta:hover{background:var(--color-gold);color:#0a0810;border-color:var(--color-gold)}
+  @media(max-width:760px){ nav#nav .navlinks a:not(.navcta),nav#nav .bead-switch{display:none} }
+  /* ── PREVIEW-ONLY: a representative BUY AREA standing in for Shopline's native main-product
+     (on the live store this area is the native section, styled via the template's custom_css;
+     structure/checkout stay native+compliant — only the look matches sw-v2). ── */
+  .pdp-buy{max-width:var(--content-width);margin:0 auto;padding:clamp(96px,12vh,140px) clamp(20px,4vw,48px) clamp(40px,6vh,72px);
+    display:grid;grid-template-columns:1fr 1fr;gap:clamp(28px,4vw,64px);align-items:start}
+  .pdp-gallery .main{aspect-ratio:1;border-radius:4px;overflow:hidden;border:1px solid var(--color-border);background:var(--color-surface)}
+  .pdp-gallery .main img{width:100%;height:100%;object-fit:cover}
+  .pdp-gallery .thumbs{display:flex;gap:10px;margin-top:12px}
+  .pdp-gallery .thumbs img{width:72px;height:72px;object-fit:cover;border-radius:3px;border:1px solid var(--color-border);cursor:pointer;opacity:.7;transition:.3s}
+  .pdp-gallery .thumbs img:hover,.pdp-gallery .thumbs img.on{opacity:1;border-color:var(--color-gold)}
+  .pdp-info{position:sticky;top:96px}
+  .pdp-info .eyebrow{font-family:var(--font-ui);font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--color-gold);margin-bottom:16px}
+  .pdp-info h1{font-family:var(--font-heading);font-weight:500;font-size:clamp(34px,4vw,52px);line-height:1.05;color:var(--color-text-primary)}
+  .pdp-info .summary{font-family:var(--font-heading);font-style:italic;font-size:clamp(17px,1.6vw,21px);color:var(--color-text-body);margin-top:14px}
+  .pdp-info .price{font-family:var(--font-heading);font-size:30px;color:var(--color-text-primary);margin:24px 0 4px}
+  .pdp-info .ship{font-size:13px;color:var(--color-text-muted)}
+  .pdp-info .desc{font-size:15px;line-height:1.7;color:var(--color-text-body);margin:22px 0;max-width:42ch}
+  .pdp-info .opt{font-family:var(--font-ui);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--color-text-muted);margin:18px 0 10px}
+  .pdp-info .sizes{display:flex;gap:10px;flex-wrap:wrap}
+  .pdp-info .sizes button{font-family:var(--font-ui);font-size:13px;color:var(--color-text-body);background:transparent;border:1px solid var(--color-border);border-radius:3px;padding:11px 18px;cursor:pointer;transition:.25s}
+  .pdp-info .sizes button.on,.pdp-info .sizes button:hover{border-color:var(--color-gold);color:var(--color-text-primary)}
+  .pdp-info .add{display:block;width:100%;margin-top:24px;font-family:var(--font-ui);font-weight:500;font-size:13px;letter-spacing:.16em;text-transform:uppercase;
+    color:#0a0810;background:linear-gradient(120deg,var(--color-gold),#f0d3a0);border:0;border-radius:3px;padding:18px;cursor:pointer;transition:.3s;box-shadow:0 10px 40px var(--color-gold-glow)}
+  .pdp-info .add:hover{box-shadow:0 16px 54px rgba(227,188,119,.32);transform:translateY(-2px)}
+  /* BC-style buy-box elements */
+  .bc-crumb{font-family:var(--font-ui);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--color-text-muted);margin-bottom:18px;display:flex;gap:8px;align-items:center}
+  .bc-crumb a{color:var(--color-text-muted);transition:.3s}.bc-crumb a:hover{color:var(--color-text-primary)}
+  .bc-crumb .cur{color:var(--color-text-body)}.bc-crumb span{opacity:.45}
+  .price-row{display:flex;align-items:center;gap:16px;margin:22px 0 2px}
+  .price-row .price{margin:0}
+  .instock{font-family:var(--font-ui);font-size:12px;letter-spacing:.03em;color:#8fc6a6;display:inline-flex;align-items:center;gap:7px}
+  .instock i{width:7px;height:7px;border-radius:50%;background:#7fc49a;box-shadow:0 0 8px #7fc49a}
+  .sell-info{list-style:none;margin:20px 0 4px;display:flex;flex-direction:column;gap:11px}
+  .sell-info li{display:flex;align-items:center;gap:11px;font-family:var(--font-ui);font-size:13.5px;color:var(--color-text-body)}
+  .sell-info .si{width:17px;height:17px;flex:0 0 auto;stroke:var(--color-gold);fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;opacity:.92}
+  .qty-row{display:flex;align-items:center;gap:16px;margin:18px 0 0}
+  .qty{display:inline-flex;align-items:center;border:1px solid var(--color-border);border-radius:3px}
+  .qty button{width:38px;height:40px;background:transparent;border:0;color:var(--color-text-body);font-size:16px;cursor:pointer;transition:.2s}
+  .qty button:hover{color:var(--color-gold)}
+  .qty span{min-width:34px;text-align:center;font-family:var(--font-ui);font-size:14px;color:var(--color-text-primary)}
+  @media(max-width:760px){ .pdp-buy{grid-template-columns:1fr;gap:24px} .pdp-info{position:static} }
+  footer.ft{border-top:1px solid var(--color-border);margin-top:clamp(80px,10vh,140px);padding:48px clamp(20px,4vw,48px);text-align:center;color:var(--color-text-muted);font-size:13px}
+  footer.ft .b{font-family:var(--font-heading);font-size:18px;letter-spacing:.2em;text-transform:uppercase;color:var(--color-text-primary)}
+  /* sw-v2 starfield — fixed behind content, above the gradient backdrop */
+  #space{position:fixed;inset:0;z-index:-1;pointer-events:none}
+  /* THE STONE — attribute tables (two groups) */
+  .spec-grid{display:grid;grid-template-columns:1fr 1fr;gap:clamp(32px,5vw,72px);max-width:1040px;margin:46px auto 0}
+  .spec-cap{font-family:var(--font-ui);font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--color-gold);margin-bottom:8px}
+  .spec{width:100%;border-collapse:collapse;font-family:var(--font-ui)}
+  .spec tr{border-top:1px solid var(--color-border)}
+  .spec tr:last-child{border-bottom:1px solid var(--color-border)}
+  .spec th{text-align:left;font-weight:400;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-text-muted);padding:13px 18px 13px 2px;white-space:nowrap;width:40%;vertical-align:middle}
+  .spec td{font-size:14px;color:var(--color-text-primary);padding:13px 2px;vertical-align:middle}
+  @media(max-width:760px){.spec-grid{grid-template-columns:1fr;gap:36px}}
+  @media(max-width:560px){.spec th{width:42%;font-size:11px;padding-right:12px}.spec td{font-size:13px}}
+  /* A — "listen to me" button */
+  .listen-btn{margin-top:26px;display:inline-flex;align-items:center;gap:11px;font-family:var(--font-ui);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--color-text-primary);background:transparent;border:1px solid var(--color-border);border-radius:999px;padding:11px 22px;cursor:pointer;transition:.3s}
+  .listen-btn:hover{border-color:var(--color-gold);color:var(--color-gold)}
+  .listen-btn .lw{display:inline-flex;align-items:flex-end;gap:2px;height:13px}
+  .listen-btn .lw span{width:2px;height:4px;background:var(--color-gold);border-radius:2px}
+  .listen-btn.playing .lw span{animation:eq .7s ease-in-out infinite}
+  .listen-btn.playing .lw span:nth-child(2){animation-delay:.15s}.listen-btn.playing .lw span:nth-child(3){animation-delay:.3s}.listen-btn.playing .lw span:nth-child(4){animation-delay:.45s}
+  @keyframes eq{0%,100%{height:4px}50%{height:13px}}
+  /* B — am I your stone? */
+  .match{padding:clamp(70px,9vh,120px) clamp(20px,4vw,48px);position:relative;z-index:1}
+  .match-card{max-width:660px;margin:0 auto;text-align:center;border:1px solid var(--color-border);border-radius:6px;padding:clamp(36px,5vw,64px);background:linear-gradient(180deg,rgba(183,160,228,.06),rgba(255,255,255,.012))}
+  .match-h{font-family:var(--font-heading);font-weight:500;font-size:clamp(26px,3.4vw,42px);line-height:1.1;color:var(--color-text-primary)}
+  .match-h em{font-style:italic;color:var(--color-amethyst)}
+  .match-p{font-size:15px;line-height:1.7;color:var(--color-text-body);max-width:48ch;margin:18px auto 0}
+  .match-form{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:30px 0 0}
+  .match-form input{font-family:var(--font-ui);font-size:14px;color:var(--color-text-primary);background:var(--color-surface);border:1px solid var(--color-border);border-radius:3px;padding:13px 16px;color-scheme:dark}
+  .match-form button{font-family:var(--font-ui);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#0a0810;background:linear-gradient(120deg,var(--color-gold),#f0d3a0);border:0;border-radius:3px;padding:13px 26px;cursor:pointer;font-weight:500;transition:.3s}
+  .match-form button:hover{transform:translateY(-2px)}
+  .match-result{margin:26px auto 0;max-width:50ch;font-size:15.5px;line-height:1.65;color:var(--color-text-body);opacity:0;transition:opacity .5s}
+  .match-result.show{opacity:1}
+  .match-result .verdict{font-family:var(--font-heading);font-size:23px;font-style:italic;display:block;margin-bottom:8px}
+  .match-result.fit .verdict{color:#9fd4b0}.match-result.nofit .verdict{color:var(--color-gold)}
+  .match-result a{color:var(--color-gold);border-bottom:1px solid var(--color-gold-muted);white-space:nowrap}
+  .match-note{font-size:11px;letter-spacing:.03em;color:var(--color-text-muted);margin-top:20px}
+</style>
+</head>
+<body>
+<canvas id="space"></canvas>
+
+<!-- NAV — identical to the homepage (sw-v2) -->
+<nav id="nav">
+  <a href="../sw-website-redesign/sw-v2.html#top" class="brand">Stone <b>Whisper</b></a>
+  <div class="navlinks">
+    <a href="../sw-website-redesign/sw-v2.html">Home</a>
+    <a href="page-shop.html">Shop</a>
+    <a href="page-how-it-works.html">How it works</a>
+    <a href="page-what-is-bazi.html">The method</a>
+    <a href="page-stone-library.html">Stones</a>
+    <a href="page-about.html">About</a>
+    <a href="../sw-crystal-customizer/index.html" class="navcta">Open Studio</a>
+  </div>
+</nav>
+
+<!-- BUY AREA (preview stand-in for native main-product) -->
+<section class="pdp-buy" id="buy">
+  <div class="pdp-gallery">
+    <div class="main"><img id="heroImg" src="assets/amethyst-hero.png" alt="Amethyst bracelet"></div>
+    <div class="thumbs">
+      <img class="on" src="assets/amethyst-hero.png" onclick="document.getElementById('heroImg').src=this.src">
+      <img src="assets/amethyst-wrist.png" onclick="document.getElementById('heroImg').src=this.src">
+      <img src="assets/amethyst-lifestyle.png" onclick="document.getElementById('heroImg').src=this.src">
+      <img src="assets/amethyst-macro.png" onclick="document.getElementById('heroImg').src=this.src">
+    </div>
+  </div>
+  <div class="pdp-info">
+    <!-- buy-area STRUCTURE learned from BC: breadcrumb → title → price+stock → sell-info rows → variant → quantity → buy → description -->
+    <nav class="bc-crumb"><a href="#">Home</a><span>›</span><a href="#">Bracelets</a><span>›</span><span class="cur">Amethyst</span></nav>
+    <p class="eyebrow">Bracelet · 12mm · natural amethyst</p>
+    <h1>Amethyst Bracelet</h1>
+    <p class="summary">The purple that ancient cultures couldn&rsquo;t stop reaching for.</p>
+    <div class="price-row"><span class="price">$88.00</span><span class="instock"><i></i>In stock</span></div>
+    <ul class="sell-info">
+      <li><svg class="si" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg><span>100% natural amethyst — no dye, no glass</span></li>
+      <li><svg class="si" viewBox="0 0 24 24"><path d="M12 2C7 7 7 13 12 22 17 13 17 7 12 2z"/><path d="M12 2v20"/></svg><span>12&nbsp;mm beads · polished natural stone</span></li>
+      <li><svg class="si" viewBox="0 0 24 24"><path d="M1 4h13v10H1z"/><path d="M14 8h4l3 3v3h-7z"/><circle cx="5.5" cy="17.5" r="1.8"/><circle cx="17.5" cy="17.5" r="1.8"/></svg><span>Free US shipping</span></li>
+      <li><svg class="si" viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/></svg><span>Ships in a padded stone pouch · 10&ndash;15 business days</span></li>
+    </ul>
+    <p class="opt">Wrist size</p>
+    <div class="sizes"><button>S · 15cm</button><button class="on">M · 17cm</button><button>L · 19cm</button></div>
+    <div class="qty-row"><span class="opt" style="margin:0">Quantity</span><div class="qty"><button type="button">&minus;</button><span>1</span><button type="button">+</button></div></div>
+    <button class="add">Add to bag — $88</button>
+    <p class="desc">Deep purple, made by iron and natural radiation underground — grown over ages, not dyed in a factory. The colour is the whole point.</p>
+  </div>
+</section>
+
+<!-- WHAT'S INCLUDED -->
+<section class="pdp-extra"><div class="wrap">
+  <div class="pdp__includes">
+    <p class="pdp__includes-title">In the box</p>
+    <ul>
+      <li>One amethyst bracelet · 12mm natural beads</li>
+      <li>Elastic strand, sized to your wrist</li>
+      <li>Padded stone pouch for travel &amp; storage</li>
+      <li>Care card — how to keep the colour deep</li>
+    </ul>
+  </div>
+  <p class="pdp__price-note">Each strand is hand-assembled · Delivered in 10&ndash;15 business days</p>
+  <p class="pdp__guarantee">100% natural amethyst — no dye, no glass.</p>
+</div></section>
+
+<!-- THE STONE -->
+<section class="system"><div class="wrap">
+  <div class="system__head rv" style="max-width:780px;margin:0 auto;text-align:center">
+    <p class="section-label">The stone, in its own words</p>
+    <h2 class="system__h">&ldquo;I was made underground,<br><em>before your country had a name.</em>&rdquo;</h2>
+    <p class="system__sub">Iron, and a little radiation, turned me this purple &mdash; slowly, in the dark. No two of my beads are the same shade, because I was grown, not dyed. I sit with real weight on the wrist &mdash; something solid to come back to when the day won&rsquo;t quiet down.</p>
+    <button class="listen-btn" id="listenBtn" type="button"><span class="lw"><span></span><span></span><span></span><span></span></span> Listen to me</button>
+  </div>
+  <div class="spec-grid rv">
+    <div>
+      <p class="spec-cap">The stone</p>
+      <table class="spec"><tbody>
+        <tr><th>Stone</th><td>Natural amethyst (purple quartz)</td></tr>
+        <tr><th>Composition</th><td>Silicon dioxide (SiO₂)</td></tr>
+        <tr><th>Crystal system</th><td>Trigonal</td></tr>
+        <tr><th>Colour</th><td>Deep violet — iron + natural irradiation</td></tr>
+        <tr><th>Hardness</th><td>7 Mohs — everyday-durable</td></tr>
+        <tr><th>Birthstone</th><td>February</td></tr>
+        <tr><th>Finish</th><td>Polished, round</td></tr>
+      </tbody></table>
+    </div>
+    <div>
+      <p class="spec-cap">The bracelet</p>
+      <table class="spec"><tbody>
+        <tr><th>Bead size</th><td>12&nbsp;mm — round, polished</td></tr>
+        <tr><th>Beads</th><td>~14&ndash;16, sized to your wrist</td></tr>
+        <tr><th>Closure</th><td>Elastic stretch cord</td></tr>
+        <tr><th>Fit</th><td>S 15cm · M 17cm · L 19cm</td></tr>
+        <tr><th>Treatment</th><td>None — no dye, no glass</td></tr>
+        <tr><th>Care</th><td>Keep out of strong sun · soft cloth</td></tr>
+      </tbody></table>
+    </div>
+  </div>
+</div></section>
+
+<div class="divider"></div>
+
+<!-- MACRO / CLOSER -->
+<section class="crystal"><div class="wrap">
+  <div class="crystal__head rv">
+    <p class="section-label">Up Close</p>
+    <h2 class="crystal__h">Look into one bead.</h2>
+    <p class="crystal__sub">The banding, the veils, the way the purple deepens toward the centre — all natural, none of it added later.</p>
+  </div>
+  <div class="crystal__stones rv"><img src="assets/amethyst-macro.png" alt="Amethyst bead macro" style="border-radius:4px;border:1px solid var(--color-border)"></div>
+</div></section>
+
+<div class="divider"></div>
+
+<!-- WORN -->
+<section class="lifetime"><div class="wrap"><div class="lifetime__inner">
+  <div class="lifetime__img rv"><img src="assets/amethyst-wrist.png" alt="Amethyst bracelet on wrist" style="border-radius:4px"></div>
+  <div class="lifetime__body rv">
+    <div>
+      <h2 class="lifetime__text-h">Made to be lived in.</h2>
+      <p class="lifetime__text-p">A stone bracelet shouldn&rsquo;t live in a drawer. The 12mm beads sit with real weight on the wrist — you notice them on the hard days.</p>
+      <p class="lifetime__text-p" style="color:var(--color-gold-muted);font-style:italic;">Sized to your wrist — no two strands identical.</p>
+    </div>
+    <div>
+      <p class="lifetime__list-title">Why people keep it on</p>
+      <ul class="lifetime__list">
+        <li>Real weight — 12mm natural beads, not lightweight resin</li>
+        <li>Calm, deep colour that works with everything</li>
+        <li>Elastic strand, easy on and off</li>
+        <li>Ages with you — natural stone, no coating to wear off</li>
+      </ul>
+    </div>
+  </div>
+</div></div></section>
+
+<!-- AM I YOUR STONE? (honest matching, powered by the real chart engine on the live site) -->
+<section class="match"><div class="wrap">
+  <div class="match-card rv">
+    <p class="section-label" style="color:var(--color-gold)">Am I your stone?</p>
+    <h2 class="match-h">I&rsquo;m not for everyone.<br><em>Let&rsquo;s find out if I&rsquo;m for you.</em></h2>
+    <p class="match-p">Most shops will sell you any crystal and call it fate. I&rsquo;d rather be honest. Tell me when you were born &mdash; I&rsquo;ll run your chart and say whether I actually fit. If I don&rsquo;t, I&rsquo;ll point you to the stone that does.</p>
+    <div class="match-form">
+      <input type="date" id="bday" aria-label="Your birth date">
+      <button id="matchBtn" type="button">Read my chart</button>
+    </div>
+    <div class="match-result" id="matchResult" hidden></div>
+    <p class="match-note">Read live from your birth date by the same engine behind the Studio &mdash; a method, not a horoscope.</p>
+  </div>
+</div></section>
+
+<!-- FAQ -->
+<section class="faq"><div class="wrap">
+  <div class="faq__head rv"><h2 class="faq__h">Questions</h2></div>
+  <div class="faq__list">
+    <div class="faq__item rv"><button class="faq__q" onclick="toggleFaq(this)">How do I pick my size?</button><div class="faq__a">Measure your wrist with a strip of paper. S fits ~15cm, M ~17cm, L ~19cm. The elastic gives a little either way.</div></div>
+    <div class="faq__item rv"><button class="faq__q" onclick="toggleFaq(this)">Is the amethyst real?</button><div class="faq__a">Yes — 100% natural amethyst, no dye and no glass. Colour varies bead to bead because it&rsquo;s formed in the ground, not a lab.</div></div>
+    <div class="faq__item rv"><button class="faq__q" onclick="toggleFaq(this)">How do I care for it?</button><div class="faq__a">Keep it out of long sun (strong UV can lighten amethyst), wipe with a soft cloth, take it off before showering. The care card walks you through it.</div></div>
+    <div class="faq__item rv"><button class="faq__q" onclick="toggleFaq(this)">Shipping &amp; returns?</button><div class="faq__a">Free US shipping, delivered in 10&ndash;15 business days. 30-day returns if it isn&rsquo;t right for you.</div></div>
+  </div>
+</div></section>
+
+<!-- FINAL CTA -->
+<section class="final"><div class="wrap"><div class="rv">
+  <h2 class="final__h">Grown, not dyed.<br><em>Still this purple when you&rsquo;ve forgotten it&rsquo;s on.</em></h2>
+  <p class="final__sub">12mm natural amethyst · Free US shipping.</p>
+  <a href="#buy" class="btn btn--gold">Add to bag — $88</a>
+  <p class="final__note">Hand-assembled · ships in a padded stone pouch.</p>
+</div></div></section>
+
+<footer class="ft">
+  <div class="ft-cols">
+    <div class="ft-brand"><div class="b">Stone Whisper</div><p>Natural stone, matched to you.</p></div>
+    <div class="ft-col"><h4>Shop</h4><a href="page-shop.html">Shop</a><a href="../sw-crystal-customizer/index.html">Open Studio</a><a href="page-stone-library.html">Stones</a></div>
+    <div class="ft-col"><h4>Learn</h4><a href="page-how-it-works.html">How it works</a><a href="page-what-is-bazi.html">The method</a><a href="page-blog.html">Journal</a></div>
+    <div class="ft-col"><h4>Support</h4><a href="page-faq.html">FAQ</a><a href="page-care.html">Care</a><a href="page-shipping.html">Shipping</a><a href="page-returns.html">Returns</a><a href="page-contact.html">Contact</a></div>
+    <div class="ft-col"><h4>Company</h4><a href="page-about.html">About</a><a href="page-policies.html#privacy">Privacy</a><a href="page-policies.html#terms">Terms</a><a href="page-policies.html#refund">Refund</a></div>
+  </div>
+  <p class="ft-copy">&copy; Stone Whisper &middot; natural stone, matched to you</p>
+</footer>
+
+<script>
+  /* ── sw-v2 starfield (cool parallax stars + faint galaxy band + meteors) ── */
+  (function(){
+    const cv=document.getElementById('space'); if(!cv) return; const x=cv.getContext('2d');
+    let W,H,DPR,stars=[],meteors=[],run=false,ph=0;
+    const rnd=(a,b)=>a+Math.random()*(b-a);
+    const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+    function size(){DPR=Math.min(2,devicePixelRatio||1);W=cv.width=innerWidth*DPR;H=cv.height=innerHeight*DPR;cv.style.width=innerWidth+'px';cv.style.height=innerHeight+'px';build();}
+    function build(){stars=[];const n=Math.round(innerWidth*innerHeight/2600);for(let i=0;i<n;i++){const d=rnd(.15,1);stars.push({x:rnd(0,W),y:rnd(0,H),r:rnd(.3,1.6)*DPR*d,d,tw:rnd(0,6.28),ts:rnd(.6,1.8)});}}
+    function render(){
+      const sc=(window.scrollY||0)*DPR; x.clearRect(0,0,W,H); ph+=0.015; x.globalCompositeOperation='lighter';
+      x.save(); x.translate(W*0.64,H*0.30); x.rotate(-0.52);
+      const bg=x.createLinearGradient(0,-H*0.55,0,H*0.55);
+      bg.addColorStop(0,'rgba(120,140,214,0)'); bg.addColorStop(.5,'rgba(150,134,206,0.075)'); bg.addColorStop(1,'rgba(120,140,214,0)');
+      x.fillStyle=bg; x.fillRect(-W,-H*0.55,W*2,H*1.1); x.restore();
+      for(const s of stars){ s.tw+=0.02*s.ts; const yy=(((s.y-sc*0.4*s.d)%H)+H)%H, tw=.5+Math.sin(s.tw)*.5;
+        x.fillStyle=`rgba(245,238,224,${((.2+tw*.6)*s.d).toFixed(3)})`; x.beginPath(); x.arc(s.x%W,yy,s.r*(.7+tw*.5),0,6.2832); x.fill(); }
+      if(meteors.length<1 && Math.random()<0.004){ meteors.push({x:rnd(.2,.95)*W,y:rnd(0,.4)*H,vx:rnd(-12,-7)*DPR,vy:rnd(4,7)*DPR,life:1}); }
+      for(const m of meteors){ m.x+=m.vx; m.y+=m.vy; m.life-=.014;
+        const g=x.createLinearGradient(m.x,m.y,m.x-m.vx*5,m.y-m.vy*5); g.addColorStop(0,`rgba(255,250,240,${m.life.toFixed(3)})`); g.addColorStop(1,'rgba(255,250,240,0)');
+        x.strokeStyle=g; x.lineWidth=1.6*DPR; x.lineCap='round'; x.beginPath(); x.moveTo(m.x,m.y); x.lineTo(m.x-m.vx*5,m.y-m.vy*5); x.stroke(); }
+      meteors=meteors.filter(m=>m.life>0&&m.x>-100&&m.y<H+100);
+      x.globalCompositeOperation='source-over';
+    }
+    function loop(){ if(document.hidden){run=false;return;} render(); requestAnimationFrame(loop); }
+    function start(){ if(run)return; run=true; requestAnimationFrame(loop); }
+    size(); addEventListener('resize',()=>{size();render();},{passive:true}); render();
+    if(reduce) addEventListener('scroll',render,{passive:true}); else { start(); document.addEventListener('visibilitychange',()=>{if(!document.hidden)start();}); }
+  })();
+
+  const nav=document.getElementById('nav');
+  addEventListener('scroll',()=>nav.classList.toggle('lit',scrollY>40));
+  const obs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('vis');obs.unobserve(e.target);}}),{threshold:.1});
+  document.querySelectorAll('.rv').forEach(el=>obs.observe(el));
+  document.querySelectorAll('.thumbs img').forEach(t=>t.addEventListener('click',function(){document.querySelectorAll('.thumbs img').forEach(i=>i.classList.remove('on'));this.classList.add('on');}));
+  function toggleFaq(b){b.classList.toggle('open');b.nextElementSibling.classList.toggle('open');}
+
+  /* A — listen to the stone (its element sound) */
+  (function(){
+    const btn=document.getElementById('listenBtn'); if(!btn) return;
+    const fire=new Audio('../sw-website-redesign/sounds/el_fire.mp3'); fire.preload='auto'; let ft;
+    btn.addEventListener('click',()=>{
+      if(btn.classList.contains('playing')){ fire.pause(); fire.currentTime=0; btn.classList.remove('playing'); clearInterval(ft); return; }
+      fire.currentTime=0; fire.volume=0; fire.play().catch(()=>{}); btn.classList.add('playing');
+      let v=0; clearInterval(ft); ft=setInterval(()=>{v=Math.min(.6,v+.06);fire.volume=v;if(v>=.6)clearInterval(ft);},40);
+      fire.onended=()=>btn.classList.remove('playing');
+    });
+  })();
+
+  /* B — am I your stone? (DEMO verdict; live site reads the real chart engine) */
+  (function(){
+    const btn=document.getElementById('matchBtn'), inp=document.getElementById('bday'), res=document.getElementById('matchResult'); if(!btn) return;
+    btn.addEventListener('click',()=>{
+      if(!inp.value){ inp.focus(); return; }
+      const d=new Date(inp.value), h=(d.getMonth()*31+d.getDate());
+      const fireHeavy=(h%5===0||h%5===2);   // demo only — real engine computes the chart
+      res.hidden=false; res.className='match-result';
+      if(fireHeavy){ res.classList.add('nofit');
+        res.innerHTML='<span class="verdict">Honestly? I&rsquo;m not your best fit.</span>Your chart already runs hot on Fire — more of me would tip it over. You&rsquo;d feel steadier in something that cools. Try <a href="#">Aquamarine (Water) →</a>, or <a href="../sw-crystal-customizer/index.html">build a strand around your chart →</a>'; }
+      else { res.classList.add('fit');
+        res.innerHTML='<span class="verdict">Yes — I&rsquo;m a strong match for you.</span>Your chart runs cool on Fire, and that&rsquo;s exactly the warmth I bring. This is what I&rsquo;m for. <a href="#buy">Make me yours →</a>'; }
+      requestAnimationFrame(()=>res.classList.add('show'));
+    });
+  })();
+</script>
+</body></html>
