@@ -98,7 +98,7 @@
     <!-- CUSTOM VS FINISHED -->
     <div class="faq__item rv"><button class="faq__q" onclick="toggleFaq(this)">What&rsquo;s the difference between the Studio and a finished bracelet?</button><div class="faq__a">A <b>finished bracelet</b> is a single ready-made design &mdash; you pick your size and it ships. The <b>Studio</b> is the custom path: you build a strand around your own chart, choosing stones matched to what your chart is missing and arranged for colour. Same real stones and same quality either way; the Studio just means you decide every stone in it. <a href="../sw-crystal-customizer/index.html">Open the Studio &rarr;</a></div></div>
 
-    <div class="faq__item rv"><button class="faq__q" onclick="toggleFaq(this)">Can I have a custom bracelet remade or adjusted later?</button><div class="faq__a">Reach out and we&rsquo;ll do our best. Restringing to a different size is usually straightforward; design changes depend on stone availability. For specifics on turnaround and any cost, contact us at [Company email] &mdash; we&rsquo;d rather quote you honestly than promise blind.</div></div>
+    <div class="faq__item rv"><button class="faq__q" onclick="toggleFaq(this)">Can I have a custom bracelet remade or adjusted later?</button><div class="faq__a">Reach out and we&rsquo;ll do our best. Restringing to a different size is usually straightforward; design changes depend on stone availability. For specifics on turnaround and any cost, contact us at <a href="mailto:support@stonewhisper.co">support@stonewhisper.co</a> &mdash; we&rsquo;d rather quote you honestly than promise blind.</div></div>
 
     <!-- SHIPPING & RETURNS -->
     <div class="faq__item rv"><button class="faq__q" onclick="toggleFaq(this)">How long does shipping take, and what does it cost?</button><div class="faq__a">US shipping is free. Orders are delivered in 10&ndash;15 business days, shipped in a padded stone pouch. For full details and timing on custom pieces, see our <a href="page-shipping.html">Shipping page &rarr;</a></div></div>
@@ -236,7 +236,7 @@
     - Cross-links point to sibling pages that DO own native parts:
         * page-shipping.html / page-returns.html / page-care.html -> page.policy.json templates.
         * "Open the Studio" / "How it works" -> the customizer + how-it-works pages.
-      Any contact form referenced from the custom-bracelet answer ([Company email])
+      Any contact form referenced from the custom-bracelet answer
       must use Shopline's NATIVE contact-form / contact submission on deploy,
       not a custom-posted form.
 
@@ -244,8 +244,7 @@
     {{ `images/x.png` | asset_url() }} — this page currently uses no images,
     only the cosmic backdrop + starfield chrome.
 
-  PLACEHOLDERS TO RESOLVE BEFORE PUBLISH:
-    - [Company email] (custom-bracelet adjustment answer) — confirm support address.
-    - Confirm sibling page filenames/handles: page-care.html (a Care page is
-      referenced but not yet present in this folder) — create it or update the link.
+  PRE-PUBLISH CHECK:
+    - Confirm support@stonewhisper.co is the live support inbox.
+    - Confirm sibling page handles match the final Shopline page handles.
   ════════════════════════════════════════════════════════════════════ -->
