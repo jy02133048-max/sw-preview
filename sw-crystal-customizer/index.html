@@ -1143,6 +1143,7 @@ function spanPick(pool,k){ if(!pool.length)return[]; if(pool.length<=k)return po
   return [...new Set(o)]; }
 function availBands(){ return HUE_BANDS.map((b,i)=>({b,i,pool:bandPool(b)})).filter(x=>x.pool.length>=2); }
 // the full canonical colour-harmony book (Itten/colour-wheel) on the real hue wheel — each scheme carries its own 面积比(k=bead count: dominant more, accent fewer)
+// φ 面积比=默认(skill §5-M Graves φ 13:8/8:5,User 2026-07-02 视觉过 10 条拍板转正):主色带 SKU 配额 Fibonacci 主导化(两带 5:3,三带 8:3:2),修掉旧 Adjacent 3:3 / Split 4:4 的"无主色"平局(Graves K:必须一个 dominant)。小色带 pool 不足时 spanPick 自然封顶,比例朝 φ 靠不硬凑。
 function harmonyPalette(forceBandIdx){
   const avail=availBands();
   if(!avail.length) return null;
@@ -1154,11 +1155,11 @@ function harmonyPalette(forceBandIdx){
   const r=Math.random(); let plan,scheme;   // plan=[{band,k}] · k=该色珠数(面积比)
   const uniqBands=arr=>{const seen={};return arr.filter(x=>x&&x.band&&!seen[x.band.i]&&(seen[x.band.i]=1));};
   if(r<0.26){ scheme='Monochrome'; plan=[{band:base,k:5}]; }
-  else if(r<0.46){ scheme='Adjacent'; const nb=within(base.b.c,72).filter(x=>x.i!==base.i); plan=nb.length?[{band:base,k:3},{band:nb[0],k:3}].concat(nb.length>1&&Math.random()<0.4?[{band:nb[1],k:2}]:[]):[{band:base,k:5}]; }
-  else if(r<0.62){ scheme='Complement'; const opp=nearest(base.b.c+180); plan=(opp&&opp.i!==base.i)?[{band:base,k:4},{band:opp,k:2}]:[{band:base,k:5}]; }            // 不等面积 4:2 + scoreStrand 缓冲
-  else if(r<0.74){ scheme='Split-Complementary'; plan=uniqBands([{band:base,k:4},{band:nearest(base.b.c+152),k:2},{band:nearest(base.b.c+208),k:2}]); if(plan.length<2)plan=[{band:base,k:5}]; }
-  else if(r<0.85){ scheme='Triangle'; plan=uniqBands([{band:base,k:3},{band:nearest(base.b.c+120),k:2},{band:nearest(base.b.c+240),k:2}]); if(plan.length<2)plan=[{band:base,k:5}]; }
-  else if(r<0.97){ const warm=(base.b.c<100||base.b.c>320); scheme=warm?'Warm palette':'Cool palette'; const set=(warm?WARM:COOL).filter(x=>x.i!==base.i); plan=[{band:base,k:3}].concat(set.slice(0,2).map(x=>({band:x,k:2}))); }
+  else if(r<0.46){ scheme='Adjacent'; const nb=within(base.b.c,72).filter(x=>x.i!==base.i); const third=nb.length>1&&Math.random()<0.4; plan=nb.length?[{band:base,k:third?8:5},{band:nb[0],k:3}].concat(third?[{band:nb[1],k:2}]:[]):[{band:base,k:5}]; }   // φ 5:3 / 8:3:2(旧 3:3 无主)
+  else if(r<0.62){ scheme='Complement'; const opp=nearest(base.b.c+180); plan=(opp&&opp.i!==base.i)?[{band:base,k:5},{band:opp,k:3}]:[{band:base,k:5}]; }            // 不等面积 φ 5:3 + scoreStrand 缓冲
+  else if(r<0.74){ scheme='Split-Complementary'; plan=uniqBands([{band:base,k:8},{band:nearest(base.b.c+152),k:3},{band:nearest(base.b.c+208),k:2}]); if(plan.length<2)plan=[{band:base,k:5}]; }   // φ 8:3:2=8:5(旧 4:4 平)
+  else if(r<0.85){ scheme='Triangle'; plan=uniqBands([{band:base,k:8},{band:nearest(base.b.c+120),k:3},{band:nearest(base.b.c+240),k:2}]); if(plan.length<2)plan=[{band:base,k:5}]; }   // φ 8:3:2
+  else if(r<0.97){ const warm=(base.b.c<100||base.b.c>320); scheme=warm?'Warm palette':'Cool palette'; const set=(warm?WARM:COOL).filter(x=>x.i!==base.i); plan=[{band:base,k:8}].concat(set.slice(0,2).map((x,i)=>({band:x,k:i?2:3}))); }   // φ 8:3:2
   else { scheme='Neutral accent'; plan=[{band:base,k:2}]; }
   plan=plan.filter(p=>p.band&&p.band.pool&&p.band.pool.length);
   if(!plan.length) plan=[{band:base,k:5}];
