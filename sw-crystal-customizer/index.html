@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<title>Stone Whisper Bracelet Studio V1</title>
+<title>Bracelet Studio — Stone Whisper</title>
 <script src="lunar.js" defer></script>
 <!-- B4: GSAP + Flip (vendored local) — pour-in via single tween (replaces setInterval+rAF+setTimeout, fixes A3), drag-reorder via Flip -->
 <script src="vendor/gsap.min.js"></script>
@@ -222,6 +222,8 @@
   .divider{height:1px;background:var(--line);margin:20px 0}
   .trust{display:flex;flex-direction:column;gap:8px;margin-top:24px}
   .trust span{font-size:12px;color:var(--muted);display:flex;gap:8px}.trust b{color:var(--gold);font-weight:400}
+  .trustline{margin-top:18px;padding-top:12px;border-top:1px solid var(--line);font-size:11.5px;color:var(--faint);text-align:center;line-height:1.6}
+  .trustline b{color:var(--accent,var(--gold));font-weight:400}
   .album{display:grid;grid-template-columns:repeat(auto-fill,minmax(98px,1fr));gap:11px}
   .album .ph{font-size:13px;color:var(--faint)}
   .album-item{position:relative;text-align:center}
@@ -514,7 +516,7 @@
   body.v1-body.theme-sand .pa-btn{background:rgba(255,250,240,.94);border-color:rgba(120,86,52,.2);color:#4a2f1c}
   /* ===== OPT-IN photo backdrop (?bg=photo) — purely additive, default unaffected, fully reversible ===== */
   body.v1-body.bg-photo .preview{
-    background:linear-gradient(180deg,rgba(40,26,14,.06) 0%,rgba(40,26,14,0) 26%,rgba(40,26,14,0) 72%,rgba(40,26,14,.16) 100%),url('assets/sand-backdrop-empty.png');
+    background:linear-gradient(180deg,rgba(40,26,14,.06) 0%,rgba(40,26,14,0) 26%,rgba(40,26,14,0) 72%,rgba(40,26,14,.16) 100%),var(--sw-bg-sand,url('assets/sand-backdrop-empty.png'));
     background-size:cover,cover;background-position:center,center 62%;background-repeat:no-repeat;
     border-bottom:1px solid rgba(120,86,52,.2);padding:8px 0 14px}
   body.v1-body.bg-photo .stage::before{display:none}
@@ -527,7 +529,7 @@
   body.v1-body.bg-photo svg.bracelet .zring{stroke:rgba(64,40,20,.22)}
   /* ===== OPT-IN cosmic energy stage (?bg=cosmic) — the strand floats & glows in a nebula; reversible, default off ===== */
   body.v1-body.bg-cosmic .preview{
-    background:radial-gradient(58% 60% at 50% 46%,rgba(8,9,22,.34),rgba(5,6,16,.62) 78%),url('assets/cosmic-backdrop-empty.png');
+    background:radial-gradient(58% 60% at 50% 46%,rgba(8,9,22,.34),rgba(5,6,16,.62) 78%),var(--sw-bg-cosmic,url('assets/cosmic-backdrop-empty.png'));
     background-size:cover,cover;background-position:center,center;background-repeat:no-repeat;
     border-bottom:1px solid rgba(180,190,235,.18);padding:8px 0 14px}
   body.v1-body.bg-cosmic .appbar{background:rgba(9,10,22,.55);border-bottom:1px solid rgba(180,190,235,.16)}
@@ -690,6 +692,7 @@
       <div class="grid" id="intentGrid"></div>
         <div class="custom-scene" id="customScene" style="display:none"><textarea id="customText" placeholder="None of these fit? Write what you are in, stuck on, or trying to feel..."></textarea></div>
       <div class="nudge" id="sceneNudge" data-go="reading">Next: see why this strand holds together →</div>
+      <div class="trustline"><b>◆</b> Hand-assembled to order &nbsp;·&nbsp; <b>◆</b> We photograph your exact bracelet before it ships &nbsp;·&nbsp; <b>◆</b> 30-day returns, no questions</div>
     </div>
 
     <!-- 2 · birth + reading -->
@@ -708,8 +711,8 @@
       </div>
       <button class="btn ghost storyOpen" style="display:none">See the full strand story</button>
       <div class="divider"></div>
-      <div class="section-label" style="margin-top:0">birth details (optional)</div>
-      <div class="psub">If you want this one to feel more personal, add your birth details.</div>
+      <div class="section-label" style="margin-top:0">go deeper — add your birthday</div>
+      <div class="psub">Skip this and the scene alone builds your strand. Add your birth date and the read gets personal — it's built from your chart, not a template.</div>
       <div class="daterow">
         <input type="date" id="bDate" min="1940-01-01" max="2014-12-31" aria-label="date of birth">
         <input type="time" id="bTime" aria-label="time of birth (optional)">
@@ -720,7 +723,7 @@
       </div>
       <input list="cityList" id="bPlace" placeholder="Birth city (optional, makes the read finer)" autocomplete="off" aria-label="birth city">
       <datalist id="cityList"></datalist>
-      <div class="hint">Time and city are both optional. Add a city and we'll correct for true solar time by longitude, so the read gets finer. Not sure? Leave it blank.</div>
+      <div class="hint">Time and city are optional extras — don't know them? Leave them blank, the read still works. Add a city and we'll correct for true solar time by longitude, so it gets finer.</div>
       <div class="err" id="birthErr"></div>
       <button class="btn readbtn" id="readBtn">Read my chart →</button>
     </div>
@@ -737,11 +740,11 @@
     <div class="panel" data-panel="request">
       <div class="ptitle">Add your notes at the end.</div>
       <div class="psub">The feel you want, colours to avoid, who it's for, everyday or something more ceremonial — anything goes.</div>
-      <textarea id="reqText" placeholder="比如：想要冷一点的蓝White，不要太闪，日常佩戴，是送给刚换工作的朋友…"></textarea>
+      <textarea id="reqText" placeholder="e.g. cooler blues, nothing too sparkly, for everyday wear — it's a gift for a friend who just changed jobs…"></textarea>
       <button class="btn ghost" id="reqApply">Save note</button>
       <div class="divider"></div>
       <div class="section-label" style="margin-top:0">give it a name</div>
-      <div class="namefield"><input id="bname" placeholder="给这条手串起名…" maxlength="40"><button id="nameSuggest" title="生成名字">✨</button></div>
+      <div class="namefield"><input id="bname" placeholder="Name this bracelet — e.g. Moonlit Tide…" maxlength="40"><button id="nameSuggest" title="Suggest a name">✨</button></div>
       <div class="savelink" id="saveAlbum">♡ Save to my album</div>
       <div class="section-label">My album</div>
       <div class="album" id="album"></div>
@@ -789,7 +792,7 @@
   <div class="scene-chips"><button class="schip on" data-scene="cafe">Coffee table</button><button class="schip" data-scene="desk">Desk</button><button class="schip" data-scene="party">A night out</button><button class="schip" data-scene="wrist">AI try-on</button></div>
   <div class="wrist-box">
     <canvas id="wristCanvas" width="660" height="660" style="display:none"></canvas>
-    <img id="wristResult" alt="上手预览" style="display:none">
+    <img id="wristResult" alt="On-wrist preview" style="display:none">
     <div class="wrist-load" id="wristLoad"><div class="spin"></div><div>Placing your strand into the scene…<br><small>About 10–20 seconds</small></div></div>
   </div>
   <div class="wrist-cap" id="wristCap">AI on-wrist preview</div>
@@ -806,7 +809,7 @@
 </div></div>
 <div class="modal" id="shareModal"><div class="modal-card" style="max-width:400px">
   <span class="mx" id="shareX">×</span>
-  <img id="shareImg" alt="分享图">
+  <img id="shareImg" alt="Share image">
   <div class="wrist-cap">Press & hold to save · share it anywhere</div>
   <a id="shareDl" class="btn ghost" download="stone-whisper-strand.png">Download image</a>
 </div></div>
@@ -814,11 +817,15 @@
 
 <script>
 const VER=(location.hostname==='localhost'||location.hostname==='127.0.0.1')?Date.now():'v20260612';   // fixed in prod — Date.now() was defeating ALL image caching
-const ASSET=location.hostname.endsWith('github.io')?'https://cdn.jsdelivr.net/gh/jy02133048-max/sw-strand-preview@main/':'';   // jsDelivr reaches mainland users far better than github.io; ref pinned to a commit at publish time
+const PUBHOST=/(^|\.)(github\.io|stonewhisper\.co|myshopline\.com)$/.test(location.hostname);   // public builds: github.io preview + SHOPLINE live (stonewhisper.co); anything else (localhost/file) stays same-origin dev
+const ASSET=PUBHOST?'https://cdn.jsdelivr.net/gh/jy02133048-max/sw-strand-preview@main/':'';   // jsDelivr reaches mainland users far better than github.io; ref pinned to a commit at publish time
 const deAsset=u=>(ASSET&&u&&u.indexOf(ASSET)===0)?u.slice(ASSET.length):null;
-const APIBASE=location.hostname.endsWith('github.io')?'https://sw-strand-relay-production.up.railway.app':'';   // public build: AI relay on Railway (key server-side, origin-gated, rate-capped)   // CDN miss → retry same-origin
+const APIBASE=PUBHOST?'https://sw-strand-relay-production.up.railway.app':'';   // public build: AI relay on Railway (key server-side, origin-gated, rate-capped)   // CDN miss → retry same-origin
 const CHART_PROFILE_API=(APIBASE||'')+'/api/chart-profile';   // server-side true chart engine; client lite engine stays as fallback
-const WORD_API=(location.hostname.endsWith('github.io')?'https://sw-word-service-production.up.railway.app':'')+'/api/word';   // CC: leashed per-person copy on its OWN service (no execSync taint → reliable); laozhang+haiku server-side, key never in the page
+const WORD_API=(PUBHOST?'https://sw-word-service-production.up.railway.app':'')+'/api/word';   // CC: leashed per-person copy on its OWN service (no execSync taint → reliable); laozhang+haiku server-side, key never in the page
+window.SW_ASSET=ASSET;   // bridge for the 3D module block (and any wrapper the deployer puts around this script): lexical consts don't cross those boundaries, window does
+if(PUBHOST){ [WORD_API.replace('/api/word','/health'), APIBASE+'/health'].forEach(u=>{ try{ fetch(u).catch(()=>{}); }catch(e){} }); }   // warm both Railway services at page load — a cold start measured 17s, past any sane request timeout
+if(PUBHOST){ const rs=document.documentElement.style; rs.setProperty('--sw-bg-sand',"url('"+ASSET+"assets/sand-backdrop-empty.png?v="+VER+"')"); rs.setProperty('--sw-bg-cosmic',"url('"+ASSET+"assets/cosmic-backdrop-empty.png?v="+VER+"')"); }   // ?bg= backdrops: CSS can't read PUBHOST, so feed it the CDN url via custom props
 let CHART_API_BACKOFF_UNTIL=0, READ_SEQ=0;
 const ANALYSIS_MIN_MS=9000;   // 8-10s window — long enough to feel like a real deep read, not an instant guess (User 2026-06-27)
 let PLACE_TIMER=0;
@@ -1221,9 +1228,9 @@ const PATTERNS=(()=>{
   A({id:'xiantianbagua',name:'Primal Bagua',zh:'Primal',meaning:'伏羲卦,天地定位——对宫阴阳镜像',src:'Shuogua Commentary',lane:'statement',colors:1,raw:1,min:8,build:bagua(xiantian)});
   A({id:'taiji',name:'Taiji',zh:'Taiji',meaning:'Split black and white, two fish eyes — light inside dark, dark inside light',src:'Taiji',lane:'statement',colors:0,min:6,fixed:['white_neutral','black'],styleNote:'核心锁强黑白对比;鱼眼=样式轴待落:两眼应改用异样式珠(雕花/异光泽)强化阴中有阳',build:taiji});
   A({id:'xiaoxigua',name:'Waxing & Waning',zh:'Waxing & Waning Hexagrams',meaning:'Light returning, rising to full, then easing back to dark — a year\'s tide of bright and shadow',src:'Han-era hexagram cycle',lane:'statement',colors:0,min:8,fixed:['black','blue','purple','green','yellow_gold','pink','white_neutral'],build:xiaoxi});
-  A({id:'wuxing',name:'Elements相生 Five Phases',zh:'Elements',meaning:'WoodFireEarthMetalWater相生不息,青赤黄白黑闭环',src:'Book of Documents · Hong Fan',lane:'statement',colors:0,min:5,fixed:['green','red','yellow_gold','white_neutral','black'],build:fixedStations(5)});
+  A({id:'wuxing',name:'Five Phases',zh:'Five Phases',meaning:'WoodFireEarthMetalWater相生不息,青赤黄白黑闭环',src:'Book of Documents · Hong Fan',lane:'statement',colors:0,min:5,fixed:['green','red','yellow_gold','white_neutral','black'],build:fixedStations(5)});
   A({id:'dizhi',name:'Twelve-Step Orbit',zh:'Twelve-Step Orbit',meaning:'A twelve-station color cycle, each point mapped to an element tone.',src:'cycle',lane:'statement',colors:0,min:12,fixed:['blue','yellow_gold','green','green','yellow_gold','red','red','yellow_gold','white_neutral','white_neutral','yellow_gold','blue'],build:n=>Array.from({length:n},(_,i)=>Math.round(i*12/n)%12)});
-  A({id:'ershiba',name:'Mansions四象 Mansions',zh:'Mansions',meaning:'青龙朱雀白虎玄武,四方各七宿',src:'Records of the Grand Historian · Treatise on the Celestial Offices',lane:'statement',colors:0,min:8,fixed:['green','red','white_neutral','black'],build:n=>{const o=Array(n).fill('N');for(let q=0;q<4;q++){const b=Math.round(q*n/4);for(let s=0;s<2;s++)o[(b+s)%n]=q;}return o;}});
+  A({id:'ershiba',name:'Four Guardians',zh:'Four Guardians',meaning:'青龙朱雀白虎玄武,四方各七宿',src:'Records of the Grand Historian · Treatise on the Celestial Offices',lane:'statement',colors:0,min:8,fixed:['green','red','white_neutral','black'],build:n=>{const o=Array(n).fill('N');for(let q=0;q<4;q++){const b=Math.round(q*n/4);for(let s=0;s<2;s++)o[(b+s)%n]=q;}return o;}});
   A({id:'qizheng',name:'Luminaries',zh:'Luminaries',meaning:'Sun & Moon与五星,七曜运行之纲',src:'Book of Documents · Canon of Yao',lane:'statement',colors:0,min:7,fixed:['yellow_gold','white_neutral','red','black','green','white_neutral','yellow_gold'],build:fixedStations(7)});
   A({id:'jiuxing',name:'Nine Star',zh:'Nine Star',meaning:'One white through nine purple, nine colours circling the ring',src:'Flying Stars',lane:'statement',colors:0,min:9,fixed:['white_neutral','black','green','green','yellow_gold','white_neutral','red','white_neutral','purple'],build:fixedStations(9)});
   A({id:'tiangan',name:'Ten-Step Pairing',zh:'Ten-Step Pairing',meaning:'Ten stations in paired light and deep element tones: green, red, gold, white, and black.',src:'cycle',lane:'statement',colors:0,min:10,fixed:['green','green','red','red','yellow_gold','yellow_gold','white_neutral','white_neutral','black','black'],build:fixedStations(10)});
@@ -1232,8 +1239,8 @@ const PATTERNS=(()=>{
   A({id:'beidou',name:'Big Dipper',zh:'Big Dipper',meaning:'The dipper\'s handle marks the seasons, the pole star at the pivot — the seven stars',src:'Records of the Grand Historian · Treatise on the Celestial Offices',lane:'statement',colors:1,focal:true,min:14,build:n=>{const o=Array(n).fill('N');for(let i=1;i<7;i++)o[Math.round(i*n/7)%n]='A';o[0]='F';return o;}});
 
   // ===== E · 共鸣符号 (fixed-colour talismans) =====
-  A({id:'chakra',name:'Seven Chakras',zh:'Seven Chakras',meaning:'Seven chakras aligned from root to crown — the full rainbow: red, orange, yellow, green, blue, indigo, violet',src:'chakra',lane:'statement',colors:0,min:7,fixed:['red','yellow_gold','yellow_gold','green','blue','purple','purple'],build:fixedStations(7)});
-  A({id:'zodiac',name:'Zodiac Wheel Zodiac十二',zh:'Zodiac',meaning:'十二宫一岁周天,本命石可为焦',src:'zodiac',lane:'statement',colors:0,min:12,fixed:['red','green','yellow_gold','blue','red','green','yellow_gold','blue','red','green','yellow_gold','blue'],build:n=>Array.from({length:n},(_,i)=>Math.round(i*12/n)%12)});
+  A({id:'chakra',name:'Rainbow Spectrum',zh:'Rainbow Spectrum',meaning:'The full rainbow in seven stations — red through violet, evenly spaced around the ring',src:'rainbow',lane:'statement',colors:0,min:7,fixed:['red','yellow_gold','yellow_gold','green','blue','purple','purple'],build:fixedStations(7)});
+  A({id:'zodiac',name:'Zodiac Wheel',zh:'Zodiac',meaning:'十二宫一岁周天,本命石可为焦',src:'zodiac',lane:'statement',colors:0,min:12,fixed:['red','green','yellow_gold','blue','red','green','yellow_gold','blue','red','green','yellow_gold','blue'],build:n=>Array.from({length:n},(_,i)=>Math.round(i*12/n)%12)});
   A({id:'evileye',name:'Evil Eye',zh:'Evil Eye',meaning:'A cobalt-blue eye looking back — the nazar that turns away envy',src:'Nazar',lane:'statement',colors:0,min:6,fixed:['blue'],build:n=>{const o=Array(n).fill('N');for(let i=0;i<3;i++)o[Math.round(i*n/3)%n]=0;o[Math.floor(n/2)]='K';return o;}});
   A({id:'elements',name:'Four Elements',zh:'Four Elements',meaning:'Fire赤·Water蓝·风白·Earth绿,四象限定宇宙(塔罗权杯剑钱)',src:'Empedocles/Tarot',lane:'statement',colors:0,raw:1,min:8,fixed:['red','blue','white_neutral','green'],build:fixedBands(4)});
   A({id:'medicinewheel',name:'Medicine Wheel',zh:'Medicine Wheel',meaning:'四方圣环,东黄南赤西黑北白,Body and mind灵情之Balance(原住民)',src:'Medicine Wheel',lane:'statement',colors:0,min:8,fixed:['yellow_gold','red','black','white_neutral'],build:fixedStations(4)});
@@ -1267,7 +1274,7 @@ const PATTERNS=(()=>{
   A({id:'phoenix',name:'Phoenix',zh:'Phoenix',meaning:'Ash to ember to flame to golden feather — reborn from the fire once every five hundred years',src:'Ovid, Metamorphoses · Herodotus',lane:'statement',colors:0,raw:1,min:12,fixed:['black','red','yellow_gold','gold'],build:n=>{const seq=[0,0,1,1,2,3];return Array.from({length:n},(_,i)=>seq[Math.min(seq.length-1,Math.floor(i/n*seq.length))]);}});
 
   // ===== G · 美式人气符号 (US boho / crystal-girlie / 凯尔特 / 埃及 / 原住民 · 真出处) =====
-  A({id:'moonphases',name:'Moon Phases Moon Phases轮',zh:'Moon Phases',meaning:'New moon to full to waning — the silver tide of the moon (full moon at the top)',src:'lunar cycle',lane:'tonal',colors:0,min:8,fixed:['black','silver_gray','white_neutral'],build:n=>Array.from({length:n},(_,i)=>{const d=Math.min(i,n-i)/(n/2||1);return d<0.34?2:(d<0.67?1:0);})});
+  A({id:'moonphases',name:'Moon Phases',zh:'Moon Phases',meaning:'New moon to full to waning — the silver tide of the moon (full moon at the top)',src:'lunar cycle',lane:'tonal',colors:0,min:8,fixed:['black','silver_gray','white_neutral'],build:n=>Array.from({length:n},(_,i)=>{const d=Math.min(i,n-i)/(n/2||1);return d<0.34?2:(d<0.67?1:0);})});
   A({id:'triplemoon',name:'Triple Moon',zh:'Triple Moon',meaning:'Crescent, full, waning — the moon\'s three faces: maiden, mother, crone',src:'Triple Goddess (Wiccan)',lane:'tonal',colors:0,min:8,fixed:['silver_gray','white_neutral','black'],build:n=>{const o=Array(n).fill('N');o[0]=1;o[Math.round(n/5)%n]=0;o[(n-Math.round(n/5))%n]=2;return o;}});
   A({id:'hamsa',name:'Hamsa',zh:'Hand of Fatima',meaning:'Five fingers, an eye in the palm — the protective hand that turns harm away',src:'Hamsa (中东/地中海)',lane:'statement',colors:0,focal:true,min:8,fixed:['blue'],build:n=>{const o=Array(n).fill('N');for(let i=0;i<5;i++)o[Math.round(i*n/5)%n]=0;o[0]='F';return o;}});
   A({id:'dreamcatcher',name:'Dreamcatcher',zh:'Dreamcatcher',meaning:'网住噩梦、放行美梦——奥吉布瓦的圆环之网(手串本身即网圈)',src:'Ojibwe Dreamcatcher',lane:'bohemian',colors:0,focal:true,min:12,fixed:['blue','white_neutral'],build:n=>{const o=Array(n).fill(0);for(let p=1;p<6;p++)o[Math.round(p*n/6)%n]=1;o[0]='F';o[Math.floor(n/2)]='K';return o;}});
@@ -1276,7 +1283,7 @@ const PATTERNS=(()=>{
   A({id:'triquetra',name:'Triquetra',zh:'Triquetra',meaning:'Three rings interlocked, never broken — the Celtic trinity of sky, earth, and self',src:'Book of Kells',lane:'bohemian',colors:1,focal:true,min:9,build:n=>{const o=Array(n).fill('N');for(let p=0;p<3;p++){const b=Math.round(p*n/3)%n;o[b]='A';o[(b+1)%n]='A';}o[0]='F';return o;}});
   A({id:'eyeofhorus',name:'Eye of Horus',zh:'Eye of Horus',meaning:'The Wadjet eye — all-seeing, for healing, protection, and sovereignty',src:'Egyptian Book of the Dead',lane:'statement',colors:0,focal:true,min:9,fixed:['yellow_gold','blue'],build:n=>{const o=Array(n).fill(0);for(let i=0;i<3;i++)o[Math.round((i+0.5)*n/3)%n]=1;o[0]='F';o[Math.floor(n/2)]='K';return o;}});
   A({id:'scarab',name:'Scarab',zh:'Scarab',meaning:'Rolling the sun across the sky, dying and reborn — an ancient Egyptian rebirth charm (lapis blue)',src:'埃及 Khepri Scarab',lane:'statement',colors:0,focal:true,min:8,fixed:['blue'],build:n=>{const o=Array(n).fill(0);o[0]='F';o[Math.round(n*0.15)%n]='K';o[(n-Math.round(n*0.15))%n]='K';return o;}});
-  A({id:'sunmoon',name:'Sun & Moon Sun & Moon同辉',zh:'Sun & Moon',meaning:'Sun-crow and moon-hare, day and night as twins — light and stillness held together',src:'sun & moon Sun & Moon双生',lane:'statement',colors:0,raw:1,min:6,fixed:['yellow_gold','silver_gray'],build:n=>{const h=Math.floor(n/2);const o=Array.from({length:n},(_,i)=>i<h?0:1);o[0]='F';return o;}});
+  A({id:'sunmoon',name:'Sun & Moon',zh:'Sun & Moon',meaning:'Sun-crow and moon-hare, day and night as twins — light and stillness held together',src:'sun & moon Sun & Moon双生',lane:'statement',colors:0,raw:1,min:6,fixed:['yellow_gold','silver_gray'],build:n=>{const h=Math.floor(n/2);const o=Array.from({length:n},(_,i)=>i<h?0:1);o[0]='F';return o;}});
 
   // mono fallback
   A({id:'whisper',name:'Whisper',zh:'Whisper',meaning:'A plain ring, room to breathe',src:'minimal',lane:'minimal',colors:0,quiet:1,kind:'frame',motif:[['N','flex']]});
@@ -1600,7 +1607,7 @@ function selLabel(sf){ const c=sf.category||'', d=sf.domain||'';   // category/d
   if(/dayun|decade|current_luck/.test(c)) return 'This chapter';
   return ({core:'Who you are',love:'Love & partnership',career:'Work & direction',wealth:'Money & flow',health:'Body & mind',timing:'Your timing'})[d] || 'Your chart'; }
 async function fetchWordLines(prof){ prof._wordLines=null; const sel=(prof&&prof.selected_findings)||[]; if(!sel.length) return;   // leashed per-person copy; failure → null → selectByAnalysis falls back to the local reads
-  try{ const ctl=new AbortController(), t=setTimeout(()=>ctl.abort(),16000);
+  try{ const ctl=new AbortController(), t=setTimeout(()=>ctl.abort(),26000);   // 26s: covers a Railway cold start (measured 17s) — the warm-up ping usually makes this moot
     const res=await fetch(WORD_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({findings:sel}),signal:ctl.signal}); clearTimeout(t);
     if(!res.ok) return; const d=await res.json(); const map={}; (d.lines||[]).forEach(o=>{ if(o&&o.id!=null&&o.line) map[o.id]=o.line; });
     if(Object.keys(map).length) prof._wordLines=map;
@@ -1715,7 +1722,7 @@ function beadCount(){ return Math.max(4, Math.round(loopMm()/state.beadMm)); }  
 function fillToCount(recipe,n){ if(!recipe.length)return[]; const o=[]; let i=0; while(o.length<n){o.push(recipe[i%recipe.length]);i++} return o; }
 function recipeFromPicks(picks){ const r=[]; picks.forEach((p,i)=>{r.push(p.key); if(i<2)r.push(p.key);}); return r; }
 function rebuild(){ state.seq=state.recipe.slice(); renderAll();
-  try{ if(state.recipe.length) localStorage.setItem('sw_current',JSON.stringify({recipe:state.recipe,mmList:state.mmList,beadMm:state.beadMm,wristCm:state.wristCm,intents:state.intents,picks:state.picks,prof:state.prof,findings:state.findings,hasReading:state.hasReading,autofilled:state.autofilled,basePattern:state.basePattern,pattern:state.pattern,palette:state.palette,name:state.name})); }catch(e){}
+  try{ if(state.recipe.length) localStorage.setItem('sw_current',JSON.stringify({recipe:state.recipe,mmList:state.mmList,beadMm:state.beadMm,wristCm:state.wristCm,intents:state.intents,picks:state.picks,prof:state.prof,findings:state.findings,hasReading:state.hasReading,autofilled:state.autofilled,basePattern:state.basePattern,pattern:state.pattern,palette:state.palette,name:state.name})); }catch(e){lsFail();}
   try{ if(typeof renderSlots==='function') renderSlots(); }catch(e){}
   try{ updateUndoBtn(); }catch(e){}                                                  // keep Undo's on-screen/greyed state in sync after every build, incl. a fresh read (User 2026-06-28)
 }   // the ring IS the beads you placed; also auto-cache the design so a lock-screen/reload never loses it (User 2026-06-27)
@@ -2053,6 +2060,7 @@ async function maybeRead(){
   state.prof=prof;
   state.palette=null;
   if(state.prof) await fetchWordLines(state.prof);   // leashed per-person copy for the engine's selected findings, before the reads are built (CC 2026-06-29)
+  if(seq!==READ_SEQ) return;   // a newer read started while the word fetch was in flight — this one is stale, don't write its strand over the new one
   const _mode=state.intents.length?'both':'chart';
   state.findings = state.prof ? selectByAnalysis(state.prof,state.intents,_mode) : null;    // Mode 2/3 analysis-first
   if(state.findings && state.findings.length){
@@ -2394,7 +2402,7 @@ $('reqApply').onclick=()=>{ state.request=$('reqText').value.trim();
 function buildPalette(){
   const cb=$('catBar'); cb.innerHTML='';
   const groups=[
-    {lbl:'',items:[{id:'all',t:'全部'}]},
+    {lbl:'',items:[{id:'all',t:'All'}]},
     {lbl:'Elements',items:[['metal','Metal'],['wood','Wood'],['water','Water'],['fire','Fire'],['earth','Earth']].map(a=>({id:'el:'+a[0],t:a[1]}))},
     {lbl:'Wish',items:[['love','Love'],['wealth','Wealth'],['career','Career'],['focus','Focus'],['calm','Calm'],['sleep_light','Sleep'],['protection','Protection'],['confidence','Confidence']].map(a=>({id:'wish:'+a[0],t:a[1]}))},
     {lbl:'Color',items:Array.from(new Set(CATALOG.map(catOf))).map(c=>({id:'color:'+c,t:c}))},
@@ -2544,7 +2552,8 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDetail();});
       [...SV.querySelectorAll('.zb')].forEach(b=>b.style.transition='');
       rebuild();   // beads reused by identity → now at LAST positions
       if(useFlip){ window._flipBusy=true;   // freeze the turntable so Flip's captured rects stay consistent
-        Flip.from(fstate,{duration:.55,ease:'power2.inOut',nested:true,onComplete:()=>{window._flipBusy=false;}}); }
+        clearTimeout(window._flipBusyT); window._flipBusyT=setTimeout(()=>{window._flipBusy=false;},1500);   // safety: if the tween is killed before onComplete, don't leave the turntable frozen forever
+        Flip.from(fstate,{duration:.55,ease:'power2.inOut',nested:true,onComplete:()=>{window._flipBusy=false; clearTimeout(window._flipBusyT);}}); }
       drag=false; key=null; return true; }
     return false; };
   SV.addEventListener('pointerup',()=>{ if(fin(true))return; if(key&&!long){ slot>=0?removeAt(slot):removeStone(key); SV._noClick=true; setTimeout(()=>SV._noClick=false,300); } key=null; });
@@ -2585,7 +2594,7 @@ $('clearAll').onclick=()=>{ if(!state.recipe.length)return; pushHistory(); state
 $('zoomX').onclick=()=>$('zoomModal').classList.remove('show'); $('zoomModal').onclick=e=>{if(e.target===$('zoomModal'))$('zoomModal').classList.remove('show');};
 
 /* on-wrist preview — composite YOUR actual beads around a bare-wrist photo on a canvas */
-const WRISTIMG=new Image(); WRISTIMG.src=ASSET+'assets/wrist-base.png?v='+VER;
+const WRISTIMG=new Image(); WRISTIMG.crossOrigin='anonymous'; WRISTIMG.src=ASSET+'assets/wrist-base.png?v='+VER;   // crossOrigin: CDN draw must not taint the canvas (toDataURL for share/AI)
 const WC={x:706,y:576,rv:90,rh:46};   // wrist centre + ellipse radii in base-image pixels (tuned to wrist-base.png)
 function drawWrist(){
   const cv=$('wristCanvas'); if(!cv||!cv.getContext)return; const x=cv.getContext('2d'), S=cv.width;
@@ -2629,7 +2638,8 @@ function openWrist(){ if(!state.seq.length)return;
   $('wristModal').classList.add('show');
   $('wristResult').style.display='none'; $('wristCanvas').style.display='none'; $('wristLoad').style.display='flex'; $('wristCap').textContent='Generating your on-wrist preview…';
   braceletDataURL(durl=>{ if(!durl){ wristFallback(); return; }
-    fetch(APIBASE+'/api/onwrist',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:durl})})
+    const ctl=new AbortController(); setTimeout(()=>ctl.abort(),30000);   // cold Railway + AI compose can hang — cap the spinner, fall back to the local composite
+    fetch(APIBASE+'/api/onwrist',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:durl}),signal:ctl.signal})
       .then(r=>r.json()).then(d=>{ if(!d||!d.image) throw 0; const im=$('wristResult');
         im.onload=()=>{ $('wristLoad').style.display='none'; im.style.display='block'; $('wristCap').textContent='On-wrist preview · your exact strand'; };
         im.onerror=()=>wristFallback(); im.src=d.image; })
@@ -2638,7 +2648,7 @@ function openWrist(){ if(!state.seq.length)return;
 function wristFallback(){ $('wristLoad').style.display='none'; $('wristResult').style.display='none'; drawWrist(); $('wristCanvas').style.display='block'; $('wristCap').textContent='Composite preview (AI preview is busy right now)'; }
 /* scene preview: instant composites + the AI wrist shot */
 const SCENES={cafe:{img:'assets/scenes/cafe.jpg',cap:'On the coffee table · your bracelet'},desk:{img:'assets/scenes/desk.jpg',cap:'On your desk · your bracelet'},party:{img:'assets/scenes/party.jpg',cap:'Party night · your strand'}};
-for(const n in SCENES){ const im=new Image(); im.src=SCENES[n].img+'?v='+VER; SCENES[n].image=im; }
+for(const n in SCENES){ const im=new Image(); im.crossOrigin='anonymous'; im.src=ASSET+SCENES[n].img+'?v='+VER; SCENES[n].image=im; }
 function drawScene(name){
   const cv=$('wristCanvas'), x=cv.getContext('2d'), S=cv.width, bg=SCENES[name].image;
   const seq=state.seq, srcs=seq.map((kk,ii)=>beadSrc(kk,ii)), uniqS=[...new Set(srcs)], imgs={}; let pend=uniqS.length;
@@ -2674,7 +2684,8 @@ function openScene(name){
   $('wristResult').style.display='none'; $('wristCanvas').style.display='none';
   $('wristLoad').style.display='flex'; $('wristCap').textContent='Placing your strand into the scene…';
   braceletDataURL(durl=>{ if(!durl){ sceneFallback(name); return; }
-    fetch(APIBASE+'/api/onwrist',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:durl,scene:name})})
+    const ctl=new AbortController(); setTimeout(()=>ctl.abort(),30000);   // same cap as the wrist call — never leave the spinner running on a hung request
+    fetch(APIBASE+'/api/onwrist',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:durl,scene:name}),signal:ctl.signal})
       .then(r=>r.json()).then(d=>{ if(!d||!d.image) throw 0; _sceneCache[ck]=d.image; const im=$('wristResult');
         im.onload=()=>{ $('wristLoad').style.display='none'; im.style.display='block'; $('wristCap').textContent=SCENES[name].cap+' · AI'; };
         im.onerror=()=>sceneFallback(name); im.src=d.image; })
@@ -2863,7 +2874,9 @@ $('designChoices').addEventListener('click',e=>{ const c=e.target.closest('.choi
 /* save slots — keep a few looks side by side; tap empty to save, tap filled to load, × to clear (User 2026-06-27) */
 const SLOT_KEY='sw_slots', SLOT_N=3;
 function loadSlots(){ try{return JSON.parse(localStorage.getItem(SLOT_KEY))||{};}catch(e){return {};} }
-function putSlots(s){ try{localStorage.setItem(SLOT_KEY,JSON.stringify(s));}catch(e){} }
+let _lsWarned=false;
+function lsFail(){ if(!_lsWarned){ _lsWarned=true; toast("Couldn't save — browser storage is full"); } }   // saves were failing silently; say it once, not on every autosave
+function putSlots(s){ try{localStorage.setItem(SLOT_KEY,JSON.stringify(s));}catch(e){lsFail();} }
 function designSnapshot(){ return {recipe:state.recipe,mmList:state.mmList,beadMm:state.beadMm,wristCm:state.wristCm,intents:state.intents,picks:state.picks,prof:state.prof,hasReading:state.hasReading,autofilled:state.autofilled,basePattern:state.basePattern,pattern:state.pattern,palette:state.palette,name:state.name}; }
 function renderSlots(){ const host=$('slots'); if(!host) return; const s=loadSlots(); let h='';
   for(let i=1;i<=SLOT_N;i++){ const f=s[i]; h+=`<button class="slot${f?' filled':''}" data-slot="${i}">${f?('Look '+i):('Save '+i)}${f?` <span class="x" data-x="${i}">×</span>`:''}</button>`; }
@@ -2901,7 +2914,7 @@ $('addBtn').onclick=()=>{ if(!state.seq.length)return;
 
 /* album (localStorage) */
 function loadAlbum(){ try{return JSON.parse(localStorage.getItem('sw_album')||'[]');}catch(e){return[];} }
-function putAlbum(a){ try{localStorage.setItem('sw_album',JSON.stringify(a.slice(0,40)));}catch(e){} }
+function putAlbum(a){ try{localStorage.setItem('sw_album',JSON.stringify(a.slice(0,40)));}catch(e){lsFail();} }
 $('saveAlbum').onclick=()=>{ if(!state.recipe.length){toast("Make a bracelet first");return;}
   const a=loadAlbum(); a.unshift({name:state.name||"Untitled bracelet",recipe:state.recipe.slice(),mmList:state.mmList.slice(),wristCm:state.wristCm,beadMm:state.beadMm,ts:Date.now()});
   putAlbum(a); renderAlbum(); toast("Saved to your album"); };
@@ -3008,7 +3021,7 @@ fetch(ASSET+'beadwork/stones.json?v='+VER).then(r=>r.json()).then(cat=>{
       renderer.toneMapping=T.ACESFilmicToneMapping; renderer.toneMappingExposure=1.05;
       const scene=new T.Scene();
       const pmrem=new T.PMREMGenerator(renderer); scene.environment=pmrem.fromScene(new RoomEnvironment(),0.04).texture;
-      new T.TextureLoader().load('assets/cosmic-backdrop-empty.png',t=>{t.colorSpace=T.SRGBColorSpace;scene.background=t;scene.backgroundIntensity=1.45;});
+      new T.TextureLoader().load((window.SW_ASSET||'')+'assets/cosmic-backdrop-empty.png',t=>{t.colorSpace=T.SRGBColorSpace;scene.background=t;scene.backgroundIntensity=1.45;});
       const camera=new T.PerspectiveCamera(34,1,0.1,100); camera.position.set(0,0.2,9.4);
       const group=new T.Group(); scene.add(group); const RAD=2.5;
       const kl=new T.DirectionalLight(0xfff2e0,2.0); kl.position.set(-3,4,5); scene.add(kl);
