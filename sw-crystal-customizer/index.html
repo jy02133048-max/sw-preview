@@ -224,6 +224,14 @@
   .trust span{font-size:12px;color:var(--muted);display:flex;gap:8px}.trust b{color:var(--gold);font-weight:400}
   .trustline{margin-top:18px;padding-top:12px;border-top:1px solid var(--line);font-size:11.5px;color:var(--faint);text-align:center;line-height:1.6}
   .trustline b{color:var(--accent,var(--gold));font-weight:400}
+  /* order modal */
+  .ord-sum{font-size:13px;color:var(--muted);line-height:1.7;margin:10px 0 12px}
+  .ord-sum b{color:var(--ink);font-weight:500}
+  .ord-stones{margin-top:6px;padding:8px 11px;background:rgba(125,110,90,.07);border-radius:8px;font-size:12.5px;max-height:130px;overflow-y:auto}
+  #ordEmail{width:100%;background:var(--bg2);border:1px solid var(--line);color:var(--ink);padding:12px 13px;border-radius:9px;font-size:16px;font-family:'Inter',sans-serif;font-weight:300}
+  #ordEmail:focus{outline:none;border-color:var(--accent,var(--gold))}
+  .ord-note{font-size:11.5px;color:var(--faint);margin-top:10px;line-height:1.6}
+  .ord-code{font-family:Menlo,ui-monospace,monospace;font-size:22px;letter-spacing:.06em;color:var(--accent,#0e6b50);text-align:center;margin:12px 0 8px}
   .album{display:grid;grid-template-columns:repeat(auto-fill,minmax(98px,1fr));gap:11px}
   .album .ph{font-size:13px;color:var(--faint)}
   .album-item{position:relative;text-align:center}
@@ -812,6 +820,22 @@
   <img id="shareImg" alt="Share image">
   <div class="wrist-cap">Press & hold to save · share it anywhere</div>
   <a id="shareDl" class="btn ghost" download="stone-whisper-strand.png">Download image</a>
+</div></div>
+<div class="modal" id="orderModal"><div class="modal-card" style="max-width:400px;text-align:left">
+  <span class="mx" id="orderX">×</span>
+  <div id="ordForm">
+    <div class="mname" style="font-size:22px">Reserve this bracelet</div>
+    <div class="ord-sum" id="ordSum"></div>
+    <input id="ordEmail" type="email" autocomplete="email" placeholder="Your email" maxlength="120">
+    <div class="err" id="ordErr"></div>
+    <button class="btn" id="ordGo" style="margin-top:6px">Reserve it — get my payment link</button>
+    <div class="ord-note">No payment now. We hold this exact design under its own number and email you a secure payment link within 12 hours. Hand-assembled, photographed before it ships, 30-day returns.</div>
+  </div>
+  <div id="ordDone" style="display:none">
+    <div class="mname" style="font-size:22px;text-align:center">Reserved ✓</div>
+    <div class="ord-code" id="ordCode"></div>
+    <div class="ord-note" style="text-align:center" id="ordDoneNote"></div>
+  </div>
 </div></div>
 <div class="toast" id="toast"></div>
 
@@ -2350,7 +2374,7 @@ function renderAll(){
   const cp=$('ctaPrice'), npv=has?money(priceOf(state.seq)):'—';
   if(cp.textContent!==npv&&cp.textContent!=='—'){cp.classList.remove('bump');void cp.offsetWidth;cp.classList.add('bump');}
   cp.textContent=npv;
-  const b=$('addBtn'); b.disabled=!has; b.textContent=has?'customize this strand':'Add some crystals first';
+  const b=$('addBtn'); b.disabled=!has; b.textContent=has?'Order this bracelet':'Add some crystals first';
 }
 function renderYourStones(){
   const sl=$('stoneList'), keys=[...new Set(state.recipe)];
@@ -2906,11 +2930,68 @@ function soloStrand(key){   // a whole bracelet of ONE stone (for solo-only ston
   state._repour=true; rebuild();
 }
 $('wristX').onclick=()=>$('wristModal').classList.remove('show'); $('wristModal').onclick=e=>{if(e.target===$('wristModal'))$('wristModal').classList.remove('show');};
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){$('zoomModal').classList.remove('show');$('wristModal').classList.remove('show');$('storyModal').classList.remove('show');$('shareModal').classList.remove('show');}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){$('zoomModal').classList.remove('show');$('wristModal').classList.remove('show');$('storyModal').classList.remove('show');$('shareModal').classList.remove('show');$('orderModal').classList.remove('show');}});
 
-/* confirm */
-$('addBtn').onclick=()=>{ if(!state.seq.length)return;
-  alert("Prototype — Add to cart wires into the SW store.\\n\\n"+(state.name||"Your bracelet")+" · "+state.seq.length+" beads ("+state.beadMm+"mm · wrist "+state.wristCm+"cm)\\nCrystals: "+[...new Set(state.seq)].map(k=>stoneName(STONES[k])).join(", ")+(state.request?"\\nNote: "+state.request:"")+"\nTotal: "+money(priceOf(state.seq))); };
+/* ===== order flow: reserve → snapshot+config to the studio backend → payment link by email =====
+   v0 loop: request lands in the order desk (staging, 30d TTL); studio opens a SHOPLINE draft order
+   with the SAME code in its note, sends the payment link, marks it paid. v1 = codex automates the
+   draft order via SHOPLINE API and this flow redirects straight to checkout. (CC 2026-07-02) */
+const SNAP_API=(PUBHOST?'https://sw-word-service-production.up.railway.app':'')+'/api/design-snapshot';
+function orderCode(){ const AB='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';   // no I/O/0/1 — codes get typed into order notes
+  const d=new Date(), p=n=>String(n).padStart(2,'0');
+  let s=''; for(let i=0;i<4;i++) s+=AB[Math.floor(Math.random()*AB.length)];
+  return 'SW-'+String(d.getFullYear()%100)+p(d.getMonth()+1)+p(d.getDate())+'-'+s; }
+function snapshotWithCode(code,cb){ braceletDataURL(durl=>{ if(!durl){cb(null);return;}
+  const im=new Image(); im.onload=()=>{ try{ const C=document.createElement('canvas'); C.width=512; C.height=556; const x=C.getContext('2d');
+      x.fillStyle='#0e0b13'; x.fillRect(0,0,512,556); x.drawImage(im,0,0,512,512);
+      x.fillStyle='rgba(255,255,255,.9)'; x.font='600 20px Menlo,monospace'; x.textAlign='center'; x.fillText(code,256,540);
+      cb(C.toDataURL('image/png')); }catch(e){ cb(null); } };
+  im.onerror=()=>cb(null); im.src=durl; }); }
+function buildOrderConfig(code){
+  return { code, name:state.name||'Untitled bracelet', price:money(priceOf(state.seq)),
+    wristCm:state.wristCm, beadMm:state.beadMm,
+    structure:state.pattern?patternName(state.pattern):'', palette:(state.palette&&state.palette.name)||'',
+    note:state.request||'', intents:state.intents.slice(),
+    beads:state.seq.map((k,i)=>({n:i+1,key:k,stone:(STONES[k]&&STONES[k].en)||k,mm:mmAt(i)})),
+    seq:state.seq.slice(), mmList:state.mmList.slice() }; }
+function openOrderModal(){ if(!state.seq.length) return;
+  const uniq={}; state.seq.forEach((k,i)=>{ const nm=(STONES[k]&&STONES[k].en)||k; (uniq[nm]=uniq[nm]||{c:0,mm:new Set()}).c++; uniq[nm].mm.add(mmAt(i)); });
+  const stones=Object.entries(uniq).map(([nm,v])=>nm+' ×'+v.c+' ('+[...v.mm].sort((a,b)=>a-b).join('/') +'mm)').join('<br>');
+  $('ordSum').innerHTML='<b>'+esc(state.name||'Your bracelet')+'</b> · '+state.seq.length+' beads · wrist '+state.wristCm+'cm · <b>'+money(priceOf(state.seq))+'</b>'
+    +(state.pattern?('<br>Structure · '+esc(patternName(state.pattern))):'')
+    +'<div class="ord-stones">'+stones+'</div>'
+    +(state.request?('<div class="ord-stones" style="margin-top:5px">Note · '+esc(state.request)+'</div>'):'');
+  $('ordForm').style.display='block'; $('ordDone').style.display='none'; $('ordErr').textContent='';
+  const g=$('ordGo'); g.disabled=false; g.textContent='Reserve it — get my payment link';
+  $('orderModal').classList.add('show'); }
+let ORD_BUSY=false;   // esc() reuses the existing helper at the top of this script
+async function submitOrder(){ if(ORD_BUSY||!state.seq.length) return;
+  const email=($('ordEmail').value||'').trim();
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ $('ordErr').textContent='Add your email — the payment link goes there.'; return; }
+  ORD_BUSY=true; const g=$('ordGo'); g.disabled=true; g.textContent='Reserving…'; $('ordErr').textContent='';
+  try{
+    for(let attempt=0;attempt<2;attempt++){
+      const code=orderCode();
+      const image=await new Promise(r=>snapshotWithCode(code,r));
+      const ctl=new AbortController(); setTimeout(()=>ctl.abort(),26000);
+      const res=await fetch(SNAP_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code,email,config:buildOrderConfig(code),image:image||''}),signal:ctl.signal});
+      if(res.status===409) continue;   // code collision — roll a new one
+      if(!res.ok) throw new Error('save failed');
+      $('ordForm').style.display='none'; $('ordDone').style.display='block';
+      $('ordCode').textContent=code;
+      $('ordDoneNote').innerHTML='Your design is held under this number.<br>Payment link goes to <b>'+esc(email)+'</b> within 12 hours.<br>We build exactly what you see, photograph it, then ship.';
+      if(window._ordHook) window._ordHook(code);
+      ORD_BUSY=false; return;
+    }
+    throw new Error('collision twice');
+  }catch(e){ $('ordErr').textContent="Couldn't reach the studio — please try again in a minute.";
+    g.disabled=false; g.textContent='Reserve it — get my payment link';
+    if(window._ordHook) window._ordHook('ERR'); }
+  ORD_BUSY=false; }
+$('addBtn').onclick=()=>openOrderModal();
+$('ordGo').onclick=submitOrder;
+$('orderX').onclick=()=>$('orderModal').classList.remove('show');
+$('orderModal').onclick=e=>{ if(e.target===$('orderModal'))$('orderModal').classList.remove('show'); };
 
 /* album (localStorage) */
 function loadAlbum(){ try{return JSON.parse(localStorage.getItem('sw_album')||'[]');}catch(e){return[];} }
@@ -2978,6 +3059,8 @@ fetch(ASSET+'beadwork/stones.json?v='+VER).then(r=>r.json()).then(cat=>{
   buildPalette(); renderAlbum(); rebuild(); renderSlots();
   if(/selftest=1/.test(location.search)) setTimeout(runColorSelfTest,400);
   if(/autolucky=1/.test(location.search)) setTimeout(()=>{ luckyStrand(); try{ document.title='LUCKY:'+JSON.stringify({seq:state.seq,scheme:(state.palette||{}).name,pat:(state.pattern||{}).zh,meaning:(state.pattern||{}).meaning,src:(state.pattern||{}).src}); }catch(e){ document.title='ERR'; } },900);
+  if(/autoorder=1/.test(location.search)) setTimeout(()=>{ luckyStrand(); window._ordHook=c=>{ document.title='ORDER:'+c; };   // debug: lucky strand → reserve with a test email, code lands in the title
+    setTimeout(()=>{ openOrderModal(); $('ordEmail').value='autotest@stonewhisper.co'; submitOrder(); },1300); },900);
   // ?seq=jx-061,jx-061,… → load an exact preset strand (shareable / preview a designed sequence)
   var sq=(location.search.match(/[?&]seq=([^&]+)/)||[])[1];
   if(sq){ var ks=decodeURIComponent(sq).split(',').map(k=>k.trim()).filter(k=>STONES[k]); if(ks.length){ state.recipe=ks.slice(); state.mmList=ks.map(()=>null); state.autofilled=false; rebuild(); } }
