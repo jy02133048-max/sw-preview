@@ -1133,7 +1133,8 @@ function scoreStrand(seq){
 }
 // ===== HARMONY palettes (real-coord colour schemes) → fed into the FULL structure library (arrangeStrand) =====
 // structures stay rich (Elements/脉轮/Golden Section/Color-Block/Station/ombré…); this just gives each one a WELL-COORDINATED set of stones.
-const HUE_BANDS=[{lo:0,hi:50,zh:'Rose Pink',c:25},{lo:50,hi:100,zh:'Amber Gold',c:75},{lo:100,hi:195,zh:'Teal',c:147},{lo:195,hi:262,zh:'Lake Blue',c:228},{lo:262,hi:312,zh:'Blue-purple',c:287},{lo:312,hi:360,zh:'Purple',c:336}];
+// 8 色带=默认(2026-07-02 色准审计→User 视觉过拍板转正):旧 6 带的 Teal 100-195° 内实际是两团珠(黄绿 101-109 vs 真绿 153-191),中心 147° 无珠=拿不存在的颜色查书上几何(Topaz 错位 46°)。边界=库存 hue 分布的真实空隙,几何误差 max 46°→24°。
+const HUE_BANDS=[{lo:0,hi:51,zh:'Rose Pink',c:25},{lo:51,hi:100,zh:'Amber Gold',c:73},{lo:100,hi:130,zh:'Lime Jade',c:106},{lo:130,hi:196,zh:'Teal Green',c:172},{lo:196,hi:220,zh:'Cyan',c:202},{lo:220,hi:255,zh:'Lake Blue',c:238},{lo:255,hi:300,zh:'Blue-violet',c:273},{lo:300,hi:360,zh:'Purple',c:320}];
 const bandPool=b=>MIXPOOL.filter(s=>{const C=Cof(s.key),H=Hof(s.key); return C>13 && H>=b.lo && H<b.hi;}).sort((a,b2)=>Lof(b2.key)-Lof(a.key));  // chromatic beads of one hue, light→dark
 const lightNeutrals=()=>MIXPOOL.filter(s=>isNeutral(s.key)&&Lof(s.key)>58).sort((a,b)=>Lof(b.key)-Lof(a.key));
 function spanPick(pool,k){ if(!pool.length)return[]; if(pool.length<=k)return pool.map(s=>s.key);
@@ -1141,7 +1142,9 @@ function spanPick(pool,k){ if(!pool.length)return[]; if(pool.length<=k)return po
   const o=[], seg=pool.length/k;                                       // pool is light→dark; carve into k lightness segments, pick a RANDOM stone in each → keeps the gradient SPAN (coordination) but every stone in the band gets a turn (fixes 41 dead stones / spanPick was 100% deterministic, User 2026-06-29)
   for(let i=0;i<k;i++){ const lo=Math.floor(i*seg), hi=Math.min(pool.length-1,Math.ceil((i+1)*seg)-1); o.push(pool[lo+Math.floor(Math.random()*(Math.max(lo,hi)-lo+1))].key); }
   return [...new Set(o)]; }
-function availBands(){ return HUE_BANDS.map((b,i)=>({b,i,pool:bandPool(b)})).filter(x=>x.pool.length>=2); }
+function availBands(){ return HUE_BANDS.map((b,i)=>{ let bb=b; const pool=bandPool(b);
+  if(pool.length){ const rad=Math.PI/180; let xs=0,ys=0; pool.forEach(s=>{xs+=Math.cos(Hof(s.key)*rad);ys+=Math.sin(Hof(s.key)*rad);}); bb={...b,c:Math.round((Math.atan2(ys,xs)/rad+360)%360)}; }   // 带中心=带内真珠色相的圆均值(库存自适应)——几何按真珠算,不按拍死的桶心;上新珠自动跟
+  return {b:bb,i,pool}; }).filter(x=>x.pool.length>=2); }
 // the full canonical colour-harmony book (Itten/colour-wheel) on the real hue wheel — each scheme carries its own 面积比(k=bead count: dominant more, accent fewer)
 // φ 面积比=默认(skill §5-M Graves φ 13:8/8:5,User 2026-07-02 视觉过 10 条拍板转正):主色带 SKU 配额 Fibonacci 主导化(两带 5:3,三带 8:3:2),修掉旧 Adjacent 3:3 / Split 4:4 的"无主色"平局(Graves K:必须一个 dominant)。小色带 pool 不足时 spanPick 自然封顶,比例朝 φ 靠不硬凑。
 function harmonyPalette(forceBandIdx){
