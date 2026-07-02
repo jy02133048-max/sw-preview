@@ -1078,7 +1078,12 @@ function scoreStrand(seq){
   if(nC<=1) harm=10;                                           // Monochrome
   else if(nC===2){ const g=dHue(cents[0],cents[1]); harm = g<=58?9 : (g>=148?6 : 5); }   // Adjacent/Complement/中距均可(Color-OS:Wada 348组 45%落60-150°,色距非闸→中距不再罚,真闸=明度差+muted锚+中性buffer)
   else if(nC===3) harm=5;                                      // Triangle/Split-Complementary = 有意方案,接受(邻接 clash 单独兜底)
-  else harm=-20;                                               // ≥4 Cluster=彩虹/散
+  else if(nC===4) harm=-20;                                    // 4 簇=勉强上限(skill §0-N Wada:distinct 彩色≤4)
+  else return 5;                                               // ≥5 簇=彩虹 → §13 colorCount GATE:直接砍死,不进加权(2026-07-02 接 skill §13)
+  // §13 valueContrast 簇间明度差(§0-O Wada 2色组 ΔL 中位27):≥2 彩簇但各簇平均 L 挤在 <0.15 内 = 对比做平,扣
+  let flatPen=0;
+  if(nC>=2){ const cL=cents.map(c=>{const m=acc.filter(k=>dHue(Hof(k),c)<=48); return m.length? m.reduce((t2,k)=>t2+valOf(k),0)/m.length : null;}).filter(v=>v!=null);
+    if(cL.length>=2){ const cSpread=Math.max(...cL)-Math.min(...cL); if(cSpread<0.15) flatPen=8*(0.15-cSpread)/0.15; } }
   // 邻接撞色:两beads都够彩、色相落真半冲区(Δh 62..148)且没中性隔开(Adjacent Δh~50 不算撞,Complement Δh~180 也不算)
   let clash=0; for(let i=0;i<n;i++){const a=seq[i],b=seq[(i+1)%n]; if(Cof(a)>28&&Cof(b)>28){const dh=dHue(Hof(a),Hof(b)); if(dh>62&&dh<148)clash++;}}
   let t=0; seq.forEach(k=>t+=tempOf(STONES[k]||{})); const tempImb=Math.abs(t)/n;
@@ -1087,9 +1092,12 @@ function scoreStrand(seq){
   if(neutralRatio>0.9) s-=22*(neutralRatio-0.9)/0.1;          // 只罚"全白无焦点";不再奖励白(User 要Color配Color)
   if(highSat>0.6) s-=28*(highSat-0.6);                        // 只罚极端过饱和(Crystals色本就muted,放开让Color出来)
   if(vSpread<0.4) s-=12*(0.4-vSpread)/0.4;                    // 明度跨度(亮+暗)
+  s-=flatPen;                                                  // 簇间明度差做平(§0-O)
   s-=7*clash;                                                  // 邻接撞色
   if(tempImb>0.7) s-=6;                                        // 冷暖极端失衡
-  if(heroes===1) s+=4; else if(heroes>=3) s-=6;
+  // §13 d1 focalHierarchy(单一焦点=§1.5-A2 跨5路最硬共识):唯一 hero=最优;无 hero 但有唯一彩度峰也算焦点;hero 堆砌重罚
+  if(heroes===1) s+=6; else if(heroes===2) s-=2; else if(heroes>=3) s-=10;
+  else if(acc.length){ const cs=[...new Set(acc)].map(Cof).sort((a,b)=>b-a); if(cs.length>=2 && cs[0]-cs[1]>=10) s+=3; }
   return Math.max(0,Math.min(100,Math.round(s)));
 }
 // ===== HARMONY palettes (real-coord colour schemes) → fed into the FULL structure library (arrangeStrand) =====
